@@ -1,0 +1,33 @@
+version: "3.8"
+services:
+  shadow:
+    image: shadow
+    working_dir: /shadow/src/test/tor/minimal/
+    entrypoint: /bin/bash
+    build:
+      context: .
+      shm_size: 2g
+
+    # shm_size: 2g
+    # sysctls:
+    #   fs.nr_open: 10485760 # 10M
+    #   fs.file-max: 10485760 # 10M
+    #   vm.max_map_count: 1073741824 # 1G
+    #   kernel.pid_max: 4194304 # 4M
+    #   kernel.threads-max: 4194304 # 4M
+
+    # ulimits:
+    #   nofile:
+    #     soft: 10485760 # 10M
+    #     hard: 10485760 # 10M
+    #   nproc:
+    #     soft: 4194304 # 4M
+    #     hard: 4194304 # 4M
+
+    # Configuration that is equivalent to running:
+    # docker run --privileged -it --tmpfs /dev/shm:rw,nosuid,nodev,exec,size=1024g --security-opt seccomp=unconfined shadow
+    tmpfs:
+      - /dev/shm:rw,nosuid,nodev,exec,size=2g
+    security_opt:
+      - seccomp:unconfined
+    privileged: true
