@@ -213,6 +213,9 @@ struct curve25519_public_key_t;
 #define RELAY_COMMAND_XOFF 43
 #define RELAY_COMMAND_XON 44
 
+#define RELAY_COMMAND_DATA_DELAY_LOWEST 45
+#define RELAY_COMMAND_DATA_DELAY_HIGHEST 255
+
 /* Reasons why an OR connection is closed. */
 #define END_OR_CONN_REASON_DONE           1
 #define END_OR_CONN_REASON_REFUSED        2 /* connection refused */

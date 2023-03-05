@@ -1,0 +1,54 @@
+{
+	"files": [
+		{
+			"path": "src/core/or/relay.c",
+			"bookmarks": [
+				{
+					"line": 613,
+					"column": 0,
+					"label": ""
+				},
+				{
+					"line": 1617,
+					"column": 13,
+					"label": ""
+				},
+				{
+					"line": 2072,
+					"column": 13,
+					"label": ""
+				},
+				{
+					"line": 2341,
+					"column": 28,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "src/core/or/or.h",
+			"bookmarks": [
+				{
+					"line": 181,
+					"column": 0,
+					"label": ""
+				},
+				{
+					"line": 412,
+					"column": 63,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "src/core/mainloop/connection.c",
+			"bookmarks": [
+				{
+					"line": 4739,
+					"column": 21,
+					"label": ""
+				}
+			]
+		}
+	]
+}

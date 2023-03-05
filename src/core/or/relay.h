@@ -107,6 +107,8 @@ void circuit_clear_cell_queue(circuit_t *circ, channel_t *chan);
 circid_t packed_cell_get_circid(const packed_cell_t *cell, int wide_circ_ids);
 uint8_t packed_cell_get_command(const packed_cell_t *cell, int wide_circ_ids);
 
+struct timespec get_sleep_timespec_from_command(uint8_t command);
+
 #ifdef RELAY_PRIVATE
 STATIC int
 handle_relay_cell_command(cell_t *cell, circuit_t *circ,
