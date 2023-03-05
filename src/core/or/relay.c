@@ -2016,13 +2016,13 @@ handle_relay_cell_command(cell_t *cell, circuit_t *circ,
 
       stats_n_data_bytes_received += rh->length;
       if (true || rh->command != RELAY_COMMAND_DATA) {
-        log_info(LD_GENERAL, "Received a data cell to delay, with command = %d.", rh->command);
         int res = 0;
         struct timespec ts = get_sleep_timespec_from_command(rh->command);
+        log_info(LD_GENERAL, "[RENDEZMIX] Received a data cell to delay (cmd=%d, ts.tv_sec=%ld, ts.tv_nsec=%ld)", rh->command, ts.tv_sec, ts.tv_nsec);
         do {
           res = nanosleep(&ts, &ts);
         } while (res && errno == EINTR);
-        log_info(LD_GENERAL, "Finished delaying data cell with command = %d.", rh->command);
+        log_info(LD_GENERAL, "[RENDEZMIX] Finished delaying data cell (cmd=%d, ts.tv_sec=%ld, ts.tv_nsec=%ld)", rh->command, ts.tv_sec, ts.tv_nsec);
       }
       connection_buf_add((char *)(cell->payload + RELAY_HEADER_SIZE),
                          rh->length, TO_CONN(conn));
