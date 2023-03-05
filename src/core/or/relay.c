@@ -45,6 +45,7 @@
  * types of relay cells, launching requests or transmitting data as needed.
  **/
 
+#include "lib/log/log.h"
 #include "lib/time/compat_time.h"
 #include <time.h>
 #define RELAY_PRIVATE
@@ -2014,12 +2015,14 @@ handle_relay_cell_command(cell_t *cell, circuit_t *circ,
       }
 
       stats_n_data_bytes_received += rh->length;
-      if (rh->command != RELAY_COMMAND_DATA) {
+      if (true || rh->command != RELAY_COMMAND_DATA) {
+        log_info(LD_GENERAL, "Received a data cell to delay, with command = %d.", rh->command);
         int res = 0;
         struct timespec ts = get_sleep_timespec_from_command(rh->command);
         do {
           res = nanosleep(&ts, &ts);
         } while (res && errno == EINTR);
+        log_info(LD_GENERAL, "Finished delaying data cell with command = %d.", rh->command);
       }
       connection_buf_add((char *)(cell->payload + RELAY_HEADER_SIZE),
                          rh->length, TO_CONN(conn));
@@ -2054,10 +2057,10 @@ handle_relay_cell_command(cell_t *cell, circuit_t *circ,
 struct timespec get_sleep_timespec_from_command(uint8_t command)
 {
   int i = command - RELAY_COMMAND_DATA_DELAY_LOWEST;
-  struct timespec ts;
-  ts.tv_sec = i; //FIXME JUST FOR EARLY TESTING PURPOSES (should be 0)
-  ts.tv_nsec = (i * 1000000);
-  return ts;
+  if (command == RELAY_COMMAND_DATA)
+    return (struct timespec){2, 0}; //FIXME JUST FOR EARLY TESTING PURPOSES (should be {0,0})
+  else
+    return (struct timespec){i, i * 1000000};
 }
 
 /** An incoming relay cell has arrived on circuit <b>circ</b>. If
