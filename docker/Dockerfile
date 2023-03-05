@@ -43,6 +43,7 @@ WORKDIR /
 COPY ./.ssh /root/.ssh
 RUN chmod 600 /root/.ssh/*
 # GIT_SSH_COMMAND="ssh -vvv"
+ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
 RUN git clone git@github.com:AfonsoG6/rendezmix.git
 
 RUN apt install -y openssl libssl-dev libevent-dev build-essential automake zlib1g zlib1g-dev
