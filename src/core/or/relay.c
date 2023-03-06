@@ -2058,7 +2058,7 @@ struct timespec get_sleep_timespec_from_command(uint8_t command)
 {
   int i = command - RELAY_COMMAND_DATA_DELAY_LOWEST;
   if (command == RELAY_COMMAND_DATA)
-    return (struct timespec){2, 0}; //FIXME JUST FOR EARLY TESTING PURPOSES (should be {0,0})
+    return (struct timespec){0, 1000000}; //FIXME JUST FOR EARLY TESTING PURPOSES (should be {0,0})
   else
     return (struct timespec){i, i * 1000000};
 }
