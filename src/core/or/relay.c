@@ -2020,14 +2020,14 @@ handle_relay_cell_command(cell_t *cell, circuit_t *circ,
       }
 
       stats_n_data_bytes_received += rh->length;
-      if (layer_hint == NULL || rh->command != RELAY_COMMAND_DATA) { //FIXME Should be an && but we need to test the delay
+      if (layer_hint == NULL && rh->command != RELAY_COMMAND_DATA) {
         int res = 0;
         struct timespec ts = get_sleep_timespec_from_command(rh->command);
-        log_info(LD_GENERAL, "[RENDEZMIX] Received a data cell to delay (cmd=%d, ts.tv_sec=%ld, ts.tv_nsec=%ld)", rh->command, ts.tv_sec, ts.tv_nsec);
+        log_info(LD_GENERAL, "[RENDEZMIX] Received a data cell to delay (id=%d, cmd=%d, ts.tv_sec=%ld, ts.tv_nsec=%ld)", circ->global_circuitlist_idx, rh->command, ts.tv_sec, ts.tv_nsec);
         do {
           res = nanosleep(&ts, &ts);
         } while (res && errno == EINTR);
-        log_info(LD_GENERAL, "[RENDEZMIX] Finished delaying data cell (cmd=%d, ts.tv_sec=%ld, ts.tv_nsec=%ld)", rh->command, ts.tv_sec, ts.tv_nsec);
+        log_info(LD_GENERAL, "[RENDEZMIX] Finished delaying data cell (id=%d, cmd=%d, ts.tv_sec=%ld, ts.tv_nsec=%ld)", circ->global_circuitlist_idx, rh->command, ts.tv_sec, ts.tv_nsec);
       }
       connection_buf_add((char *)(cell->payload + RELAY_HEADER_SIZE),
                          rh->length, TO_CONN(conn));
@@ -2352,7 +2352,7 @@ connection_edge_package_raw_inbuf(edge_connection_t *conn, int package_partial,
   }
 
   int relay_command = crypto_rand_int_range(RELAY_COMMAND_DATA_DELAY_LOWEST, RELAY_COMMAND_DATA_DELAY_HIGHEST);
-  log_info(LD_GENERAL, "[RENDEZMIX] Sending data cell (cmd=%d)", relay_command);
+  log_info(LD_GENERAL, "[RENDEZMIX] Sending data cell (id=%d, cmd=%d)", circ->global_circuitlist_idx, relay_command);
   if (connection_edge_send_command(conn, relay_command,
                                    payload, length) < 0 ) {
     /* circuit got marked for close, don't continue, don't need to mark conn */
