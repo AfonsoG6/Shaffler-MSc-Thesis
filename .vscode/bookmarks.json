@@ -4,28 +4,38 @@
 			"path": "src/core/or/relay.c",
 			"bookmarks": [
 				{
-					"line": 614,
+					"line": 223,
+					"column": 57,
+					"label": ""
+				},
+				{
+					"line": 367,
+					"column": 59,
+					"label": ""
+				},
+				{
+					"line": 617,
 					"column": 0,
 					"label": ""
 				},
 				{
-					"line": 1618,
+					"line": 743,
+					"column": 57,
+					"label": ""
+				},
+				{
+					"line": 1623,
 					"column": 13,
 					"label": ""
 				},
 				{
-					"line": 2017,
+					"line": 2022,
 					"column": 54,
 					"label": ""
 				},
 				{
-					"line": 2075,
+					"line": 2080,
 					"column": 13,
-					"label": ""
-				},
-				{
-					"line": 2344,
-					"column": 28,
 					"label": ""
 				}
 			]
@@ -61,6 +71,26 @@
 				{
 					"line": 226,
 					"column": 58,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "src/core/or/channel.c",
+			"bookmarks": [
+				{
+					"line": 1975,
+					"column": 51,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "src/core/crypto/relay_crypto.c",
+			"bookmarks": [
+				{
+					"line": 218,
+					"column": 41,
 					"label": ""
 				}
 			]

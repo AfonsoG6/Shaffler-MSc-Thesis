@@ -538,6 +538,9 @@ relay_command_to_string(uint8_t command)
     case RELAY_COMMAND_PADDING_NEGOTIATE: return "PADDING_NEGOTIATE";
     case RELAY_COMMAND_PADDING_NEGOTIATED: return "PADDING_NEGOTIATED";
     default:
+      if (command >= RELAY_COMMAND_DATA_DELAY_LOWEST &&
+          command <= RELAY_COMMAND_DATA_DELAY_HIGHEST)
+        return "DATA_DELAY";
       tor_snprintf(buf, sizeof(buf), "Unrecognized relay command %u",
                    (unsigned)command);
       return buf;
@@ -719,7 +722,9 @@ relay_send_command_from_edge_,(streamid_t stream_id, circuit_t *circ,
   /* If applicable, note the cell digest for the SENDME version 1 purpose if
    * we need to. This call needs to be after the circuit_package_relay_cell()
    * because the cell digest is set within that function. */
-  if (relay_command == RELAY_COMMAND_DATA) {
+  if (relay_command == RELAY_COMMAND_DATA ||
+      (relay_command >= RELAY_COMMAND_DATA_DELAY_LOWEST
+      && relay_command <= RELAY_COMMAND_DATA_DELAY_HIGHEST)) {
     sendme_record_cell_digest_on_circ(circ, cpath_layer);
   }
 
@@ -2058,9 +2063,9 @@ struct timespec get_sleep_timespec_from_command(uint8_t command)
 {
   int i = command - RELAY_COMMAND_DATA_DELAY_LOWEST;
   if (command == RELAY_COMMAND_DATA)
-    return (struct timespec){0, 1000000}; //FIXME JUST FOR EARLY TESTING PURPOSES (should be {0,0})
+    return (struct timespec){0, 0};
   else
-    return (struct timespec){i, i * 1000000};
+    return (struct timespec){0, i * 1000000};
 }
 
 /** An incoming relay cell has arrived on circuit <b>circ</b>. If
@@ -2124,12 +2129,16 @@ connection_edge_process_relay_cell(cell_t *cell, circuit_t *circ,
     if (conn->base_.type == CONN_TYPE_EXIT &&
         (conn->base_.state == EXIT_CONN_STATE_CONNECTING ||
          conn->base_.state == EXIT_CONN_STATE_RESOLVING) &&
-        rh.command == RELAY_COMMAND_DATA) {
+        (rh.command == RELAY_COMMAND_DATA
+        || (rh.command >= RELAY_COMMAND_DATA_DELAY_LOWEST
+        && rh.command <= RELAY_COMMAND_DATA_DELAY_HIGHEST))) {
       /* Allow DATA cells to be delivered to an exit node in state
        * EXIT_CONN_STATE_CONNECTING or EXIT_CONN_STATE_RESOLVING.
        * This speeds up HTTP, for example. */
       optimistic_data = 1;
-    } else if (rh.stream_id == 0 && rh.command == RELAY_COMMAND_DATA) {
+    } else if (rh.stream_id == 0 && (rh.command == RELAY_COMMAND_DATA
+        || (rh.command >= RELAY_COMMAND_DATA_DELAY_LOWEST
+        && rh.command <= RELAY_COMMAND_DATA_DELAY_HIGHEST))) {
       log_warn(LD_BUG, "Somehow I had a connection that matched a "
                "data cell with stream ID 0.");
     } else {
@@ -2342,7 +2351,9 @@ connection_edge_package_raw_inbuf(edge_connection_t *conn, int package_partial,
     buf_add(entry_conn->pending_optimistic_data, payload, length);
   }
 
-  if (connection_edge_send_command(conn, RELAY_COMMAND_DATA,
+  int relay_command = crypto_rand_int_range(RELAY_COMMAND_DATA_DELAY_LOWEST, RELAY_COMMAND_DATA_DELAY_HIGHEST);
+  log_info(LD_GENERAL, "[RENDEZMIX] Sending data cell (cmd=%d)", relay_command);
+  if (connection_edge_send_command(conn, relay_command,
                                    payload, length) < 0 ) {
     /* circuit got marked for close, don't continue, don't need to mark conn */
     return 0;
