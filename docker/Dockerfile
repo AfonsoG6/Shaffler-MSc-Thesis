@@ -60,3 +60,4 @@ RUN make install
 COPY ./simulation /simulation
 
 WORKDIR /simulation
+RUN find . -type f -exec dos2unix {} \;
