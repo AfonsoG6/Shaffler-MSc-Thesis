@@ -2,7 +2,7 @@ version: "3.8"
 services:
   shadow:
     image: shadow
-    working_dir: /shadow/src/test/tor/minimal/
+    working_dir: /simulation
     entrypoint: /bin/bash
     build:
       context: .
