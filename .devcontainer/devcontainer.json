@@ -1,0 +1,11 @@
+{
+	"dockerComposeFile": "../docker/docker-compose.yml",
+	"service": "shadow",
+    // Your code path from the .devcontainer directory
+    "workspaceFolder": "/",
+    // Script to run to bootstrap the app when the space is created
+    // "postCreateCommand": "cd docker && docker-compose build shadow",
+    // Automatically start the app in subsequent sessions
+    "postStartCommand": "docker-compose run shadow",
+	"shutdownAction": "stopCompose"
+}
