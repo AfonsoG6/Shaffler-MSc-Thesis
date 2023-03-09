@@ -57,4 +57,6 @@ RUN ./configure --disable-asciidoc
 RUN make
 RUN make install
 
-WORKDIR /
+COPY ./simulation /simulation
+
+WORKDIR /simulation
