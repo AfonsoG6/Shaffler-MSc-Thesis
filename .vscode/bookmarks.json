@@ -31,7 +31,7 @@
 				{
 					"line": 2022,
 					"column": 54,
-					"label": ""
+					"label": "COMMAND RECEIVE"
 				},
 				{
 					"line": 2080,
@@ -39,9 +39,9 @@
 					"label": ""
 				},
 				{
-					"line": 2353,
+					"line": 2354,
 					"column": 111,
-					"label": ""
+					"label": "COMMAND SEND"
 				}
 			]
 		},

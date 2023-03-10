@@ -27,7 +27,7 @@ hosts:
       # See https://shadow.github.io/docs/guide/compatibility_notes.html#libopenblas
       environment: OPENBLAS_NUM_THREADS=1
       args: ../../../conf/tgen.server.graphml.xml
-      start_time: 1
+      start_time: 1 sec
   4uthority:
     network_node_id: 0
     ip_addr: 100.0.0.1
@@ -35,35 +35,35 @@ hosts:
     - path: tor
       args: --Address 4uthority --Nickname 4uthority
             --defaults-torrc torrc-defaults -f torrc
-      start_time: 1
+      start_time: 1 sec
   exit1:
     network_node_id: 0
     processes:
     - path: tor
       args: --Address exit1 --Nickname exit1
             --defaults-torrc torrc-defaults -f torrc
-      start_time: 60 # 1 sec
+      start_time: 1 min
   exit2:
     network_node_id: 0
     processes:
     - path: tor
       args: --Address exit2 --Nickname exit2
             --defaults-torrc torrc-defaults -f torrc
-      start_time: 60 # 1 sec
+      start_time: 1 min
   relay1:
     network_node_id: 0
     processes:
     - path: tor
       args: --Address relay1 --Nickname relay1
             --defaults-torrc torrc-defaults -f torrc
-      start_time: 60 # 1 sec
+      start_time: 1 min
   relay2:
     network_node_id: 0
     processes:
     - path: tor
       args: --Address relay2 --Nickname relay2
             --defaults-torrc torrc-defaults -f torrc
-      start_time: 60 # 1 sec
+      start_time: 1 min
   client:
     network_node_id: 0
     processes:
@@ -71,16 +71,16 @@ hosts:
       # See https://shadow.github.io/docs/guide/compatibility_notes.html#libopenblas
       environment: OPENBLAS_NUM_THREADS=1
       args: ../../../conf/tgen.client.graphml.xml
-      start_time: 600 # 10 sec
+      start_time: 5 min
   torclient:
     network_node_id: 0
     processes:
     - path: tor
       args: --Address torclient --Nickname torclient
             --defaults-torrc torrc-defaults -f torrc
-      start_time: 900 # 15 sec
+      start_time: 10 min
     - path: tgen
       # See https://shadow.github.io/docs/guide/compatibility_notes.html#libopenblas
       environment: OPENBLAS_NUM_THREADS=1
       args: ../../../conf/tgen.torclient.graphml.xml
-      start_time: 1500 # 25 sec
+      start_time: 20 min
