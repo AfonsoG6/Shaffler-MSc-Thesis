@@ -12,6 +12,8 @@
 #ifndef TOR_RELAY_H
 #define TOR_RELAY_H
 
+#define ALL_SENDERS_DECIDE_DELAYS false
+
 extern uint64_t stats_n_relay_cells_relayed;
 extern uint64_t stats_n_relay_cells_delivered;
 extern uint64_t stats_n_circ_max_cell_reached;
