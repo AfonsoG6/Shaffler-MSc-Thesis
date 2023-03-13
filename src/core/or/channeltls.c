@@ -34,6 +34,8 @@
  * Define this so channel.h gives us things only channel_t subclasses
  * should touch.
  */
+#include "core/or/circuitlist.h"
+#include "or_circuit_st.h"
 #define CHANNEL_OBJECT_PRIVATE
 
 #define CHANNELTLS_PRIVATE
@@ -1068,6 +1070,8 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
 {
   channel_tls_t *chan;
   int handshaking;
+  circuit_t *circ;
+  int direction;
 
   tor_assert(cell);
   tor_assert(conn);
@@ -1155,7 +1159,15 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
       channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
       break;
     default:
-      if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
+      circ = circuit_get_by_circid_channel(cell->circ_id, &(chan->base_));
+      if (!CIRCUIT_IS_ORIGIN(circ) &&
+          &(chan->base_) == TO_OR_CIRCUIT(circ)->p_chan &&
+          cell->circ_id == TO_OR_CIRCUIT(circ)->p_circ_id)
+        direction = CELL_DIRECTION_OUT;
+      else
+        direction = CELL_DIRECTION_IN;
+      if (direction == CELL_DIRECTION_OUT &&
+        cell->command >= CELL_RELAY_DELAY_LOWEST &&
           cell->command <= CELL_RELAY_DELAY_HIGHEST) {
         int res = 0;
         struct timespec ts = get_sleep_timespec_from_command(cell->command);
