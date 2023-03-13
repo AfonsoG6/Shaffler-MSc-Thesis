@@ -1166,16 +1166,17 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
         direction = CELL_DIRECTION_OUT;
       else
         direction = CELL_DIRECTION_IN;
-      if (direction == CELL_DIRECTION_OUT &&
-        cell->command >= CELL_RELAY_DELAY_LOWEST &&
+      if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
           cell->command <= CELL_RELAY_DELAY_HIGHEST) {
-        int res = 0;
-        struct timespec ts = get_sleep_timespec_from_command(cell->command);
-        log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,DELAY] (cmd=%d) (ns=%ld)", cell->command, ts.tv_nsec);
-        do {
-          res = nanosleep(&ts, &ts);
-        } while (res && errno == EINTR);
-        log_info(LD_GENERAL, "[RENDEZMIX,DELAYED] (cmd=%d) (ns=%ld)", cell->command, ts.tv_nsec);
+        if (direction == CELL_DIRECTION_OUT) {
+          int res = 0;
+          struct timespec ts = get_sleep_timespec_from_command(cell->command);
+          log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,DELAY] (cmd=%d) (ns=%ld)", cell->command, ts.tv_nsec);
+          do {
+            res = nanosleep(&ts, &ts);
+          } while (res && errno == EINTR);
+          log_info(LD_GENERAL, "[RENDEZMIX,DELAYED] (cmd=%d) (ns=%ld)", cell->command, ts.tv_nsec);
+        }
         channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
         break;
       }

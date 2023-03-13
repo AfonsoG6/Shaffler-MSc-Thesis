@@ -24,16 +24,6 @@
 					"label": ""
 				}
 			]
-		},
-		{
-			"path": "src/core/or/channeltls.c",
-			"bookmarks": [
-				{
-					"line": 1168,
-					"column": 61,
-					"label": ""
-				}
-			]
 		}
 	]
 }
