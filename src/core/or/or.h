@@ -213,9 +213,6 @@ struct curve25519_public_key_t;
 #define RELAY_COMMAND_XOFF 43
 #define RELAY_COMMAND_XON 44
 
-#define RELAY_COMMAND_DATA_DELAY_LOWEST 45
-#define RELAY_COMMAND_DATA_DELAY_HIGHEST 255
-
 /* Reasons why an OR connection is closed. */
 #define END_OR_CONN_REASON_DONE           1
 #define END_OR_CONN_REASON_REFUSED        2 /* connection refused */
@@ -430,7 +427,12 @@ typedef enum {
 #define CELL_AUTH_CHALLENGE 130
 #define CELL_AUTHENTICATE 131
 #define CELL_AUTHORIZE 132
-#define CELL_COMMAND_MAX_ 132
+
+#define CELL_RELAY_DELAY_LOWEST 13
+#define CELL_RELAY_DELAY_HIGHEST 127
+#define ALL_SENDERS_DECIDE_DELAYS true
+
+#define CELL_COMMAND_MAX_ 133
 
 /** How long to test reachability before complaining to the user. */
 #define TIMEOUT_UNTIL_UNREACHABILITY_COMPLAINT (20*60)

@@ -4,44 +4,9 @@
 			"path": "src/core/or/relay.c",
 			"bookmarks": [
 				{
-					"line": 223,
-					"column": 57,
-					"label": ""
-				},
-				{
-					"line": 367,
-					"column": 59,
-					"label": ""
-				},
-				{
-					"line": 617,
+					"line": 613,
 					"column": 0,
 					"label": ""
-				},
-				{
-					"line": 743,
-					"column": 57,
-					"label": ""
-				},
-				{
-					"line": 1623,
-					"column": 13,
-					"label": ""
-				},
-				{
-					"line": 2022,
-					"column": 54,
-					"label": "COMMAND RECEIVE"
-				},
-				{
-					"line": 2080,
-					"column": 13,
-					"label": ""
-				},
-				{
-					"line": 2354,
-					"column": 111,
-					"label": "COMMAND SEND"
 				}
 			]
 		},
@@ -54,48 +19,18 @@
 					"label": ""
 				},
 				{
-					"line": 412,
+					"line": 409,
 					"column": 63,
 					"label": ""
 				}
 			]
 		},
 		{
-			"path": "src/core/mainloop/connection.c",
+			"path": "src/core/or/channeltls.c",
 			"bookmarks": [
 				{
-					"line": 4739,
-					"column": 21,
-					"label": ""
-				}
-			]
-		},
-		{
-			"path": "src/core/or/command.c",
-			"bookmarks": [
-				{
-					"line": 226,
-					"column": 58,
-					"label": ""
-				}
-			]
-		},
-		{
-			"path": "src/core/or/channel.c",
-			"bookmarks": [
-				{
-					"line": 1975,
-					"column": 51,
-					"label": ""
-				}
-			]
-		},
-		{
-			"path": "src/core/crypto/relay_crypto.c",
-			"bookmarks": [
-				{
-					"line": 218,
-					"column": 41,
+					"line": 1157,
+					"column": 61,
 					"label": ""
 				}
 			]

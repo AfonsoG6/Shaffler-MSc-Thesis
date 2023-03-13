@@ -45,9 +45,6 @@
  * types of relay cells, launching requests or transmitting data as needed.
  **/
 
-#include "lib/log/log.h"
-#include "lib/time/compat_time.h"
-#include <time.h>
 #define RELAY_PRIVATE
 #include "core/or/or.h"
 #include "feature/client/addressmap.h"
@@ -177,7 +174,8 @@ circuit_update_channel_usage(circuit_t *circ, cell_t *cell)
       return;
 
     if (circ->n_chan->channel_usage == CHANNEL_USED_FOR_FULL_CIRCS &&
-        cell->command == CELL_RELAY) {
+        (cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST &&
+          cell->command <= CELL_RELAY_DELAY_HIGHEST))) {
       circ->n_chan->channel_usage = CHANNEL_USED_FOR_USER_TRAFFIC;
     }
   } else {
@@ -201,7 +199,8 @@ circuit_update_channel_usage(circuit_t *circ, cell_t *cell)
         if (or_circ->p_chan->channel_usage < CHANNEL_USED_FOR_FULL_CIRCS) {
           or_circ->p_chan->channel_usage = CHANNEL_USED_FOR_FULL_CIRCS;
         }
-      } else if (cell->command == CELL_RELAY) {
+      } else if (cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST &&
+          cell->command <= CELL_RELAY_DELAY_HIGHEST)) {
         or_circ->p_chan->channel_usage = CHANNEL_USED_FOR_USER_TRAFFIC;
       }
     }
@@ -538,9 +537,6 @@ relay_command_to_string(uint8_t command)
     case RELAY_COMMAND_PADDING_NEGOTIATE: return "PADDING_NEGOTIATE";
     case RELAY_COMMAND_PADDING_NEGOTIATED: return "PADDING_NEGOTIATED";
     default:
-      if (command >= RELAY_COMMAND_DATA_DELAY_LOWEST &&
-          command <= RELAY_COMMAND_DATA_DELAY_HIGHEST)
-        return "DATA_DELAY";
       tor_snprintf(buf, sizeof(buf), "Unrecognized relay command %u",
                    (unsigned)command);
       return buf;
@@ -630,6 +626,13 @@ relay_send_command_from_edge_,(streamid_t stream_id, circuit_t *circ,
 
   memset(&cell, 0, sizeof(cell_t));
   cell.command = CELL_RELAY;
+  if (ALL_SENDERS_DECIDE_DELAYS || cpath_layer != NULL) {
+    cell.command = crypto_rand_int_range(CELL_RELAY_DELAY_LOWEST, CELL_RELAY_DELAY_HIGHEST);
+    log_info(LD_GENERAL, "[RENDEZMIX,SEND,DELAY] (cmd=%d) {{%s}}", cell.command, payload);
+  }
+  else {
+    log_info(LD_GENERAL, "[RENDEZMIX,SEND,NORMAL] (cmd=%d) {{%s}}", cell.command, payload);
+  }
   if (CIRCUIT_IS_ORIGIN(circ)) {
     tor_assert(cpath_layer);
     cell.circ_id = circ->n_circ_id;
@@ -722,9 +725,7 @@ relay_send_command_from_edge_,(streamid_t stream_id, circuit_t *circ,
   /* If applicable, note the cell digest for the SENDME version 1 purpose if
    * we need to. This call needs to be after the circuit_package_relay_cell()
    * because the cell digest is set within that function. */
-  if (relay_command == RELAY_COMMAND_DATA ||
-      (relay_command >= RELAY_COMMAND_DATA_DELAY_LOWEST
-      && relay_command <= RELAY_COMMAND_DATA_DELAY_HIGHEST)) {
+  if (relay_command == RELAY_COMMAND_DATA) {
     sendme_record_cell_digest_on_circ(circ, cpath_layer);
   }
 
@@ -1670,6 +1671,87 @@ handle_relay_cell_command(cell_t *cell, circuit_t *circ,
         TO_OR_CIRCUIT(circ)->p_chan->dirreq_id = circ->dirreq_id;
       }
       return connection_exit_begin_conn(cell, circ);
+    case RELAY_COMMAND_DATA:
+      ++stats_n_data_cells_received;
+
+      /* Update our circuit-level deliver window that we received a DATA cell.
+       * If the deliver window goes below 0, we end the circuit and stream due
+       * to a protocol failure. */
+      if (sendme_circuit_data_received(circ, layer_hint) < 0) {
+        log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,
+               "(relay data) circ deliver_window below 0. Killing.");
+        connection_edge_end_close(conn, END_STREAM_REASON_TORPROTOCOL);
+        return -END_CIRC_REASON_TORPROTOCOL;
+      }
+
+      /* Consider sending a circuit-level SENDME cell. */
+      sendme_circuit_consider_sending(circ, layer_hint);
+
+      if (rh->stream_id == 0) {
+        log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL, "Relay data cell with zero "
+               "stream_id. Dropping.");
+        return 0;
+      } else if (!conn) {
+        if (CIRCUIT_IS_ORIGIN(circ)) {
+          origin_circuit_t *ocirc = TO_ORIGIN_CIRCUIT(circ);
+          if (connection_half_edge_is_valid_data(ocirc->half_streams,
+                                                 rh->stream_id)) {
+            circuit_read_valid_data(ocirc, rh->length);
+            log_info(domain,
+                     "data cell on circ %u valid on half-closed "
+                     "stream id %d", ocirc->global_identifier, rh->stream_id);
+          }
+        }
+
+        log_info(domain,"data cell dropped, unknown stream (streamid %d).",
+                 rh->stream_id);
+        return 0;
+      }
+
+      /* Update our stream-level deliver window that we just received a DATA
+       * cell. Going below 0 means we have a protocol level error so the
+       * stream and circuit are closed. */
+
+      if (sendme_stream_data_received(conn) < 0) {
+        log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,
+               "(relay data) conn deliver_window below 0. Killing.");
+        connection_edge_end_close(conn, END_STREAM_REASON_TORPROTOCOL);
+        return -END_CIRC_REASON_TORPROTOCOL;
+      }
+      /* Total all valid application bytes delivered */
+      if (CIRCUIT_IS_ORIGIN(circ) && rh->length > 0) {
+        circuit_read_valid_data(TO_ORIGIN_CIRCUIT(circ), rh->length);
+      }
+
+      /* For onion service connection, update the metrics. */
+      if (conn->hs_ident) {
+        hs_metrics_app_write_bytes(&conn->hs_ident->identity_pk,
+                                   conn->hs_ident->orig_virtual_port,
+                                   rh->length);
+      }
+
+      stats_n_data_bytes_received += rh->length;
+      connection_buf_add((char*)(cell->payload + RELAY_HEADER_SIZE),
+                              rh->length, TO_CONN(conn));
+
+#ifdef MEASUREMENTS_21206
+      /* Count number of RELAY_DATA cells received on a linked directory
+       * connection. */
+      connection_t *linked_conn = TO_CONN(conn)->linked_conn;
+
+      if (linked_conn && linked_conn->type == CONN_TYPE_DIR) {
+        ++(TO_DIR_CONN(linked_conn)->data_cells_received);
+      }
+#endif /* defined(MEASUREMENTS_21206) */
+
+      if (!optimistic_data) {
+        /* Only send a SENDME if we're not getting optimistic data; otherwise
+         * a SENDME could arrive before the CONNECTED.
+         */
+        sendme_connection_edge_consider_sending(conn);
+      }
+
+      return 0;
     case RELAY_COMMAND_XOFF:
       if (!conn) {
         if (CIRCUIT_IS_ORIGIN(circ)) {
@@ -1774,7 +1856,8 @@ handle_relay_cell_command(cell_t *cell, circuit_t *circ,
         static ratelim_t early_warning_limit =
           RATELIM_INIT(EARLY_WARNING_INTERVAL);
         char *m;
-        if (cell->command == CELL_RELAY) {
+        if (cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST &&
+          cell->command <= CELL_RELAY_DELAY_HIGHEST)) {
           ++total_nonearly;
           if ((m = rate_limit_log(&early_warning_limit, approx_time()))) {
             double percentage = ((double)total_nonearly)/total_n_extend;
@@ -1952,120 +2035,12 @@ handle_relay_cell_command(cell_t *cell, circuit_t *circ,
                               rh->command, rh->length,
                               cell->payload+RELAY_HEADER_SIZE);
       return 0;
-    case RELAY_COMMAND_DATA:
-    default:
-      if (rh->command != RELAY_COMMAND_DATA
-          && rh->command < RELAY_COMMAND_DATA_DELAY_LOWEST
-          && rh->command > RELAY_COMMAND_DATA_DELAY_HIGHEST)
-        break;
-
-      ++stats_n_data_cells_received;
-
-      /* Update our circuit-level deliver window that we received a DATA cell.
-       * If the deliver window goes below 0, we end the circuit and stream due
-       * to a protocol failure. */
-      if (sendme_circuit_data_received(circ, layer_hint) < 0) {
-        log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,
-               "(relay data) circ deliver_window below 0. Killing.");
-        connection_edge_end_close(conn, END_STREAM_REASON_TORPROTOCOL);
-        return -END_CIRC_REASON_TORPROTOCOL;
-      }
-
-      /* Consider sending a circuit-level SENDME cell. */
-      sendme_circuit_consider_sending(circ, layer_hint);
-
-      if (rh->stream_id == 0) {
-        log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,
-               "Relay data cell with zero "
-               "stream_id. Dropping.");
-        return 0;
-      } else if (!conn) {
-        if (CIRCUIT_IS_ORIGIN(circ)) {
-          origin_circuit_t *ocirc = TO_ORIGIN_CIRCUIT(circ);
-          if (connection_half_edge_is_valid_data(ocirc->half_streams,
-                                                 rh->stream_id)) {
-            circuit_read_valid_data(ocirc, rh->length);
-            log_info(domain,
-                     "data cell on circ %u valid on half-closed "
-                     "stream id %d",
-                     ocirc->global_identifier, rh->stream_id);
-          }
-        }
-
-        log_info(domain, "data cell dropped, unknown stream (streamid %d).",
-                 rh->stream_id);
-        return 0;
-      }
-
-      /* Update our stream-level deliver window that we just received a DATA
-       * cell. Going below 0 means we have a protocol level error so the
-       * stream and circuit are closed. */
-
-      if (sendme_stream_data_received(conn) < 0) {
-        log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,
-               "(relay data) conn deliver_window below 0. Killing.");
-        connection_edge_end_close(conn, END_STREAM_REASON_TORPROTOCOL);
-        return -END_CIRC_REASON_TORPROTOCOL;
-      }
-      /* Total all valid application bytes delivered */
-      if (CIRCUIT_IS_ORIGIN(circ) && rh->length > 0) {
-        circuit_read_valid_data(TO_ORIGIN_CIRCUIT(circ), rh->length);
-      }
-
-      /* For onion service connection, update the metrics. */
-      if (conn->hs_ident) {
-        hs_metrics_app_write_bytes(&conn->hs_ident->identity_pk,
-                                   conn->hs_ident->orig_virtual_port,
-                                   rh->length);
-      }
-
-      stats_n_data_bytes_received += rh->length;
-      if (ALL_SENDERS_DECIDE_DELAYS || (layer_hint == NULL && rh->command != RELAY_COMMAND_DATA)) {
-        int res = 0;
-        struct timespec ts = get_sleep_timespec_from_command(rh->command);
-        log_info(LD_GENERAL, "[RENDEZMIX,RECIEVED] (cmd=%d) (ns=%ld)", rh->command, ts.tv_nsec);
-        do {
-          res = nanosleep(&ts, &ts);
-        } while (res && errno == EINTR);
-        log_info(LD_GENERAL, "[RENDEZMIX,DELAYED] (cmd=%d) (ns=%ld)", rh->command, ts.tv_nsec);
-      }
-      connection_buf_add((char *)(cell->payload + RELAY_HEADER_SIZE),
-                         rh->length, TO_CONN(conn));
-
-#ifdef MEASUREMENTS_21206
-      /* Count number of RELAY_DATA cells received on a linked directory
-       * connection. */
-      connection_t *linked_conn = TO_CONN(conn)->linked_conn;
-
-      if (linked_conn && linked_conn->type == CONN_TYPE_DIR) {
-        ++(TO_DIR_CONN(linked_conn)->data_cells_received);
-      }
-#endif /* defined(MEASUREMENTS_21206) */
-
-      if (!optimistic_data) {
-        /* Only send a SENDME if we're not getting optimistic data; otherwise
-         * a SENDME could arrive before the CONNECTED.
-         */
-        sendme_connection_edge_consider_sending(conn);
-      }
-
-      return 0;
-    }
-    log_fn(
-        LOG_PROTOCOL_WARN, LD_PROTOCOL,
-        "Received unknown relay command %d. Perhaps the other side is using "
-        "a newer version of Tor? Dropping.",
-        rh->command);
-    return 0; /* for forward compatibility, don't kill the circuit */
-}
-
-struct timespec get_sleep_timespec_from_command(uint8_t command)
-{
-  int i = command - RELAY_COMMAND_DATA_DELAY_LOWEST;
-  if (command == RELAY_COMMAND_DATA)
-    return (struct timespec){0, 0};
-  else
-    return (struct timespec){0, i * 1000000};
+  }
+  log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,
+         "Received unknown relay command %d. Perhaps the other side is using "
+         "a newer version of Tor? Dropping.",
+         rh->command);
+  return 0; /* for forward compatibility, don't kill the circuit */
 }
 
 /** An incoming relay cell has arrived on circuit <b>circ</b>. If
@@ -2129,16 +2104,12 @@ connection_edge_process_relay_cell(cell_t *cell, circuit_t *circ,
     if (conn->base_.type == CONN_TYPE_EXIT &&
         (conn->base_.state == EXIT_CONN_STATE_CONNECTING ||
          conn->base_.state == EXIT_CONN_STATE_RESOLVING) &&
-        (rh.command == RELAY_COMMAND_DATA
-        || (rh.command >= RELAY_COMMAND_DATA_DELAY_LOWEST
-        && rh.command <= RELAY_COMMAND_DATA_DELAY_HIGHEST))) {
+        rh.command == RELAY_COMMAND_DATA) {
       /* Allow DATA cells to be delivered to an exit node in state
        * EXIT_CONN_STATE_CONNECTING or EXIT_CONN_STATE_RESOLVING.
        * This speeds up HTTP, for example. */
       optimistic_data = 1;
-    } else if (rh.stream_id == 0 && (rh.command == RELAY_COMMAND_DATA
-        || (rh.command >= RELAY_COMMAND_DATA_DELAY_LOWEST
-        && rh.command <= RELAY_COMMAND_DATA_DELAY_HIGHEST))) {
+    } else if (rh.stream_id == 0 && rh.command == RELAY_COMMAND_DATA) {
       log_warn(LD_BUG, "Somehow I had a connection that matched a "
                "data cell with stream ID 0.");
     } else {
@@ -2351,12 +2322,7 @@ connection_edge_package_raw_inbuf(edge_connection_t *conn, int package_partial,
     buf_add(entry_conn->pending_optimistic_data, payload, length);
   }
 
-  int relay_command = RELAY_COMMAND_DATA;
-  if (ALL_SENDERS_DECIDE_DELAYS || conn->cpath_layer != NULL) {
-    relay_command = crypto_rand_int_range(RELAY_COMMAND_DATA_DELAY_LOWEST, RELAY_COMMAND_DATA_DELAY_HIGHEST);
-    log_info(LD_GENERAL, "[RENDEZMIX,SEND] (cmd=%d) {{%s}}", relay_command, payload);
-  }
-  if (connection_edge_send_command(conn, relay_command,
+  if (connection_edge_send_command(conn, RELAY_COMMAND_DATA,
                                    payload, length) < 0 ) {
     /* circuit got marked for close, don't continue, don't need to mark conn */
     return 0;

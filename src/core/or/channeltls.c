@@ -1151,15 +1151,38 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
        * These are all transport independent and we pass them up through the
        * channel_t mechanism.  They are ultimately handled in command.c.
        */
+      if (cell->command == CELL_RELAY) log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,NORMAL] (cmd=%d)", cell->command);
       channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
       break;
     default:
+      if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
+          cell->command <= CELL_RELAY_DELAY_HIGHEST) {
+        int res = 0;
+        struct timespec ts = get_sleep_timespec_from_command(cell->command);
+        log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,DELAY] (cmd=%d) (ns=%ld)", cell->command, ts.tv_nsec);
+        do {
+          res = nanosleep(&ts, &ts);
+        } while (res && errno == EINTR);
+        log_info(LD_GENERAL, "[RENDEZMIX,DELAYED] (cmd=%d) (ns=%ld)", cell->command, ts.tv_nsec);
+        channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
+        break;
+      }
+
       log_fn(LOG_INFO, LD_PROTOCOL,
              "Cell of unknown type (%d) received in channeltls.c.  "
              "Dropping.",
              cell->command);
              break;
   }
+}
+
+struct timespec get_sleep_timespec_from_command(uint8_t command)
+{
+  int i = command - CELL_RELAY_DELAY_LOWEST;
+  if (command == CELL_RELAY)
+    return (struct timespec){0, 0};
+  else
+    return (struct timespec){0, i * 1000000};
 }
 
 /**
