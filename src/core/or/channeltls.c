@@ -1177,6 +1177,7 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
           } while (res && errno == EINTR);
           log_info(LD_GENERAL, "[RENDEZMIX,DELAYED] (cmd=%d) (ns=%ld)", cell->command, ts.tv_nsec);
         }
+        else log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,NORMAL] (cmd=%d)", cell->command);
         channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
         break;
       }
