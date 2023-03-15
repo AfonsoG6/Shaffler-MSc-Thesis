@@ -24,6 +24,61 @@
 					"label": ""
 				}
 			]
+		},
+		{
+			"path": "src/core/or/channeltls.c",
+			"bookmarks": [
+				{
+					"line": 1162,
+					"column": 61,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "src/app/config/resolve_addr.c",
+			"bookmarks": [
+				{
+					"line": 383,
+					"column": 15,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "src/feature/nodelist/dirlist.c",
+			"bookmarks": [
+				{
+					"line": 86,
+					"column": 42,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "src/feature/nodelist/nodelist.c",
+			"bookmarks": [
+				{
+					"line": 524,
+					"column": 18,
+					"label": ""
+				},
+				{
+					"line": 547,
+					"column": 20,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "src/core/or/connection_st.h",
+			"bookmarks": [
+				{
+					"line": 148,
+					"column": 18,
+					"label": "CONN->ADDR"
+				}
+			]
 		}
 	]
 }

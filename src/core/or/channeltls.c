@@ -1072,6 +1072,7 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
   int handshaking;
   circuit_t *circ;
   int direction;
+  char ip[64];
 
   tor_assert(cell);
   tor_assert(conn);
@@ -1155,7 +1156,8 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
        * These are all transport independent and we pass them up through the
        * channel_t mechanism.  They are ultimately handled in command.c.
        */
-      if (cell->command == CELL_RELAY) log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,NORMAL] (cmd=%d)", cell->command);
+      tor_inet_ntoa(&(conn->base_.addr.addr.in_addr), ip, 64);
+      if (cell->command == CELL_RELAY) log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,NORMAL] (cmd=%d) (addr=%s)", cell->command, ip);
       channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
       break;
     default:
@@ -1168,16 +1170,17 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
         direction = CELL_DIRECTION_IN;
       if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
           cell->command <= CELL_RELAY_DELAY_HIGHEST) {
+        tor_inet_ntoa(&(conn->base_.addr.addr.in_addr), ip, 64);
         if (direction == CELL_DIRECTION_OUT) {
           int res = 0;
           struct timespec ts = get_sleep_timespec_from_command(cell->command);
-          log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,DELAY] (cmd=%d) (ns=%ld)", cell->command, ts.tv_nsec);
+          log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,DELAY] (cmd=%d) (ns=%ld) (addr=%s)", cell->command, ts.tv_nsec, ip);
           do {
             res = nanosleep(&ts, &ts);
           } while (res && errno == EINTR);
-          log_info(LD_GENERAL, "[RENDEZMIX,DELAYED] (cmd=%d) (ns=%ld)", cell->command, ts.tv_nsec);
+          log_info(LD_GENERAL, "[RENDEZMIX,DELAYED] (cmd=%d) (ns=%ld) (addr=%s)", cell->command, ts.tv_nsec, ip);
         }
-        else log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,NORMAL] (cmd=%d)", cell->command);
+        else log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,NORMAL] (cmd=%d) (addr=%s)", cell->command, ip);
         channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
         break;
       }
