@@ -12,8 +12,6 @@
 #ifndef TOR_RELAY_H
 #define TOR_RELAY_H
 
-#define ALL_SENDERS_DECIDE_DELAYS false
-
 extern uint64_t stats_n_relay_cells_relayed;
 extern uint64_t stats_n_relay_cells_delivered;
 extern uint64_t stats_n_circ_max_cell_reached;
@@ -108,8 +106,6 @@ void circuit_clear_cell_queue(circuit_t *circ, channel_t *chan);
 
 circid_t packed_cell_get_circid(const packed_cell_t *cell, int wide_circ_ids);
 uint8_t packed_cell_get_command(const packed_cell_t *cell, int wide_circ_ids);
-
-struct timespec get_sleep_timespec_from_command(uint8_t command);
 
 #ifdef RELAY_PRIVATE
 STATIC int

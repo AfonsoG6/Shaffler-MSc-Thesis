@@ -106,7 +106,11 @@ cell_command_to_string(uint8_t command)
     case CELL_AUTH_CHALLENGE: return "auth_challenge";
     case CELL_AUTHENTICATE: return "authenticate";
     case CELL_AUTHORIZE: return "authorize";
-    default: return "unrecognized";
+    default:
+      if (command >= CELL_RELAY_DELAY_LOWEST &&
+          command <= CELL_RELAY_DELAY_HIGHEST)
+        return "relay";
+      return "unrecognized";
   }
 }
 
@@ -210,6 +214,12 @@ command_process_cell(channel_t *chan, cell_t *cell)
       PROCESS_CELL(destroy, cell, chan);
       break;
     default:
+      if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
+          cell->command <= CELL_RELAY_DELAY_HIGHEST) {
+        ++stats_n_relay_cells_processed;
+        PROCESS_CELL(relay, cell, chan);
+        break;
+      }
       log_fn(LOG_INFO, LD_PROTOCOL,
              "Cell of unknown or unexpected type (%d) received.  "
              "Dropping.",
