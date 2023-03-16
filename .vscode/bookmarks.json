@@ -29,8 +29,13 @@
 			"path": "src/core/or/channeltls.c",
 			"bookmarks": [
 				{
-					"line": 1162,
-					"column": 61,
+					"line": 846,
+					"column": 53,
+					"label": ""
+				},
+				{
+					"line": 1174,
+					"column": 30,
 					"label": ""
 				}
 			]

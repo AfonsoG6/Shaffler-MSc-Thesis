@@ -35,6 +35,7 @@
  * should touch.
  */
 #include "core/or/circuitlist.h"
+#include "feature/nodelist/nodelist.h"
 #include "or_circuit_st.h"
 #define CHANNEL_OBJECT_PRIVATE
 
@@ -1072,17 +1073,20 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
   int handshaking;
   circuit_t *circ;
   int direction;
-  char ip[64];
+  char prev_node_addr[64] = "NULL";
+  char next_node_addr[64] = "NULL";
+  channel_tls_t *n_chan;
+  connection_t *n_conn;
 
   tor_assert(cell);
   tor_assert(conn);
 
   chan = conn->chan;
 
- if (!chan) {
-   log_warn(LD_CHANNEL,
+  if (!chan) {
+    log_warn(LD_CHANNEL,
             "Got a cell_t on an OR connection with no channel");
-   return;
+    return;
   }
 
   handshaking = (TO_CONN(conn)->state != OR_CONN_STATE_OPEN);
@@ -1156,31 +1160,40 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
        * These are all transport independent and we pass them up through the
        * channel_t mechanism.  They are ultimately handled in command.c.
        */
-      tor_inet_ntoa(&(conn->base_.addr.addr.in_addr), ip, 64);
-      if (cell->command == CELL_RELAY) log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,NORMAL] (cmd=%d) (addr=%s)", cell->command, ip);
+      if (cell->command == CELL_RELAY) log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,NORMAL]");
       channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
       break;
     default:
       circ = circuit_get_by_circid_channel(cell->circ_id, &(chan->base_));
-      if (!CIRCUIT_IS_ORIGIN(circ) &&
-          &(chan->base_) == TO_OR_CIRCUIT(circ)->p_chan &&
-          cell->circ_id == TO_OR_CIRCUIT(circ)->p_circ_id)
+      if (!CIRCUIT_IS_ORIGIN(circ) && &(chan->base_) == TO_OR_CIRCUIT(circ)->p_chan && cell->circ_id == TO_OR_CIRCUIT(circ)->p_circ_id)
         direction = CELL_DIRECTION_OUT;
       else
         direction = CELL_DIRECTION_IN;
       if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
           cell->command <= CELL_RELAY_DELAY_HIGHEST) {
-        tor_inet_ntoa(&(conn->base_.addr.addr.in_addr), ip, 64);
-        if (direction == CELL_DIRECTION_OUT) {
-          int res = 0;
-          struct timespec ts = get_sleep_timespec_from_command(cell->command);
-          log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,DELAY] (cmd=%d) (ns=%ld) (addr=%s)", cell->command, ts.tv_nsec, ip);
-          do {
-            res = nanosleep(&ts, &ts);
-          } while (res && errno == EINTR);
-          log_info(LD_GENERAL, "[RENDEZMIX,DELAYED] (cmd=%d) (ns=%ld) (addr=%s)", cell->command, ts.tv_nsec, ip);
+        tor_inet_ntoa(&(conn->base_.addr.addr.in_addr), prev_node_addr, 64);
+        n_chan = BASE_CHAN_TO_TLS(circ->n_chan);
+        if (n_chan) {
+          n_conn = TO_CONN(n_chan->conn);
+          if (n_conn) tor_inet_ntoa(&(n_conn->addr.addr.in_addr), next_node_addr, 64);
         }
-        else log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,NORMAL] (cmd=%d) (addr=%s)", cell->command, ip);
+        if (direction == CELL_DIRECTION_OUT) {
+          log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,DELAY] (cmd=%d) (p_addr=%s) (n_addr=%s)", cell->command, prev_node_addr, next_node_addr);
+          if (probably_middle_node(conn, circ)) {
+            int res = 0;
+            struct timespec ts = get_sleep_timespec_from_command(cell->command);
+            do {
+              res = nanosleep(&ts, &ts);
+            } while (res && errno == EINTR);
+            log_info(LD_GENERAL, "[RENDEZMIX,DELAYED] (cmd=%d) (ns=%ld) (p_addr=%s) (n_addr=%s)", cell->command, ts.tv_nsec, prev_node_addr, next_node_addr);
+            cell->command = CELL_RELAY;
+          }
+        }
+        else {
+          // Reject Delay command and replace it with normal command
+          log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,NORMAL] (cmd=%d) (p_addr=%s) (n_addr=%s)", cell->command, prev_node_addr, next_node_addr);
+          cell->command = CELL_RELAY;
+        }
         channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
         break;
       }
@@ -1193,7 +1206,29 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
   }
 }
 
-struct timespec get_sleep_timespec_from_command(uint8_t command)
+int
+probably_middle_node(or_connection_t *conn, circuit_t *circ)
+{
+  channel_tls_t *n_chan;
+  connection_t *n_conn;
+  tor_addr_t prev_node_addr, next_node_addr;
+
+  n_chan = BASE_CHAN_TO_TLS(circ->n_chan);
+  if (!n_chan) return false; // Is Exit node
+
+
+  n_conn = &(n_chan->conn->base_);
+  if (!n_conn) return false; // Is Exit node
+
+  prev_node_addr = conn->base_.addr;
+  next_node_addr = n_conn->addr;
+
+  // We're probably a middle node if the previous and next nodes are in the nodelist
+  return nodelist_probably_contains_address(&prev_node_addr) && nodelist_probably_contains_address(&next_node_addr);
+}
+
+struct timespec
+get_sleep_timespec_from_command(uint8_t command)
 {
   int i = command - CELL_RELAY_DELAY_LOWEST;
   if (command == CELL_RELAY)

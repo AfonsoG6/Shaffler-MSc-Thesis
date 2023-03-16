@@ -61,6 +61,7 @@ void channel_tls_update_marks(or_connection_t *conn);
 /* Cleanup at shutdown */
 void channel_tls_free_all(void);
 
+int probably_middle_node(or_connection_t *conn, circuit_t *circ);
 struct timespec get_sleep_timespec_from_command(uint8_t command);
 
 extern uint64_t stats_n_authorize_cells_processed;
