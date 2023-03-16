@@ -22,6 +22,7 @@ network:
 hosts:
   fileserver:
     network_node_id: 0
+    ip_addr: 11.0.0.200
     processes:
     - path: tgen
       # See https://shadow.github.io/docs/guide/compatibility_notes.html#libopenblas
@@ -38,6 +39,7 @@ hosts:
       start_time: 1 sec
   exit1:
     network_node_id: 0
+    ip_addr: 11.0.0.21
     processes:
     - path: tor
       args: --Address exit1 --Nickname exit1
@@ -45,6 +47,7 @@ hosts:
       start_time: 1 min
   exit2:
     network_node_id: 0
+    ip_addr: 11.0.0.22
     processes:
     - path: tor
       args: --Address exit2 --Nickname exit2
@@ -52,6 +55,7 @@ hosts:
       start_time: 1 min
   relay1:
     network_node_id: 0
+    ip_addr: 11.0.0.11
     processes:
     - path: tor
       args: --Address relay1 --Nickname relay1
@@ -59,6 +63,7 @@ hosts:
       start_time: 1 min
   relay2:
     network_node_id: 0
+    ip_addr: 11.0.0.12
     processes:
     - path: tor
       args: --Address relay2 --Nickname relay2
@@ -66,6 +71,7 @@ hosts:
       start_time: 1 min
   client:
     network_node_id: 0
+    ip_addr: 11.0.0.101
     processes:
     - path: tgen
       # See https://shadow.github.io/docs/guide/compatibility_notes.html#libopenblas
@@ -74,6 +80,7 @@ hosts:
       start_time: 5 min
   torclient:
     network_node_id: 0
+    ip_addr: 11.0.0.100
     processes:
     - path: tor
       args: --Address torclient --Nickname torclient

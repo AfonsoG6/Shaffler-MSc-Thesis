@@ -4,44 +4,9 @@
 			"path": "src/core/or/relay.c",
 			"bookmarks": [
 				{
-					"line": 223,
-					"column": 57,
-					"label": ""
-				},
-				{
-					"line": 367,
-					"column": 59,
-					"label": ""
-				},
-				{
-					"line": 617,
+					"line": 613,
 					"column": 0,
 					"label": ""
-				},
-				{
-					"line": 743,
-					"column": 57,
-					"label": ""
-				},
-				{
-					"line": 1623,
-					"column": 13,
-					"label": ""
-				},
-				{
-					"line": 2022,
-					"column": 54,
-					"label": "COMMAND RECEIVE"
-				},
-				{
-					"line": 2080,
-					"column": 13,
-					"label": ""
-				},
-				{
-					"line": 2354,
-					"column": 111,
-					"label": "COMMAND SEND"
 				}
 			]
 		},
@@ -54,49 +19,69 @@
 					"label": ""
 				},
 				{
-					"line": 412,
+					"line": 409,
 					"column": 63,
 					"label": ""
 				}
 			]
 		},
 		{
-			"path": "src/core/mainloop/connection.c",
+			"path": "src/core/or/channeltls.c",
 			"bookmarks": [
 				{
-					"line": 4739,
-					"column": 21,
+					"line": 846,
+					"column": 53,
+					"label": ""
+				},
+				{
+					"line": 1174,
+					"column": 30,
 					"label": ""
 				}
 			]
 		},
 		{
-			"path": "src/core/or/command.c",
+			"path": "src/app/config/resolve_addr.c",
 			"bookmarks": [
 				{
-					"line": 226,
-					"column": 58,
+					"line": 383,
+					"column": 15,
 					"label": ""
 				}
 			]
 		},
 		{
-			"path": "src/core/or/channel.c",
+			"path": "src/feature/nodelist/dirlist.c",
 			"bookmarks": [
 				{
-					"line": 1975,
-					"column": 51,
+					"line": 86,
+					"column": 42,
 					"label": ""
 				}
 			]
 		},
 		{
-			"path": "src/core/crypto/relay_crypto.c",
+			"path": "src/feature/nodelist/nodelist.c",
 			"bookmarks": [
 				{
-					"line": 218,
-					"column": 41,
+					"line": 524,
+					"column": 18,
 					"label": ""
+				},
+				{
+					"line": 547,
+					"column": 20,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "src/core/or/connection_st.h",
+			"bookmarks": [
+				{
+					"line": 148,
+					"column": 18,
+					"label": "CONN->ADDR"
 				}
 			]
 		}

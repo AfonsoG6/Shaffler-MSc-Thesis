@@ -48,8 +48,8 @@ RUN chmod 600 /root/.ssh/*
 ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
 RUN git clone git@github.com:AfonsoG6/rendezmix.git
 
-
 WORKDIR /rendezmix
+RUN git checkout cellcmd
 RUN chmod 777 -R .
 
 RUN ./autogen.sh
