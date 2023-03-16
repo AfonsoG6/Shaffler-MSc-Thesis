@@ -27,10 +27,10 @@ struct curve25519_public_key_t;
 #ifdef CHANNEL_OBJECT_PRIVATE
 
 struct channel_tls_t {
-  /* Base channel_t struct */
-  channel_t base_;
-  /* or_connection_t pointer */
-  or_connection_t *conn;
+    /* Base channel_t struct */
+    channel_t base_;
+    /* or_connection_t pointer */
+    or_connection_t *conn;
 };
 
 #endif /* defined(CHANNEL_OBJECT_PRIVATE) */
@@ -52,8 +52,8 @@ const channel_tls_t * channel_tls_from_base_const(const channel_t *chan);
 /* Things for connection_or.c to call back into */
 void channel_tls_handle_cell(cell_t *cell, or_connection_t *conn);
 void channel_tls_handle_state_change_on_orconn(channel_tls_t *chan,
-                                               or_connection_t *conn,
-                                               uint8_t state);
+        or_connection_t *conn,
+        uint8_t state);
 void channel_tls_handle_var_cell(var_cell_t *var_cell,
                                  or_connection_t *conn);
 void channel_tls_update_marks(or_connection_t *conn);
@@ -74,12 +74,12 @@ extern uint64_t stats_n_auth_challenge_cells_processed;
 
 #ifdef CHANNELTLS_PRIVATE
 STATIC void channel_tls_process_certs_cell(var_cell_t *cell,
-                                           channel_tls_t *tlschan);
+        channel_tls_t *tlschan);
 STATIC void channel_tls_process_auth_challenge_cell(var_cell_t *cell,
-                                                    channel_tls_t *tlschan);
+        channel_tls_t *tlschan);
 STATIC void channel_tls_common_init(channel_tls_t *tlschan);
 STATIC void channel_tls_process_authenticate_cell(var_cell_t *cell,
-                                                  channel_tls_t *tlschan);
+        channel_tls_t *tlschan);
 #endif /* defined(CHANNELTLS_PRIVATE) */
 
 #endif /* !defined(TOR_CHANNELTLS_H) */

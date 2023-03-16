@@ -20,7 +20,7 @@ const char *relay_command_to_string(uint8_t command);
 
 void relay_consensus_has_changed(const networkstatus_t *ns);
 uint32_t relay_get_param_max_circuit_cell_queue_size(
-                                     const networkstatus_t *ns);
+    const networkstatus_t *ns);
 int circuit_receive_relay_cell(cell_t *cell, circuit_t *circ,
                                cell_direction_t cell_direction);
 size_t cell_queues_get_total_allocation(void);
@@ -28,10 +28,10 @@ size_t cell_queues_get_total_allocation(void);
 void relay_header_pack(uint8_t *dest, const relay_header_t *src);
 void relay_header_unpack(relay_header_t *dest, const uint8_t *src);
 MOCK_DECL(int,
-relay_send_command_from_edge_,(streamid_t stream_id, circuit_t *circ,
-                               uint8_t relay_command, const char *payload,
-                               size_t payload_len, crypt_path_t *cpath_layer,
-                               const char *filename, int lineno));
+          relay_send_command_from_edge_,(streamid_t stream_id, circuit_t *circ,
+                  uint8_t relay_command, const char *payload,
+                  size_t payload_len, crypt_path_t *cpath_layer,
+                  const char *filename, int lineno));
 /* Indicates to relay_send_command_from_edge() that it is a control cell. */
 #define CONTROL_CELL_ID 0
 #define relay_send_command_from_edge(stream_id, circ, relay_command, payload, \
@@ -89,9 +89,9 @@ void channel_unlink_all_circuits(channel_t *chan, smartlist_t *detached_out);
 MOCK_DECL(int, channel_flush_from_first_active_circuit,
           (channel_t *chan, int max));
 MOCK_DECL(int, circuit_package_relay_cell, (cell_t *cell, circuit_t *circ,
-                           cell_direction_t cell_direction,
-                           crypt_path_t *layer_hint, streamid_t on_stream,
-                           const char *filename, int lineno));
+          cell_direction_t cell_direction,
+          crypt_path_t *layer_hint, streamid_t on_stream,
+          const char *filename, int lineno));
 
 void update_circuit_on_cmux_(circuit_t *circ, cell_direction_t direction,
                              const char *file, int lineno);
@@ -100,8 +100,8 @@ void update_circuit_on_cmux_(circuit_t *circ, cell_direction_t direction,
 
 int append_address_to_payload(uint8_t *payload_out, const tor_addr_t *addr);
 const uint8_t *decode_address_from_payload(tor_addr_t *addr_out,
-                                        const uint8_t *payload,
-                                        int payload_len);
+        const uint8_t *payload,
+        int payload_len);
 void circuit_clear_cell_queue(circuit_t *circ, channel_t *chan);
 
 circid_t packed_cell_get_circid(const packed_cell_t *cell, int wide_circ_ids);
@@ -110,16 +110,16 @@ uint8_t packed_cell_get_command(const packed_cell_t *cell, int wide_circ_ids);
 #ifdef RELAY_PRIVATE
 STATIC int
 handle_relay_cell_command(cell_t *cell, circuit_t *circ,
-                     edge_connection_t *conn, crypt_path_t *layer_hint,
-                     relay_header_t *rh, int optimistic_data);
+                          edge_connection_t *conn, crypt_path_t *layer_hint,
+                          relay_header_t *rh, int optimistic_data);
 
 STATIC int connected_cell_parse(const relay_header_t *rh, const cell_t *cell,
-                         tor_addr_t *addr_out, int *ttl_out);
+                                tor_addr_t *addr_out, int *ttl_out);
 /** An address-and-ttl tuple as yielded by resolved_cell_parse */
 typedef struct address_ttl_t {
-  tor_addr_t addr;
-  char *hostname;
-  int ttl;
+    tor_addr_t addr;
+    char *hostname;
+    int ttl;
 } address_ttl_t;
 STATIC void address_ttl_free_(address_ttl_t *addr);
 #define address_ttl_free(addr) \
@@ -127,19 +127,19 @@ STATIC void address_ttl_free_(address_ttl_t *addr);
 STATIC int resolved_cell_parse(const cell_t *cell, const relay_header_t *rh,
                                smartlist_t *addresses_out, int *errcode_out);
 STATIC int connection_edge_process_resolved_cell(edge_connection_t *conn,
-                                                 const cell_t *cell,
-                                                 const relay_header_t *rh);
+        const cell_t *cell,
+        const relay_header_t *rh);
 STATIC packed_cell_t *packed_cell_new(void);
 STATIC packed_cell_t *cell_queue_pop(cell_queue_t *queue);
 STATIC destroy_cell_t *destroy_cell_queue_pop(destroy_cell_queue_t *queue);
 STATIC int cell_queues_check_size(void);
 STATIC int connection_edge_process_relay_cell(cell_t *cell, circuit_t *circ,
-                                   edge_connection_t *conn,
-                                   crypt_path_t *layer_hint);
+        edge_connection_t *conn,
+        crypt_path_t *layer_hint);
 STATIC size_t get_pad_cell_offset(size_t payload_len);
 STATIC size_t connection_edge_get_inbuf_bytes_to_package(size_t n_available,
-                                                      int package_partial,
-                                                      circuit_t *on_circuit);
+        int package_partial,
+        circuit_t *on_circuit);
 
 #endif /* defined(RELAY_PRIVATE) */
 

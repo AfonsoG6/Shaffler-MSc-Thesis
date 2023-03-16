@@ -345,8 +345,8 @@ struct curve25519_public_key_t;
 
 /** Client authorization type that a hidden service performs. */
 typedef enum rend_auth_type_t {
-  REND_NO_AUTH      = 0,
-  REND_V3_AUTH      = 1, /* Dummy flag to allow adding v3 services on the
+    REND_NO_AUTH      = 0,
+    REND_V3_AUTH      = 1, /* Dummy flag to allow adding v3 services on the
                           * control port */
 } rend_auth_type_t;
 
@@ -364,8 +364,8 @@ typedef struct hsdir_index_t hsdir_index_t;
 
 /** Used to indicate which way a cell is going on a circuit. */
 typedef enum {
-  CELL_DIRECTION_IN=1, /**< The cell is moving towards the origin. */
-  CELL_DIRECTION_OUT=2, /**< The cell is moving away from the origin. */
+    CELL_DIRECTION_IN=1, /**< The cell is moving towards the origin. */
+    CELL_DIRECTION_OUT=2, /**< The cell is moving away from the origin. */
 } cell_direction_t;
 
 /**
@@ -376,8 +376,8 @@ typedef enum {
  * for channel delivery are disassociated from the channel.
  */
 typedef enum {
-  CIRCUIT_N_CHAN = 0,
-  CIRCUIT_P_CHAN = 1
+    CIRCUIT_N_CHAN = 0,
+    CIRCUIT_P_CHAN = 1
 } circuit_channel_direction_t;
 
 /** Initial value for both sides of a circuit transmission window when the
@@ -469,18 +469,18 @@ typedef enum {
 static int get_cell_network_size(int wide_circ_ids);
 static inline int get_cell_network_size(int wide_circ_ids)
 {
-  return wide_circ_ids ? CELL_MAX_NETWORK_SIZE : CELL_MAX_NETWORK_SIZE - 2;
+    return wide_circ_ids ? CELL_MAX_NETWORK_SIZE : CELL_MAX_NETWORK_SIZE - 2;
 }
 static int get_var_cell_header_size(int wide_circ_ids);
 static inline int get_var_cell_header_size(int wide_circ_ids)
 {
-  return wide_circ_ids ? VAR_CELL_MAX_HEADER_SIZE :
-    VAR_CELL_MAX_HEADER_SIZE - 2;
+    return wide_circ_ids ? VAR_CELL_MAX_HEADER_SIZE :
+           VAR_CELL_MAX_HEADER_SIZE - 2;
 }
 static int get_circ_id_size(int wide_circ_ids);
 static inline int get_circ_id_size(int wide_circ_ids)
 {
-  return wide_circ_ids ? 4 : 2;
+    return wide_circ_ids ? 4 : 2;
 }
 
 /** Number of bytes in a relay cell's header (not including general cell
@@ -520,11 +520,11 @@ typedef struct ext_or_cmd_t ext_or_cmd_t;
 
 /** Beginning of a RELAY cell payload. */
 typedef struct {
-  uint8_t command; /**< The end-to-end relay command. */
-  uint16_t recognized; /**< Used to tell whether cell is for us. */
-  streamid_t stream_id; /**< Which stream is this cell associated with? */
-  char integrity[4]; /**< Used to tell whether cell is corrupted. */
-  uint16_t length; /**< How long is the payload body? */
+    uint8_t command; /**< The end-to-end relay command. */
+    uint16_t recognized; /**< Used to tell whether cell is for us. */
+    streamid_t stream_id; /**< Which stream is this cell associated with? */
+    char integrity[4]; /**< Used to tell whether cell is corrupted. */
+    uint16_t length; /**< How long is the payload body? */
 } relay_header_t;
 
 typedef struct socks_request_t socks_request_t;
@@ -617,29 +617,29 @@ typedef struct cached_dir_t cached_dir_t;
 /** Enum used to remember where a signed_descriptor_t is stored and how to
  * manage the memory for signed_descriptor_body.  */
 typedef enum {
-  /** The descriptor isn't stored on disk at all: the copy in memory is
-   * canonical; the saved_offset field is meaningless. */
-  SAVED_NOWHERE=0,
-  /** The descriptor is stored in the cached_routers file: the
-   * signed_descriptor_body is meaningless; the signed_descriptor_len and
-   * saved_offset are used to index into the mmaped cache file. */
-  SAVED_IN_CACHE,
-  /** The descriptor is stored in the cached_routers.new file: the
-   * signed_descriptor_body and saved_offset fields are both set. */
-  /* FFFF (We could also mmap the file and grow the mmap as needed, or
-   * lazy-load the descriptor text by using seek and read.  We don't, for
-   * now.)
-   */
-  SAVED_IN_JOURNAL
+    /** The descriptor isn't stored on disk at all: the copy in memory is
+     * canonical; the saved_offset field is meaningless. */
+    SAVED_NOWHERE=0,
+    /** The descriptor is stored in the cached_routers file: the
+     * signed_descriptor_body is meaningless; the signed_descriptor_len and
+     * saved_offset are used to index into the mmaped cache file. */
+    SAVED_IN_CACHE,
+    /** The descriptor is stored in the cached_routers.new file: the
+     * signed_descriptor_body and saved_offset fields are both set. */
+    /* FFFF (We could also mmap the file and grow the mmap as needed, or
+     * lazy-load the descriptor text by using seek and read.  We don't, for
+     * now.)
+     */
+    SAVED_IN_JOURNAL
 } saved_location_t;
 #define saved_location_bitfield_t ENUM_BF(saved_location_t)
 
 /** Enumeration: what directory object is being downloaded?
  * This determines which schedule is selected to perform the download. */
 typedef enum {
-  DL_SCHED_GENERIC = 0,
-  DL_SCHED_CONSENSUS = 1,
-  DL_SCHED_BRIDGE = 2,
+    DL_SCHED_GENERIC = 0,
+    DL_SCHED_CONSENSUS = 1,
+    DL_SCHED_BRIDGE = 2,
 } download_schedule_t;
 #define download_schedule_bitfield_t ENUM_BF(download_schedule_t)
 
@@ -649,8 +649,8 @@ typedef enum {
  * are no fallbacks).
  * When we have a valid consensus, "any" means any directory server. */
 typedef enum {
-  DL_WANT_ANY_DIRSERVER = 0,
-  DL_WANT_AUTHORITY = 1,
+    DL_WANT_ANY_DIRSERVER = 0,
+    DL_WANT_AUTHORITY = 1,
 } download_want_authority_t;
 #define download_want_authority_bitfield_t \
                                         ENUM_BF(download_want_authority_t)
@@ -659,8 +659,8 @@ typedef enum {
  * connection is attempted (these attempts can be concurrent), or do we want
  * to increment the schedule position after a connection fails? */
 typedef enum {
-  DL_SCHED_INCREMENT_FAILURE = 0,
-  DL_SCHED_INCREMENT_ATTEMPT = 1,
+    DL_SCHED_INCREMENT_FAILURE = 0,
+    DL_SCHED_INCREMENT_ATTEMPT = 1,
 } download_schedule_increment_t;
 #define download_schedule_increment_bitfield_t \
                                         ENUM_BF(download_schedule_increment_t)
@@ -680,62 +680,62 @@ typedef struct signed_descriptor_t signed_descriptor_t;
 /** Flags used to summarize the declared protocol versions of a relay,
  * so we don't need to parse them again and again. */
 typedef struct protover_summary_flags_t {
-  /** True iff we have a proto line for this router, or a versions line
-   * from which we could infer the protocols. */
-  unsigned int protocols_known:1;
+    /** True iff we have a proto line for this router, or a versions line
+     * from which we could infer the protocols. */
+    unsigned int protocols_known:1;
 
-  /** True iff this router has a version or protocol list that allows it to
-   * accept EXTEND2 cells. This requires Relay=2. */
-  unsigned int supports_extend2_cells:1;
+    /** True iff this router has a version or protocol list that allows it to
+     * accept EXTEND2 cells. This requires Relay=2. */
+    unsigned int supports_extend2_cells:1;
 
-  /** True iff this router has a version or protocol list that allows it to
-   * accept IPv6 connections. This requires Relay=2 or Relay=3. */
-  unsigned int supports_accepting_ipv6_extends:1;
+    /** True iff this router has a version or protocol list that allows it to
+     * accept IPv6 connections. This requires Relay=2 or Relay=3. */
+    unsigned int supports_accepting_ipv6_extends:1;
 
-  /** True iff this router has a version or protocol list that allows it to
-   * initiate IPv6 connections. This requires Relay=3. */
-  unsigned int supports_initiating_ipv6_extends:1;
+    /** True iff this router has a version or protocol list that allows it to
+     * initiate IPv6 connections. This requires Relay=3. */
+    unsigned int supports_initiating_ipv6_extends:1;
 
-  /** True iff this router has a version or protocol list that allows it to
-   * consider IPv6 connections canonical. This requires Relay=3. */
-  unsigned int supports_canonical_ipv6_conns:1;
+    /** True iff this router has a version or protocol list that allows it to
+     * consider IPv6 connections canonical. This requires Relay=3. */
+    unsigned int supports_canonical_ipv6_conns:1;
 
-  /** True iff this router has a protocol list that allows it to negotiate
-   * ed25519 identity keys on a link handshake with us. This
-   * requires LinkAuth=3. */
-  unsigned int supports_ed25519_link_handshake_compat:1;
+    /** True iff this router has a protocol list that allows it to negotiate
+     * ed25519 identity keys on a link handshake with us. This
+     * requires LinkAuth=3. */
+    unsigned int supports_ed25519_link_handshake_compat:1;
 
-  /** True iff this router has a protocol list that allows it to negotiate
-   * ed25519 identity keys on a link handshake, at all. This requires some
-   * LinkAuth=X for X >= 3. */
-  unsigned int supports_ed25519_link_handshake_any:1;
+    /** True iff this router has a protocol list that allows it to negotiate
+     * ed25519 identity keys on a link handshake, at all. This requires some
+     * LinkAuth=X for X >= 3. */
+    unsigned int supports_ed25519_link_handshake_any:1;
 
-  /** True iff this router has a protocol list that allows it to be an
-   * introduction point supporting ed25519 authentication key which is part of
-   * the v3 protocol detailed in proposal 224. This requires HSIntro=4. */
-  unsigned int supports_ed25519_hs_intro : 1;
+    /** True iff this router has a protocol list that allows it to be an
+     * introduction point supporting ed25519 authentication key which is part of
+     * the v3 protocol detailed in proposal 224. This requires HSIntro=4. */
+    unsigned int supports_ed25519_hs_intro : 1;
 
-  /** True iff this router has a protocol list that allows it to support the
-   * ESTABLISH_INTRO DoS cell extension. Requires HSIntro=5. */
-  unsigned int supports_establish_intro_dos_extension : 1;
+    /** True iff this router has a protocol list that allows it to support the
+     * ESTABLISH_INTRO DoS cell extension. Requires HSIntro=5. */
+    unsigned int supports_establish_intro_dos_extension : 1;
 
-  /** True iff this router has a protocol list that allows it to be an hidden
-   * service directory supporting version 3 as seen in proposal 224. This
-   * requires HSDir=2. */
-  unsigned int supports_v3_hsdir : 1;
+    /** True iff this router has a protocol list that allows it to be an hidden
+     * service directory supporting version 3 as seen in proposal 224. This
+     * requires HSDir=2. */
+    unsigned int supports_v3_hsdir : 1;
 
-  /** True iff this router has a protocol list that allows it to be an hidden
-   * service rendezvous point supporting version 3 as seen in proposal 224.
-   * This requires HSRend=2. */
-  unsigned int supports_v3_rendezvous_point: 1;
+    /** True iff this router has a protocol list that allows it to be an hidden
+     * service rendezvous point supporting version 3 as seen in proposal 224.
+     * This requires HSRend=2. */
+    unsigned int supports_v3_rendezvous_point: 1;
 
-  /** True iff this router has a protocol list that allows clients to
-   * negotiate hs circuit setup padding. Requires Padding=2. */
-  unsigned int supports_hs_setup_padding : 1;
+    /** True iff this router has a protocol list that allows clients to
+     * negotiate hs circuit setup padding. Requires Padding=2. */
+    unsigned int supports_hs_setup_padding : 1;
 
-  /** True iff this router supports congestion control.
-   * Requires both FlowCtrl=2 *and* Relay=4 */
-  unsigned int supports_congestion_control : 1;
+    /** True iff this router supports congestion control.
+     * Requires both FlowCtrl=2 *and* Relay=4 */
+    unsigned int supports_congestion_control : 1;
 } protover_summary_flags_t;
 
 typedef struct routerinfo_t routerinfo_t;
@@ -754,8 +754,8 @@ typedef struct networkstatus_sr_info_t networkstatus_sr_info_t;
  * flavors of a consensus are generated from the same set of votes, but they
  * present different types information to different versions of Tor. */
 typedef enum {
-  FLAV_NS = 0,
-  FLAV_MICRODESC = 1,
+    FLAV_NS = 0,
+    FLAV_MICRODESC = 1,
 } consensus_flavor_t;
 
 /** How many different consensus flavors are there? */
@@ -778,15 +778,15 @@ typedef struct authority_cert_t authority_cert_t;
  * and so long as every cache that caches one of them caches all of them.
  */
 typedef enum {
-  NO_DIRINFO      = 0,
-  /** Serves/signs v3 directory information: votes, consensuses, certs */
-  V3_DIRINFO      = 1 << 2,
-  /** Serves bridge descriptors. */
-  BRIDGE_DIRINFO  = 1 << 4,
-  /** Serves extrainfo documents. */
-  EXTRAINFO_DIRINFO=1 << 5,
-  /** Serves microdescriptors. */
-  MICRODESC_DIRINFO=1 << 6,
+    NO_DIRINFO      = 0,
+    /** Serves/signs v3 directory information: votes, consensuses, certs */
+    V3_DIRINFO      = 1 << 2,
+    /** Serves bridge descriptors. */
+    BRIDGE_DIRINFO  = 1 << 4,
+    /** Serves extrainfo documents. */
+    EXTRAINFO_DIRINFO=1 << 5,
+    /** Serves microdescriptors. */
+    MICRODESC_DIRINFO=1 << 6,
 } dirinfo_type_t;
 
 #define ALL_DIRINFO ((dirinfo_type_t)((1<<7)-1))
@@ -811,14 +811,14 @@ struct create_cell_t;
 /** Entry in the cell stats list of a circuit; used only if CELL_STATS
  * events are enabled. */
 typedef struct testing_cell_stats_entry_t {
-  uint8_t command; /**< cell command number. */
-  /** Waiting time in centiseconds if this event is for a removed cell,
-   * or 0 if this event is for adding a cell to the queue.  22 bits can
-   * store more than 11 hours, enough to assume that a circuit with this
-   * delay would long have been closed. */
-  unsigned int waiting_time:22;
-  unsigned int removed:1; /**< 0 for added to, 1 for removed from queue. */
-  unsigned int exitward:1; /**< 0 for app-ward, 1 for exit-ward. */
+    uint8_t command; /**< cell command number. */
+    /** Waiting time in centiseconds if this event is for a removed cell,
+     * or 0 if this event is for adding a cell to the queue.  22 bits can
+     * store more than 11 hours, enough to assume that a circuit with this
+     * delay would long have been closed. */
+    unsigned int waiting_time:22;
+    unsigned int removed:1; /**< 0 for added to, 1 for removed from queue. */
+    unsigned int exitward:1; /**< 0 for app-ward, 1 for exit-ward. */
 } testing_cell_stats_entry_t;
 
 typedef struct circuit_t circuit_t;
@@ -909,25 +909,25 @@ typedef struct circuit_build_times_t circuit_build_times_t;
 
 /** Enumerates possible origins of a client-side address mapping. */
 typedef enum {
-  /** We're remapping this address because the controller told us to. */
-  ADDRMAPSRC_CONTROLLER,
-  /** We're remapping this address because of an AutomapHostsOnResolve
-   * configuration. */
-  ADDRMAPSRC_AUTOMAP,
-  /** We're remapping this address because our configuration (via torrc, the
-   * command line, or a SETCONF command) told us to. */
-  ADDRMAPSRC_TORRC,
-  /** We're remapping this address because we have TrackHostExit configured,
-   * and we want to remember to use the same exit next time. */
-  ADDRMAPSRC_TRACKEXIT,
-  /** We're remapping this address because we got a DNS resolution from a
-   * Tor server that told us what its value was. */
-  ADDRMAPSRC_DNS,
+    /** We're remapping this address because the controller told us to. */
+    ADDRMAPSRC_CONTROLLER,
+    /** We're remapping this address because of an AutomapHostsOnResolve
+     * configuration. */
+    ADDRMAPSRC_AUTOMAP,
+    /** We're remapping this address because our configuration (via torrc, the
+     * command line, or a SETCONF command) told us to. */
+    ADDRMAPSRC_TORRC,
+    /** We're remapping this address because we have TrackHostExit configured,
+     * and we want to remember to use the same exit next time. */
+    ADDRMAPSRC_TRACKEXIT,
+    /** We're remapping this address because we got a DNS resolution from a
+     * Tor server that told us what its value was. */
+    ADDRMAPSRC_DNS,
 
-  /** No remapping has occurred.  This isn't a possible value for an
-   * addrmap_entry_t; it's used as a null value when we need to answer "Why
-   * did this remapping happen." */
-  ADDRMAPSRC_NONE
+    /** No remapping has occurred.  This isn't a possible value for an
+     * addrmap_entry_t; it's used as a null value when we need to answer "Why
+     * did this remapping happen." */
+    ADDRMAPSRC_NONE
 } addressmap_entry_source_t;
 #define addressmap_entry_source_bitfield_t ENUM_BF(addressmap_entry_source_t)
 
