@@ -16,10 +16,10 @@
 #include "lib/cc/torint.h"
 
 #ifdef HAVE_SIGNAL_H
-#include <signal.h>
+#  include <signal.h>
 #endif
 #ifdef HAVE_TIME_H
-#include <time.h>
+#  include <time.h>
 #endif
 
 #include "lib/arch/bytes.h"
@@ -77,19 +77,19 @@ struct curve25519_public_key_t;
 /* These signals are defined to help handle_control_signal work.
  */
 #ifndef SIGHUP
-#define SIGHUP 1
+#  define SIGHUP 1
 #endif
 #ifndef SIGINT
-#define SIGINT 2
+#  define SIGINT 2
 #endif
 #ifndef SIGUSR1
-#define SIGUSR1 10
+#  define SIGUSR1 10
 #endif
 #ifndef SIGUSR2
-#define SIGUSR2 12
+#  define SIGUSR2 12
 #endif
 #ifndef SIGTERM
-#define SIGTERM 15
+#  define SIGTERM 15
 #endif
 /* Controller signals start at a high number so we don't
  * conflict with system-defined signals. */
@@ -102,20 +102,20 @@ struct curve25519_public_key_t;
 #if (SIZEOF_CELL_T != 0)
 /* On Irix, stdlib.h defines a cell_t type, so we need to make sure
  * that our stuff always calls cell_t something different. */
-#define cell_t tor_cell_t
+#  define cell_t tor_cell_t
 #endif
 
 /** Helper macro: Given a pointer to to.base_, of type from*, return &to. */
-#define DOWNCAST(to, ptr) ((to*)SUBTYPE_P(ptr, to, base_))
+#define DOWNCAST(to, ptr) ((to *)SUBTYPE_P(ptr, to, base_))
 
 /** Length of longest allowable configured nickname. */
 #define MAX_NICKNAME_LEN 19
 /** Length of a router identity encoded as a hexadecimal digest, plus
  * possible dollar sign. */
-#define MAX_HEX_NICKNAME_LEN (HEX_DIGEST_LEN+1)
+#define MAX_HEX_NICKNAME_LEN (HEX_DIGEST_LEN + 1)
 /** Maximum length of verbose router identifier: dollar sign, hex ID digest,
  * equal sign or tilde, nickname. */
-#define MAX_VERBOSE_NICKNAME_LEN (1+HEX_DIGEST_LEN+1+MAX_NICKNAME_LEN)
+#define MAX_VERBOSE_NICKNAME_LEN (1 + HEX_DIGEST_LEN + 1 + MAX_NICKNAME_LEN)
 
 /** For HTTP parsing: Maximum number of bytes we'll accept in the headers
  * of an HTTP request or response. */
@@ -148,19 +148,19 @@ struct curve25519_public_key_t;
 
 /** How often we should check the network consensus if it is time to rotate or
  * expire onion keys. */
-#define ONION_KEY_CONSENSUS_CHECK_INTERVAL (60*60)
+#define ONION_KEY_CONSENSUS_CHECK_INTERVAL (60 * 60)
 
 /** How often do we rotate TLS contexts? */
-#define MAX_SSL_KEY_LIFETIME_INTERNAL (2*60*60)
+#define MAX_SSL_KEY_LIFETIME_INTERNAL (2 * 60 * 60)
 
 /** How old do we allow a router to get before removing it
  * from the router list? In seconds. */
-#define ROUTER_MAX_AGE (60*60*48)
+#define ROUTER_MAX_AGE (60 * 60 * 48)
 /** How old can a router get before we (as a server) will no longer
  * consider it live? In seconds. */
-#define ROUTER_MAX_AGE_TO_PUBLISH (60*60*24)
+#define ROUTER_MAX_AGE_TO_PUBLISH (60 * 60 * 24)
 /** How old do we let a saved descriptor get before force-removing it? */
-#define OLD_ROUTER_DESC_MAX_AGE (60*60*24*5)
+#define OLD_ROUTER_DESC_MAX_AGE (60 * 60 * 24 * 5)
 
 /* Proxy client types */
 #define PROXY_NONE 0
@@ -180,7 +180,7 @@ struct curve25519_public_key_t;
 #define MIN_CIRCUITS_HANDLING_STREAM 2
 
 /* These RELAY_COMMAND constants define values for relay cell commands, and
-* must match those defined in tor-spec.txt. */
+ * must match those defined in tor-spec.txt. */
 #define RELAY_COMMAND_BEGIN 1
 #define RELAY_COMMAND_DATA 2
 #define RELAY_COMMAND_END 3
@@ -214,17 +214,17 @@ struct curve25519_public_key_t;
 #define RELAY_COMMAND_XON 44
 
 /* Reasons why an OR connection is closed. */
-#define END_OR_CONN_REASON_DONE           1
-#define END_OR_CONN_REASON_REFUSED        2 /* connection refused */
-#define END_OR_CONN_REASON_OR_IDENTITY    3
-#define END_OR_CONN_REASON_CONNRESET      4 /* connection reset by peer */
-#define END_OR_CONN_REASON_TIMEOUT        5
-#define END_OR_CONN_REASON_NO_ROUTE       6 /* no route to host/net */
-#define END_OR_CONN_REASON_IO_ERROR       7 /* read/write error */
+#define END_OR_CONN_REASON_DONE 1
+#define END_OR_CONN_REASON_REFUSED 2 /* connection refused */
+#define END_OR_CONN_REASON_OR_IDENTITY 3
+#define END_OR_CONN_REASON_CONNRESET 4 /* connection reset by peer */
+#define END_OR_CONN_REASON_TIMEOUT 5
+#define END_OR_CONN_REASON_NO_ROUTE 6 /* no route to host/net */
+#define END_OR_CONN_REASON_IO_ERROR 7 /* read/write error */
 #define END_OR_CONN_REASON_RESOURCE_LIMIT 8 /* sockets, buffers, etc */
-#define END_OR_CONN_REASON_PT_MISSING     9 /* PT failed or not available */
-#define END_OR_CONN_REASON_TLS_ERROR      10 /* Problem in TLS protocol */
-#define END_OR_CONN_REASON_MISC           11
+#define END_OR_CONN_REASON_PT_MISSING 9 /* PT failed or not available */
+#define END_OR_CONN_REASON_TLS_ERROR 10 /* Problem in TLS protocol */
+#define END_OR_CONN_REASON_MISC 11
 
 /* Reasons why we (or a remote OR) might close a stream. See tor-spec.txt for
  * documentation of these.  The values must match. */
@@ -304,32 +304,32 @@ struct curve25519_public_key_t;
 #define END_CIRC_REASON_MEASUREMENT_EXPIRED -3
 
 /** We couldn't build a path for this circuit. */
-#define END_CIRC_REASON_NOPATH          -2
+#define END_CIRC_REASON_NOPATH -2
 /** Catch-all "other" reason for closing origin circuits. */
-#define END_CIRC_AT_ORIGIN              -1
+#define END_CIRC_AT_ORIGIN -1
 
 /* Reasons why we (or a remote OR) might close a circuit. See tor-spec.txt
  * section 5.4 for documentation of these. */
-#define END_CIRC_REASON_MIN_            0
-#define END_CIRC_REASON_NONE            0
-#define END_CIRC_REASON_TORPROTOCOL     1
-#define END_CIRC_REASON_INTERNAL        2
-#define END_CIRC_REASON_REQUESTED       3
-#define END_CIRC_REASON_HIBERNATING     4
-#define END_CIRC_REASON_RESOURCELIMIT   5
-#define END_CIRC_REASON_CONNECTFAILED   6
-#define END_CIRC_REASON_OR_IDENTITY     7
-#define END_CIRC_REASON_CHANNEL_CLOSED  8
-#define END_CIRC_REASON_FINISHED        9
-#define END_CIRC_REASON_TIMEOUT         10
-#define END_CIRC_REASON_DESTROYED       11
-#define END_CIRC_REASON_NOSUCHSERVICE   12
-#define END_CIRC_REASON_MAX_            12
+#define END_CIRC_REASON_MIN_ 0
+#define END_CIRC_REASON_NONE 0
+#define END_CIRC_REASON_TORPROTOCOL 1
+#define END_CIRC_REASON_INTERNAL 2
+#define END_CIRC_REASON_REQUESTED 3
+#define END_CIRC_REASON_HIBERNATING 4
+#define END_CIRC_REASON_RESOURCELIMIT 5
+#define END_CIRC_REASON_CONNECTFAILED 6
+#define END_CIRC_REASON_OR_IDENTITY 7
+#define END_CIRC_REASON_CHANNEL_CLOSED 8
+#define END_CIRC_REASON_FINISHED 9
+#define END_CIRC_REASON_TIMEOUT 10
+#define END_CIRC_REASON_DESTROYED 11
+#define END_CIRC_REASON_NOSUCHSERVICE 12
+#define END_CIRC_REASON_MAX_ 12
 
 /** Bitwise-OR this with the argument to circuit_mark_for_close() or
  * control_event_circuit_status() to indicate that the reason was
  * passed through from a destroy or truncate cell. */
-#define END_CIRC_REASON_FLAG_REMOTE     512
+#define END_CIRC_REASON_FLAG_REMOTE 512
 
 /** Length of v2 descriptor ID (32 base32 chars = 160 bits).
  *
@@ -345,9 +345,9 @@ struct curve25519_public_key_t;
 
 /** Client authorization type that a hidden service performs. */
 typedef enum rend_auth_type_t {
-    REND_NO_AUTH      = 0,
-    REND_V3_AUTH      = 1, /* Dummy flag to allow adding v3 services on the
-                          * control port */
+  REND_NO_AUTH = 0,
+  REND_V3_AUTH = 1, /* Dummy flag to allow adding v3 services on the
+                     * control port */
 } rend_auth_type_t;
 
 /* Stub because we can't include hs_ident.h. */
@@ -364,8 +364,8 @@ typedef struct hsdir_index_t hsdir_index_t;
 
 /** Used to indicate which way a cell is going on a circuit. */
 typedef enum {
-    CELL_DIRECTION_IN=1, /**< The cell is moving towards the origin. */
-    CELL_DIRECTION_OUT=2, /**< The cell is moving away from the origin. */
+  CELL_DIRECTION_IN = 1, /**< The cell is moving towards the origin. */
+  CELL_DIRECTION_OUT = 2, /**< The cell is moving away from the origin. */
 } cell_direction_t;
 
 /**
@@ -376,8 +376,8 @@ typedef enum {
  * for channel delivery are disassociated from the channel.
  */
 typedef enum {
-    CIRCUIT_N_CHAN = 0,
-    CIRCUIT_P_CHAN = 1
+  CIRCUIT_N_CHAN = 0,
+  CIRCUIT_P_CHAN = 1
 } circuit_channel_direction_t;
 
 /** Initial value for both sides of a circuit transmission window when the
@@ -401,7 +401,7 @@ typedef enum {
  * ratio controls the margin of error between emitting a warning and
  * killing the circuit.
  */
-#define ORCIRC_MAX_MIDDLE_CELLS (CIRCWINDOW_START_MAX*2)
+#define ORCIRC_MAX_MIDDLE_CELLS (CIRCWINDOW_START_MAX * 2)
 /** Ratio of hard (circuit kill) to soft (warning) thresholds for the
  * ORCIRC_MAX_MIDDLE_CELLS tests.
  */
@@ -430,12 +430,14 @@ typedef enum {
 
 #define CELL_RELAY_DELAY_LOWEST 13
 #define CELL_RELAY_DELAY_HIGHEST 127
-#define ALL_SENDERS_DECIDE_DELAYS false // Set to true to allow all senders to decide delays (Useful for testing)
+#define ALL_SENDERS_DECIDE_DELAYS \
+  false // Set to true to allow all senders to decide delays (Useful for
+        // testing)
 
 #define CELL_COMMAND_MAX_ 133
 
 /** How long to test reachability before complaining to the user. */
-#define TIMEOUT_UNTIL_UNREACHABILITY_COMPLAINT (20*60)
+#define TIMEOUT_UNTIL_UNREACHABILITY_COMPLAINT (20 * 60)
 
 /** Legal characters in a nickname. */
 #define LEGAL_NICKNAME_CHARACTERS \
@@ -467,27 +469,30 @@ typedef enum {
 #define VAR_CELL_MAX_HEADER_SIZE 7
 
 static int get_cell_network_size(int wide_circ_ids);
-static inline int get_cell_network_size(int wide_circ_ids)
+static inline int
+get_cell_network_size(int wide_circ_ids)
 {
-    return wide_circ_ids ? CELL_MAX_NETWORK_SIZE : CELL_MAX_NETWORK_SIZE - 2;
+  return wide_circ_ids ? CELL_MAX_NETWORK_SIZE : CELL_MAX_NETWORK_SIZE - 2;
 }
 static int get_var_cell_header_size(int wide_circ_ids);
-static inline int get_var_cell_header_size(int wide_circ_ids)
+static inline int
+get_var_cell_header_size(int wide_circ_ids)
 {
-    return wide_circ_ids ? VAR_CELL_MAX_HEADER_SIZE :
-           VAR_CELL_MAX_HEADER_SIZE - 2;
+  return wide_circ_ids ? VAR_CELL_MAX_HEADER_SIZE
+                       : VAR_CELL_MAX_HEADER_SIZE - 2;
 }
 static int get_circ_id_size(int wide_circ_ids);
-static inline int get_circ_id_size(int wide_circ_ids)
+static inline int
+get_circ_id_size(int wide_circ_ids)
 {
-    return wide_circ_ids ? 4 : 2;
+  return wide_circ_ids ? 4 : 2;
 }
 
 /** Number of bytes in a relay cell's header (not including general cell
  * header). */
-#define RELAY_HEADER_SIZE (1+2+2+4+2)
+#define RELAY_HEADER_SIZE (1 + 2 + 2 + 4 + 2)
 /** Largest number of bytes that can fit in a relay cell payload. */
-#define RELAY_PAYLOAD_SIZE (CELL_PAYLOAD_SIZE-RELAY_HEADER_SIZE)
+#define RELAY_PAYLOAD_SIZE (CELL_PAYLOAD_SIZE - RELAY_HEADER_SIZE)
 
 /** Identifies a circuit on an or_connection */
 typedef uint32_t circid_t;
@@ -520,11 +525,11 @@ typedef struct ext_or_cmd_t ext_or_cmd_t;
 
 /** Beginning of a RELAY cell payload. */
 typedef struct {
-    uint8_t command; /**< The end-to-end relay command. */
-    uint16_t recognized; /**< Used to tell whether cell is for us. */
-    streamid_t stream_id; /**< Which stream is this cell associated with? */
-    char integrity[4]; /**< Used to tell whether cell is corrupted. */
-    uint16_t length; /**< How long is the payload body? */
+  uint8_t command; /**< The end-to-end relay command. */
+  uint16_t recognized; /**< Used to tell whether cell is for us. */
+  streamid_t stream_id; /**< Which stream is this cell associated with? */
+  char integrity[4]; /**< Used to tell whether cell is corrupted. */
+  uint16_t length; /**< How long is the payload body? */
 } relay_header_t;
 
 typedef struct socks_request_t socks_request_t;
@@ -585,7 +590,7 @@ typedef struct server_port_cfg_t server_port_cfg_t;
  * server can generate independently (when using RSA_SHA256_TLSSECRET). It
  * contains everything except the client's timestamp, the client's randomly
  * generated nonce, and the signature. */
-#define V3_AUTH_FIXED_PART_LEN (8+(32*6))
+#define V3_AUTH_FIXED_PART_LEN (8 + (32 * 6))
 /** The length of the part of the AUTHENTICATE cell body that the client
  * signs. */
 #define V3_AUTH_BODY_LEN (V3_AUTH_FIXED_PART_LEN + 8 + 16)
@@ -617,29 +622,29 @@ typedef struct cached_dir_t cached_dir_t;
 /** Enum used to remember where a signed_descriptor_t is stored and how to
  * manage the memory for signed_descriptor_body.  */
 typedef enum {
-    /** The descriptor isn't stored on disk at all: the copy in memory is
-     * canonical; the saved_offset field is meaningless. */
-    SAVED_NOWHERE=0,
-    /** The descriptor is stored in the cached_routers file: the
-     * signed_descriptor_body is meaningless; the signed_descriptor_len and
-     * saved_offset are used to index into the mmaped cache file. */
-    SAVED_IN_CACHE,
-    /** The descriptor is stored in the cached_routers.new file: the
-     * signed_descriptor_body and saved_offset fields are both set. */
-    /* FFFF (We could also mmap the file and grow the mmap as needed, or
-     * lazy-load the descriptor text by using seek and read.  We don't, for
-     * now.)
-     */
-    SAVED_IN_JOURNAL
+  /** The descriptor isn't stored on disk at all: the copy in memory is
+   * canonical; the saved_offset field is meaningless. */
+  SAVED_NOWHERE = 0,
+  /** The descriptor is stored in the cached_routers file: the
+   * signed_descriptor_body is meaningless; the signed_descriptor_len and
+   * saved_offset are used to index into the mmaped cache file. */
+  SAVED_IN_CACHE,
+  /** The descriptor is stored in the cached_routers.new file: the
+   * signed_descriptor_body and saved_offset fields are both set. */
+  /* FFFF (We could also mmap the file and grow the mmap as needed, or
+   * lazy-load the descriptor text by using seek and read.  We don't, for
+   * now.)
+   */
+  SAVED_IN_JOURNAL
 } saved_location_t;
 #define saved_location_bitfield_t ENUM_BF(saved_location_t)
 
 /** Enumeration: what directory object is being downloaded?
  * This determines which schedule is selected to perform the download. */
 typedef enum {
-    DL_SCHED_GENERIC = 0,
-    DL_SCHED_CONSENSUS = 1,
-    DL_SCHED_BRIDGE = 2,
+  DL_SCHED_GENERIC = 0,
+  DL_SCHED_CONSENSUS = 1,
+  DL_SCHED_BRIDGE = 2,
 } download_schedule_t;
 #define download_schedule_bitfield_t ENUM_BF(download_schedule_t)
 
@@ -649,21 +654,20 @@ typedef enum {
  * are no fallbacks).
  * When we have a valid consensus, "any" means any directory server. */
 typedef enum {
-    DL_WANT_ANY_DIRSERVER = 0,
-    DL_WANT_AUTHORITY = 1,
+  DL_WANT_ANY_DIRSERVER = 0,
+  DL_WANT_AUTHORITY = 1,
 } download_want_authority_t;
-#define download_want_authority_bitfield_t \
-                                        ENUM_BF(download_want_authority_t)
+#define download_want_authority_bitfield_t ENUM_BF(download_want_authority_t)
 
 /** Enumeration: do we want to increment the schedule position each time a
  * connection is attempted (these attempts can be concurrent), or do we want
  * to increment the schedule position after a connection fails? */
 typedef enum {
-    DL_SCHED_INCREMENT_FAILURE = 0,
-    DL_SCHED_INCREMENT_ATTEMPT = 1,
+  DL_SCHED_INCREMENT_FAILURE = 0,
+  DL_SCHED_INCREMENT_ATTEMPT = 1,
 } download_schedule_increment_t;
 #define download_schedule_increment_bitfield_t \
-                                        ENUM_BF(download_schedule_increment_t)
+  ENUM_BF(download_schedule_increment_t)
 
 typedef struct download_status_t download_status_t;
 
@@ -680,62 +684,62 @@ typedef struct signed_descriptor_t signed_descriptor_t;
 /** Flags used to summarize the declared protocol versions of a relay,
  * so we don't need to parse them again and again. */
 typedef struct protover_summary_flags_t {
-    /** True iff we have a proto line for this router, or a versions line
-     * from which we could infer the protocols. */
-    unsigned int protocols_known:1;
+  /** True iff we have a proto line for this router, or a versions line
+   * from which we could infer the protocols. */
+  unsigned int protocols_known : 1;
 
-    /** True iff this router has a version or protocol list that allows it to
-     * accept EXTEND2 cells. This requires Relay=2. */
-    unsigned int supports_extend2_cells:1;
+  /** True iff this router has a version or protocol list that allows it to
+   * accept EXTEND2 cells. This requires Relay=2. */
+  unsigned int supports_extend2_cells : 1;
 
-    /** True iff this router has a version or protocol list that allows it to
-     * accept IPv6 connections. This requires Relay=2 or Relay=3. */
-    unsigned int supports_accepting_ipv6_extends:1;
+  /** True iff this router has a version or protocol list that allows it to
+   * accept IPv6 connections. This requires Relay=2 or Relay=3. */
+  unsigned int supports_accepting_ipv6_extends : 1;
 
-    /** True iff this router has a version or protocol list that allows it to
-     * initiate IPv6 connections. This requires Relay=3. */
-    unsigned int supports_initiating_ipv6_extends:1;
+  /** True iff this router has a version or protocol list that allows it to
+   * initiate IPv6 connections. This requires Relay=3. */
+  unsigned int supports_initiating_ipv6_extends : 1;
 
-    /** True iff this router has a version or protocol list that allows it to
-     * consider IPv6 connections canonical. This requires Relay=3. */
-    unsigned int supports_canonical_ipv6_conns:1;
+  /** True iff this router has a version or protocol list that allows it to
+   * consider IPv6 connections canonical. This requires Relay=3. */
+  unsigned int supports_canonical_ipv6_conns : 1;
 
-    /** True iff this router has a protocol list that allows it to negotiate
-     * ed25519 identity keys on a link handshake with us. This
-     * requires LinkAuth=3. */
-    unsigned int supports_ed25519_link_handshake_compat:1;
+  /** True iff this router has a protocol list that allows it to negotiate
+   * ed25519 identity keys on a link handshake with us. This
+   * requires LinkAuth=3. */
+  unsigned int supports_ed25519_link_handshake_compat : 1;
 
-    /** True iff this router has a protocol list that allows it to negotiate
-     * ed25519 identity keys on a link handshake, at all. This requires some
-     * LinkAuth=X for X >= 3. */
-    unsigned int supports_ed25519_link_handshake_any:1;
+  /** True iff this router has a protocol list that allows it to negotiate
+   * ed25519 identity keys on a link handshake, at all. This requires some
+   * LinkAuth=X for X >= 3. */
+  unsigned int supports_ed25519_link_handshake_any : 1;
 
-    /** True iff this router has a protocol list that allows it to be an
-     * introduction point supporting ed25519 authentication key which is part of
-     * the v3 protocol detailed in proposal 224. This requires HSIntro=4. */
-    unsigned int supports_ed25519_hs_intro : 1;
+  /** True iff this router has a protocol list that allows it to be an
+   * introduction point supporting ed25519 authentication key which is part of
+   * the v3 protocol detailed in proposal 224. This requires HSIntro=4. */
+  unsigned int supports_ed25519_hs_intro : 1;
 
-    /** True iff this router has a protocol list that allows it to support the
-     * ESTABLISH_INTRO DoS cell extension. Requires HSIntro=5. */
-    unsigned int supports_establish_intro_dos_extension : 1;
+  /** True iff this router has a protocol list that allows it to support the
+   * ESTABLISH_INTRO DoS cell extension. Requires HSIntro=5. */
+  unsigned int supports_establish_intro_dos_extension : 1;
 
-    /** True iff this router has a protocol list that allows it to be an hidden
-     * service directory supporting version 3 as seen in proposal 224. This
-     * requires HSDir=2. */
-    unsigned int supports_v3_hsdir : 1;
+  /** True iff this router has a protocol list that allows it to be an hidden
+   * service directory supporting version 3 as seen in proposal 224. This
+   * requires HSDir=2. */
+  unsigned int supports_v3_hsdir : 1;
 
-    /** True iff this router has a protocol list that allows it to be an hidden
-     * service rendezvous point supporting version 3 as seen in proposal 224.
-     * This requires HSRend=2. */
-    unsigned int supports_v3_rendezvous_point: 1;
+  /** True iff this router has a protocol list that allows it to be an hidden
+   * service rendezvous point supporting version 3 as seen in proposal 224.
+   * This requires HSRend=2. */
+  unsigned int supports_v3_rendezvous_point : 1;
 
-    /** True iff this router has a protocol list that allows clients to
-     * negotiate hs circuit setup padding. Requires Padding=2. */
-    unsigned int supports_hs_setup_padding : 1;
+  /** True iff this router has a protocol list that allows clients to
+   * negotiate hs circuit setup padding. Requires Padding=2. */
+  unsigned int supports_hs_setup_padding : 1;
 
-    /** True iff this router supports congestion control.
-     * Requires both FlowCtrl=2 *and* Relay=4 */
-    unsigned int supports_congestion_control : 1;
+  /** True iff this router supports congestion control.
+   * Requires both FlowCtrl=2 *and* Relay=4 */
+  unsigned int supports_congestion_control : 1;
 } protover_summary_flags_t;
 
 typedef struct routerinfo_t routerinfo_t;
@@ -754,12 +758,12 @@ typedef struct networkstatus_sr_info_t networkstatus_sr_info_t;
  * flavors of a consensus are generated from the same set of votes, but they
  * present different types information to different versions of Tor. */
 typedef enum {
-    FLAV_NS = 0,
-    FLAV_MICRODESC = 1,
+  FLAV_NS = 0,
+  FLAV_MICRODESC = 1,
 } consensus_flavor_t;
 
 /** How many different consensus flavors are there? */
-#define N_CONSENSUS_FLAVORS ((int)(FLAV_MICRODESC)+1)
+#define N_CONSENSUS_FLAVORS ((int)(FLAV_MICRODESC) + 1)
 
 typedef struct networkstatus_t networkstatus_t;
 typedef struct ns_detached_signatures_t ns_detached_signatures_t;
@@ -778,20 +782,20 @@ typedef struct authority_cert_t authority_cert_t;
  * and so long as every cache that caches one of them caches all of them.
  */
 typedef enum {
-    NO_DIRINFO      = 0,
-    /** Serves/signs v3 directory information: votes, consensuses, certs */
-    V3_DIRINFO      = 1 << 2,
-    /** Serves bridge descriptors. */
-    BRIDGE_DIRINFO  = 1 << 4,
-    /** Serves extrainfo documents. */
-    EXTRAINFO_DIRINFO=1 << 5,
-    /** Serves microdescriptors. */
-    MICRODESC_DIRINFO=1 << 6,
+  NO_DIRINFO = 0,
+  /** Serves/signs v3 directory information: votes, consensuses, certs */
+  V3_DIRINFO = 1 << 2,
+  /** Serves bridge descriptors. */
+  BRIDGE_DIRINFO = 1 << 4,
+  /** Serves extrainfo documents. */
+  EXTRAINFO_DIRINFO = 1 << 5,
+  /** Serves microdescriptors. */
+  MICRODESC_DIRINFO = 1 << 6,
 } dirinfo_type_t;
 
-#define ALL_DIRINFO ((dirinfo_type_t)((1<<7)-1))
+#define ALL_DIRINFO ((dirinfo_type_t)((1 << 7) - 1))
 
-#define ONION_HANDSHAKE_TYPE_TAP  0x0000
+#define ONION_HANDSHAKE_TYPE_TAP 0x0000
 #define ONION_HANDSHAKE_TYPE_FAST 0x0001
 #define ONION_HANDSHAKE_TYPE_NTOR 0x0002
 #define ONION_HANDSHAKE_TYPE_NTOR_V3 0x0003
@@ -802,7 +806,7 @@ typedef struct relay_crypto_t relay_crypto_t;
 typedef struct crypt_path_t crypt_path_t;
 typedef struct crypt_path_reference_t crypt_path_reference_t;
 
-#define CPATH_KEY_MATERIAL_LEN (20*2+16*2)
+#define CPATH_KEY_MATERIAL_LEN (20 * 2 + 16 * 2)
 
 typedef struct cpath_build_state_t cpath_build_state_t;
 
@@ -811,14 +815,14 @@ struct create_cell_t;
 /** Entry in the cell stats list of a circuit; used only if CELL_STATS
  * events are enabled. */
 typedef struct testing_cell_stats_entry_t {
-    uint8_t command; /**< cell command number. */
-    /** Waiting time in centiseconds if this event is for a removed cell,
-     * or 0 if this event is for adding a cell to the queue.  22 bits can
-     * store more than 11 hours, enough to assume that a circuit with this
-     * delay would long have been closed. */
-    unsigned int waiting_time:22;
-    unsigned int removed:1; /**< 0 for added to, 1 for removed from queue. */
-    unsigned int exitward:1; /**< 0 for app-ward, 1 for exit-ward. */
+  uint8_t command; /**< cell command number. */
+  /** Waiting time in centiseconds if this event is for a removed cell,
+   * or 0 if this event is for adding a cell to the queue.  22 bits can
+   * store more than 11 hours, enough to assume that a circuit with this
+   * delay would long have been closed. */
+  unsigned int waiting_time : 22;
+  unsigned int removed : 1; /**< 0 for added to, 1 for removed from queue. */
+  unsigned int exitward : 1; /**< 0 for app-ward, 1 for exit-ward. */
 } testing_cell_stats_entry_t;
 
 typedef struct circuit_t circuit_t;
@@ -833,12 +837,12 @@ typedef enum path_state_t path_state_t;
 #define path_state_bitfield_t ENUM_BF(path_state_t)
 
 #if REND_COOKIE_LEN != DIGEST_LEN
-#error "The REND_TOKEN_LEN macro assumes REND_COOKIE_LEN == DIGEST_LEN"
+#  error "The REND_TOKEN_LEN macro assumes REND_COOKIE_LEN == DIGEST_LEN"
 #endif
 #define REND_TOKEN_LEN DIGEST_LEN
 
 /** Convert a circuit subtype to a circuit_t. */
-#define TO_CIRCUIT(x)  (&((x)->base_))
+#define TO_CIRCUIT(x) (&((x)->base_))
 
 /** @name Isolation flags
 
@@ -847,25 +851,26 @@ typedef enum path_state_t path_state_t;
     @{
 */
 /** Isolate based on destination port */
-#define ISO_DESTPORT    (1u<<0)
+#define ISO_DESTPORT (1u << 0)
 /** Isolate based on destination address */
-#define ISO_DESTADDR    (1u<<1)
+#define ISO_DESTADDR (1u << 1)
 /** Isolate based on SOCKS authentication */
-#define ISO_SOCKSAUTH   (1u<<2)
+#define ISO_SOCKSAUTH (1u << 2)
 /** Isolate based on client protocol choice */
-#define ISO_CLIENTPROTO (1u<<3)
+#define ISO_CLIENTPROTO (1u << 3)
 /** Isolate based on client address */
-#define ISO_CLIENTADDR  (1u<<4)
+#define ISO_CLIENTADDR (1u << 4)
 /** Isolate based on session group (always on). */
-#define ISO_SESSIONGRP  (1u<<5)
+#define ISO_SESSIONGRP (1u << 5)
 /** Isolate based on newnym epoch (always on). */
-#define ISO_NYM_EPOCH   (1u<<6)
+#define ISO_NYM_EPOCH (1u << 6)
 /** Isolate all streams (Internal only). */
-#define ISO_STREAM      (1u<<7)
+#define ISO_STREAM (1u << 7)
 /**@}*/
 
 /** Default isolation level for ports. */
-#define ISO_DEFAULT (ISO_CLIENTADDR|ISO_SOCKSAUTH|ISO_SESSIONGRP|ISO_NYM_EPOCH)
+#define ISO_DEFAULT \
+  (ISO_CLIENTADDR | ISO_SOCKSAUTH | ISO_SESSIONGRP | ISO_NYM_EPOCH)
 
 /** Indicates that we haven't yet set a session group on a port_cfg_t. */
 #define SESSION_GROUP_UNSET -1
@@ -897,7 +902,7 @@ typedef struct or_state_t or_state_t;
 /* Circuit Build Timeout "public" structures. */
 
 /** Precision multiplier for the Bw weights */
-#define BW_WEIGHT_SCALE   10000
+#define BW_WEIGHT_SCALE 10000
 #define BW_MIN_WEIGHT_SCALE 1
 #define BW_MAX_WEIGHT_SCALE INT32_MAX
 
@@ -909,29 +914,29 @@ typedef struct circuit_build_times_t circuit_build_times_t;
 
 /** Enumerates possible origins of a client-side address mapping. */
 typedef enum {
-    /** We're remapping this address because the controller told us to. */
-    ADDRMAPSRC_CONTROLLER,
-    /** We're remapping this address because of an AutomapHostsOnResolve
-     * configuration. */
-    ADDRMAPSRC_AUTOMAP,
-    /** We're remapping this address because our configuration (via torrc, the
-     * command line, or a SETCONF command) told us to. */
-    ADDRMAPSRC_TORRC,
-    /** We're remapping this address because we have TrackHostExit configured,
-     * and we want to remember to use the same exit next time. */
-    ADDRMAPSRC_TRACKEXIT,
-    /** We're remapping this address because we got a DNS resolution from a
-     * Tor server that told us what its value was. */
-    ADDRMAPSRC_DNS,
+  /** We're remapping this address because the controller told us to. */
+  ADDRMAPSRC_CONTROLLER,
+  /** We're remapping this address because of an AutomapHostsOnResolve
+   * configuration. */
+  ADDRMAPSRC_AUTOMAP,
+  /** We're remapping this address because our configuration (via torrc, the
+   * command line, or a SETCONF command) told us to. */
+  ADDRMAPSRC_TORRC,
+  /** We're remapping this address because we have TrackHostExit configured,
+   * and we want to remember to use the same exit next time. */
+  ADDRMAPSRC_TRACKEXIT,
+  /** We're remapping this address because we got a DNS resolution from a
+   * Tor server that told us what its value was. */
+  ADDRMAPSRC_DNS,
 
-    /** No remapping has occurred.  This isn't a possible value for an
-     * addrmap_entry_t; it's used as a null value when we need to answer "Why
-     * did this remapping happen." */
-    ADDRMAPSRC_NONE
+  /** No remapping has occurred.  This isn't a possible value for an
+   * addrmap_entry_t; it's used as a null value when we need to answer "Why
+   * did this remapping happen." */
+  ADDRMAPSRC_NONE
 } addressmap_entry_source_t;
 #define addressmap_entry_source_bitfield_t ENUM_BF(addressmap_entry_source_t)
 
-#define WRITE_STATS_INTERVAL (24*60*60)
+#define WRITE_STATS_INTERVAL (24 * 60 * 60)
 
 /********************************* dirvote.c ************************/
 
@@ -960,12 +965,12 @@ typedef struct microdesc_cache_t microdesc_cache_t;
  * sooner.)
  *
  * XXX Should this be configurable? */
-#define INTRO_POINT_LIFETIME_MIN_SECONDS (18*60*60)
+#define INTRO_POINT_LIFETIME_MIN_SECONDS (18 * 60 * 60)
 /** The maximum number of seconds that an introduction point will last
  * before expiring due to old age.
  *
  * XXX Should this be configurable? */
-#define INTRO_POINT_LIFETIME_MAX_SECONDS (24*60*60)
+#define INTRO_POINT_LIFETIME_MAX_SECONDS (24 * 60 * 60)
 
 /** The maximum number of circuit creation retry we do to an intro point
  * before giving up. We try to reuse intro point that fails during their
@@ -976,8 +981,8 @@ typedef struct microdesc_cache_t microdesc_cache_t;
 
 typedef struct dir_server_t dir_server_t;
 
-#define RELAY_REQUIRED_MIN_BANDWIDTH (75*1024)
-#define BRIDGE_REQUIRED_MIN_BANDWIDTH (50*1024)
+#define RELAY_REQUIRED_MIN_BANDWIDTH (75 * 1024)
+#define BRIDGE_REQUIRED_MIN_BANDWIDTH (50 * 1024)
 
 #define ROUTER_MAX_DECLARED_BANDWIDTH INT32_MAX
 
