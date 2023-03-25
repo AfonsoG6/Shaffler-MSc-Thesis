@@ -2,7 +2,7 @@ version: "3.8"
 services:
   shadow:
     image: shadow
-    working_dir: /simulation
+    working_dir: /
     entrypoint: /bin/bash
     build:
       context: .

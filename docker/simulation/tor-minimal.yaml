@@ -91,6 +91,6 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       args: ../../../conf/tgen.torclient.graphml.xml
       start_time: 20 min
-    - path: python
+    - path: python3
       args: loop/main.py
       start_time: 15 min
