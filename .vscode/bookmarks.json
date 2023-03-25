@@ -1,7 +1,7 @@
 {
 	"files": [
 		{
-			"path": "src/core/or/relay.c",
+			"path": "tor/src/core/or/relay.c",
 			"bookmarks": [
 				{
 					"line": 613,
@@ -11,7 +11,7 @@
 			]
 		},
 		{
-			"path": "src/core/or/or.h",
+			"path": "tor/src/core/or/or.h",
 			"bookmarks": [
 				{
 					"line": 181,
@@ -26,7 +26,7 @@
 			]
 		},
 		{
-			"path": "src/core/or/channeltls.c",
+			"path": "tor/src/core/or/channeltls.c",
 			"bookmarks": [
 				{
 					"line": 846,
@@ -41,7 +41,7 @@
 			]
 		},
 		{
-			"path": "src/app/config/resolve_addr.c",
+			"path": "tor/src/app/config/resolve_addr.c",
 			"bookmarks": [
 				{
 					"line": 383,
@@ -51,7 +51,7 @@
 			]
 		},
 		{
-			"path": "src/feature/nodelist/dirlist.c",
+			"path": "tor/src/feature/nodelist/dirlist.c",
 			"bookmarks": [
 				{
 					"line": 86,
@@ -61,7 +61,7 @@
 			]
 		},
 		{
-			"path": "src/feature/nodelist/nodelist.c",
+			"path": "tor/src/feature/nodelist/nodelist.c",
 			"bookmarks": [
 				{
 					"line": 524,
@@ -76,7 +76,7 @@
 			]
 		},
 		{
-			"path": "src/core/or/connection_st.h",
+			"path": "tor/src/core/or/connection_st.h",
 			"bookmarks": [
 				{
 					"line": 148,

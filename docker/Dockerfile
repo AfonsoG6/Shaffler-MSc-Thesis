@@ -52,6 +52,7 @@ WORKDIR /root/rendezmix
 
 RUN chmod 777 -R .
 
+WORKDIR /root/rendezmix/tor
 RUN ./autogen.sh
 RUN ./configure --disable-asciidoc
 RUN make
@@ -61,3 +62,5 @@ RUN ln -s /root/rendezmix/docker/simulation /root
 
 WORKDIR /root/simulation
 RUN find . -type f -exec dos2unix {} \;
+
+RUN alias sim="/root/simulation/run.sh"
