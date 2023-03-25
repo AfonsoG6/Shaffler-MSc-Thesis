@@ -64,3 +64,7 @@ WORKDIR /root/simulation
 RUN find . -type f -exec dos2unix {} \;
 
 RUN alias sim="/root/simulation/run.sh"
+
+WORKDIR /root/rendezmix/loop
+RUN apt install -y python3-full
+RUN pip install -r requirements.txt
