@@ -14,7 +14,6 @@ Log info stdout
 LogTimeGranularity 1
 HeartbeatPeriod 1
 SafeLogging 0
-ContactInfo https://github.com/shadow/shadow-plugin-tor/issues
 DisableDebuggerAttachment 0
 PathBiasUseThreshold 10000
 PathBiasCircThreshold 10000
@@ -22,5 +21,4 @@ DoSCircuitCreationEnabled 0
 DoSConnectionEnabled 0
 DoSRefuseSingleHopClientRendezvous 0
 CircuitPriorityHalflife 30
-ControlPort 9051
 LearnCircuitBuildTimeout 0
