@@ -60,7 +60,7 @@ def get_circuit_status(sock: socket.socket) -> list[CircuitStatus]:
     received_lines = received.splitlines()
     circuit_status: list[CircuitStatus] = []
     for line in received_lines[1:]:
-        if line[0] != ".":
+        if line[0] == ".":
             break
         circuit_status.append(CircuitStatus(line))
     return circuit_status
@@ -75,6 +75,11 @@ if __name__ == '__main__':
     authenticate(sock)
     
     circuit_status: list[CircuitStatus] = get_circuit_status(sock)
-    print("Retrieved exit node: " + get_lowest_id_circuit(circuit_status).exit.name)
+    
+    exit_node: CircuitStatus|None = get_lowest_id_circuit(circuit_status)
+    if exit_node != None:
+        print("Retrieved exit node: " + exit_node.exit.name)
+    else:
+        print("No exit node found")
     
     sock.close()
