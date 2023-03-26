@@ -55,7 +55,7 @@ def authenticate(sock: socket.socket):
 
 def get_circuit_status(sock: socket.socket) -> list[CircuitStatus]:
     sock.sendall(b"getinfo circuit-status\n")
-    received = sock.recv(1024).decode("ascii")
+    received = sock.recv(4096).decode("ascii")
     print(received)
     received_lines = received.splitlines()
     circuit_status: list[CircuitStatus] = []
