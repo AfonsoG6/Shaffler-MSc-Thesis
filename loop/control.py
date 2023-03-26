@@ -29,12 +29,13 @@ class CircuitStatus:
         parts = string.split(" ")
         self.id = int(parts[0])
         self.status = parts[1]
-        self.entry = Node(parts[2])
-        self.middle = Node(parts[3])
-        self.exit = Node(parts[4])
-        self.build_flags = parts[5].split("=")[1].split(",")
-        self.purpose = parts[6].split("=")[1]
-        self.time_created = datetime.fromisoformat(parts[7].split("=")[1])
+        nodes:list[str] = parts[2].split(",")
+        self.entry = Node(nodes[0])
+        self.middle = Node(nodes[1])
+        self.exit = Node(nodes[2])
+        self.build_flags = parts[3].split("=")[1].split(",")
+        self.purpose = parts[4].split("=")[1]
+        self.time_created = datetime.fromisoformat(parts[5].split("=")[1])
         
 def get_lowest_id_circuit(circuits: list[CircuitStatus]) -> CircuitStatus:
     lowest_id = circuits[0].id
