@@ -37,12 +37,12 @@ class CircuitStatus:
         self.purpose = parts[4].split("=")[1]
         self.time_created = datetime.fromisoformat(parts[5].split("=")[1])
         
-def get_lowest_id_circuit(circuits: list[CircuitStatus]) -> CircuitStatus:
-    lowest_id = circuits[0].id
-    result: CircuitStatus = circuits[0]
+def get_lowest_id_circuit(circuits: list[CircuitStatus]) -> CircuitStatus|None:
+    lowest_id = int("inf")
+    result: CircuitStatus|None = None
     
     for circuit in circuits:
-        if circuit.id < lowest_id:
+        if circuit.purpose == "GENERAL" and circuit.id < lowest_id:
             lowest_id = circuit.id
             result = circuit
     
@@ -60,6 +60,8 @@ def get_circuit_status(sock: socket.socket) -> list[CircuitStatus]:
     received_lines = received.splitlines()
     circuit_status: list[CircuitStatus] = []
     for line in received_lines[1:]:
+        if line[0] != ".":
+            break
         circuit_status.append(CircuitStatus(line))
     return circuit_status
 
