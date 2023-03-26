@@ -13,7 +13,7 @@ if __name__ == '__main__':
     parser.add_argument("--socks_port", "-sp", type=int, default=-1)
     args=parser.parse_args()
     
-    server_thread = Thread(target=run_server, args=[args.server_port])
+    server_thread = Thread(target=run_server, args=[args.server_host, args.server_port])
     server_thread.daemon = True
     server_thread.start()
     print(f"Server started on port {args.server_port}")

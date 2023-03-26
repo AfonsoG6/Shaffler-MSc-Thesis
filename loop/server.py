@@ -9,9 +9,9 @@ class RandHTTPRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(random.randbytes(1024))
 
-def run_server(server_port:int):
+def run_server(server_host:str, server_port:int):
     httpd: HTTPServer = HTTPServer(
-            server_address=('127.0.0.1', server_port),
+            server_address=(server_host, server_port),
             RequestHandlerClass=RandHTTPRequestHandler)
 
     context = ssl.SSLContext(protocol=ssl.PROTOCOL_TLS_SERVER)
@@ -26,7 +26,9 @@ def run_server(server_port:int):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    
+    parser.add_argument("--server_host", "-svh", type=str, default="127.0.0.1")
     parser.add_argument("--server_port", "-svp", type=int, default=29999)
     args=parser.parse_args()
     
-    run_server(args.server_port)
+    run_server(args.server_host, args.server_port)
