@@ -1,6 +1,7 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import ssl
 import random
+import argparse
 
 class RandHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -10,7 +11,7 @@ class RandHTTPRequestHandler(BaseHTTPRequestHandler):
 
 def run_server(server_port:int):
     httpd: HTTPServer = HTTPServer(
-            server_address=('localhost', server_port),
+            server_address=('127.0.0.1', server_port),
             RequestHandlerClass=RandHTTPRequestHandler)
 
     context = ssl.SSLContext(protocol=ssl.PROTOCOL_TLS_SERVER)
@@ -24,4 +25,8 @@ def run_server(server_port:int):
 
 
 if __name__ == '__main__':
-    run_server(29999)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--server_port", "-svp", type=int, default=29999)
+    args=parser.parse_args()
+    
+    run_server(args.server_port)

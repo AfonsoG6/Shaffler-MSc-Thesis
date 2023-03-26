@@ -98,5 +98,5 @@ hosts:
             --DataDirectory ./loop
       start_time: 10 min
     - path: python3
-      args: main.py
+      args: main.py -svh 11.0.0.100 -svp 29000 -sp 9090
       start_time: 20 min
