@@ -38,11 +38,11 @@ class CircuitStatus:
         self.time_created = datetime.fromisoformat(parts[5].split("=")[1])
         
 def get_lowest_id_circuit(circuits: list[CircuitStatus]) -> CircuitStatus|None:
-    lowest_id = int("inf")
+    lowest_id: int = 0
     result: CircuitStatus|None = None
     
     for circuit in circuits:
-        if circuit.purpose == "GENERAL" and circuit.id < lowest_id:
+        if circuit.purpose == "GENERAL" and (circuit.id < lowest_id or result == None):
             lowest_id = circuit.id
             result = circuit
     
