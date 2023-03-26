@@ -8,8 +8,14 @@ if __name__ == '__main__':
     
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect(("127.0.0.1", args.port))
+    sock.sendall(b"authenticate \"\"\n")
+    received = sock.recv(1024).decode("ascii")
+    print(received)
+    
     sock.sendall(b"getinfo circuit-status\n")
     received = sock.recv(1024).decode("ascii")
-    print(received.splitlines())
+    lines = received.splitlines()
+    print(lines[0])
+    print(lines[1:])
     
     sock.close()
