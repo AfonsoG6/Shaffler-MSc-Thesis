@@ -19,5 +19,5 @@ if __name__ == '__main__':
     parser.add_argument("--server_host", "-svh", type=str, default="127.0.0.1")
     parser.add_argument("--server_port", "-svp", type=int, default=29999)
     parser.add_argument("--socks_port", "-sp", type=int, default=-1)
-    args=parser.parse_args()
+    args = parser.parse_args()
     run_client(args.server_host, args.server_port, args.socks_port)
