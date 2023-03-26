@@ -2,4 +2,5 @@ ORPort 0
 DirPort 0
 ClientOnly 1
 SocksPort 127.0.0.1:9000
+ControlPort 127.0.0.1:9001
 CircuitPadding 0
