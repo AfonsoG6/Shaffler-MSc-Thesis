@@ -94,12 +94,10 @@ hosts:
     - path: tor
       args: --Address torclientloop --Nickname torclientloop
             --defaults-torrc torrc-defaults -f torrc
-            --SocksPort 127.0.0.1:9090 --ExitNodes 0A9B1B207FD13A6F117F95CAFA358EEE2234F19A
-            --ControlPort 127.0.0.1:9091 --DataDirectory ./loop
+            --SocksPort 127.0.0.1:9090
+            --ControlPort 127.0.0.1:9091
+            --DataDirectory ./loop
       start_time: 10 min
     - path: python3
-      args: control.py -p 9001
-      start_time: 15 min
-    - path: python3
-      args: main.py -svh 11.0.0.100 -svp 29000 -sp 9090
+      args: main.py -svh 11.0.0.100 -svp 29000 -cp1 9001 -sp2 9090 -cp2 9091
       start_time: 20 min

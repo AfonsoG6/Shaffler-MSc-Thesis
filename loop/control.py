@@ -2,15 +2,10 @@ import socket
 import argparse
 from datetime import datetime
 
-# '7 BUILT $3FB0BD7827C760FE7F9DD810FCB10322D63AB4CF~relay1,$0A9B1B207FD13A6F117F95CAFA358EEE2234F19A~exit1,$A52CA5B56C64D864F6AE43E56F29ACBD5706DDA1~4uthority BUILD_FLAGS=IS_INTERNAL,NEED_CAPACITY,NEED_UPTIME PURPOSE=HS_VANGUARDS TIME_CREATED=2000-01-01T00:10:07.000000
-# '6 BUILT $3FB0BD7827C760FE7F9DD810FCB10322D63AB4CF~relay1,$0A9B1B207FD13A6F117F95CAFA358EEE2234F19A~exit1,$A52CA5B56C64D864F6AE43E56F29ACBD5706DDA1~4uthority BUILD_FLAGS=IS_INTERNAL,NEED_CAPACITY,NEED_UPTIME PURPOSE=HS_VANGUARDS TIME_CREATED=2000-01-01T00:10:06.000000
-# '3 BUILT $3FB0BD7827C760FE7F9DD810FCB10322D63AB4CF~relay1,$A52CA5B56C64D864F6AE43E56F29ACBD5706DDA1~4uthority,$0A9B1B207FD13A6F117F95CAFA358EEE2234F19A~exit1 BUILD_FLAGS=NEED_CAPACITY PURPOSE=GENERAL TIME_CREATED=2000-01-01T00:10:03.000000
-# '4 BUILT $3FB0BD7827C760FE7F9DD810FCB10322D63AB4CF~relay1,$FF197204099FA0E507FA46D41FED97D3337B4BAA~relay2,$4EBB385C80A2CA5D671E16F1C722FBFB5F176891~exit2 BUILD_FLAGS=NEED_CAPACITY PURPOSE=GENERAL TIME_CREATED=2000-01-01T00:10
-
 class Node:
     fingerprint: str
     name: str
-    
+
     def __init__(self, string: str):
         self.fingerprint = string.split("~")[0].replace("$", "")
         self.name = string.split("~")[1]
@@ -24,7 +19,7 @@ class CircuitStatus:
     build_flags: list[str]
     purpose: str
     time_created: datetime
-    
+
     def __init__(self, string: str):
         parts = string.split(" ")
         self.id = int(parts[0])
@@ -36,11 +31,11 @@ class CircuitStatus:
         self.build_flags = parts[3].split("=")[1].split(",")
         self.purpose = parts[4].split("=")[1]
         self.time_created = datetime.fromisoformat(parts[5].split("=")[1])
-        
+
 def get_lowest_id_circuit(circuits: list[CircuitStatus]) -> CircuitStatus|None:
     lowest_id: int = 0
     result: CircuitStatus|None = None
-    
+
     for circuit in circuits:
         if circuit.purpose == "GENERAL" and (circuit.id < lowest_id or result == None):
             lowest_id = circuit.id
@@ -53,7 +48,7 @@ def authenticate(sock: socket.socket):
     received = sock.recv(1024).decode("ascii")
     print(received)
 
-def get_circuit_status(sock: socket.socket) -> list[CircuitStatus]:
+def get_circuit_status_list(sock: socket.socket) -> list[CircuitStatus]:
     sock.sendall(b"getinfo circuit-status\n")
     received = sock.recv(4096).decode("ascii")
     print(received)
@@ -65,21 +60,30 @@ def get_circuit_status(sock: socket.socket) -> list[CircuitStatus]:
         circuit_status.append(CircuitStatus(line))
     return circuit_status
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--port", "-p", type=int, default=-1)
-    args = parser.parse_args()
-    
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect(("127.0.0.1", args.port))
-    authenticate(sock)
-    
-    circuit_status: list[CircuitStatus] = get_circuit_status(sock)
-    
-    exit_node: CircuitStatus|None = get_lowest_id_circuit(circuit_status)
-    if exit_node != None:
-        print("Retrieved exit node: " + exit_node.exit.name)
-    else:
-        print("No exit node found")
-    
+def get_exit_node(control_port: int) -> Node|None:
+    sock = connect(control_port)
+    cs_lst: list[CircuitStatus] = get_circuit_status_list(sock)
     sock.close()
+
+    cs: CircuitStatus|None = get_lowest_id_circuit(cs_lst)
+    if cs != None:
+        return cs.exit
+    else:
+        return None
+
+def set_exit_nodes(control_port: int, exit_nodes: list[Node]):
+    sock = connect(control_port)
+    exit_node_str = ""
+    for exit_node in exit_nodes:
+        exit_node_str += exit_node.fingerprint + ","
+    exit_node_str = exit_node_str[:-1]
+    sock.sendall(f"setconf ExitNodes={exit_node_str}\n".encode("ascii"))
+    received = sock.recv(1024).decode("ascii")
+    print(received)
+    sock.close()
+
+def connect(control_port: int) -> socket.socket:
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect(("127.0.0.1", control_port))
+    authenticate(sock)
+    return sock
