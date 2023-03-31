@@ -53,12 +53,24 @@ def get_circuit_status_list(sock: socket.socket) -> list[CircuitStatus]:
     received = sock.recv(4096).decode("ascii")
     print(received)
     received_lines = received.splitlines()
-    circuit_status: list[CircuitStatus] = []
+    cslst: list[CircuitStatus] = []
     for line in received_lines[1:]:
         if line[0] == ".":
             break
-        circuit_status.append(CircuitStatus(line))
-    return circuit_status
+        cslst.append(CircuitStatus(line))
+    return cslst
+
+def get_stream_status_list(sock: socket.socket) -> list[str]:
+    sock.sendall(b"getinfo stream-status\n")
+    received = sock.recv(4096).decode("ascii")
+    print(received)
+    received_lines = received.splitlines()
+    sslst: list[str] = []
+    for line in received_lines[1:]:
+        if line[0] == ".":
+            break
+        sslst.append(line)
+    return sslst
 
 def get_exit_node(control_port: int) -> Node|None:
     sock = connect(control_port)
