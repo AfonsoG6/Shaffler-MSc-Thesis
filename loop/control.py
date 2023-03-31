@@ -14,8 +14,8 @@ class CircuitStatus:
     id: int
     status: str
     entry: Node
-    middle: Node
-    exit: Node
+    middle: Node | None
+    exit: Node | None
     build_flags: list[str]
     purpose: str
     time_created: datetime
@@ -26,8 +26,15 @@ class CircuitStatus:
         self.status = parts[1]
         nodes:list[str] = parts[2].split(",")
         self.entry = Node(nodes[0])
-        self.middle = Node(nodes[1])
-        self.exit = Node(nodes[2])
+        if len(nodes) == 1:
+            self.middle = None
+            self.exit = None
+        if len(nodes) == 2:
+            self.middle = None
+            self.exit = Node(nodes[1])
+        if len(nodes) == 3:
+            self.middle = Node(nodes[1])
+            self.exit = Node(nodes[2])
         self.build_flags = parts[3].split("=")[1].split(",")
         self.purpose = parts[4].split("=")[1]
         self.time_created = datetime.fromisoformat(parts[5].split("=")[1])
