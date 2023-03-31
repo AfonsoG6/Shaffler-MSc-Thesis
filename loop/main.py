@@ -22,6 +22,9 @@ if __name__ == '__main__':
     
     update_torclient(args.ctrl_port1, args.ctrl_port2)
     
+    sock = control.connect(args.ctrl_port1)
+    control.get_circuit_status_list(sock)
+    
     server_thread = Thread(target=run_server, args=[args.server_host, args.server_port])
     server_thread.daemon = True
     server_thread.start()
