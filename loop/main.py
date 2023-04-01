@@ -33,11 +33,11 @@ if __name__ == '__main__':
             new_threads = {}
             for node in exit_nodes:
                 if node.fingerprint in client_threads.keys():
-                    log("CONTROL", f"Reusing client for exit node {node.fingerprint}~{node.name}")
+                    log("CLIENT", f"Reusing client for exit node {node.fingerprint}~{node.name}")
                     new_threads[node.fingerprint] = client_threads[node.fingerprint]
                     client_threads.pop(node.fingerprint)
                 else:
-                    log("CONTROL", f"Launching new client for exit node {node.fingerprint}~{node.name}")
+                    log("CLIENT", f"Launching new client for exit node {node.fingerprint}~{node.name}")
                     new_threads[node.fingerprint] = StoppableThread(target=run_client, args=[args.server_host, args.server_port, args.socks_port2])
             # Stop old threads
             for thread in client_threads.values():

@@ -99,11 +99,11 @@ def set_exit_nodes(control_port: int, exit_nodes: list[Node]):
     sock = connect(control_port)
     if len(exit_nodes) == 0:
         sock.sendall(b"resetconf ExitNodes\n")
-        log("[CONTROL]", "ExitNodes=")
+        log("CONTROL", "ExitNodes=")
     else:
         exit_nodes_str = exit_nodes_to_string(exit_nodes)
         sock.sendall(f"setconf ExitNodes={exit_nodes_str}\n".encode("ascii"))
-        log("[CONTROL]", f"ExitNodes={exit_nodes_str}")
+        log("CONTROL", f"ExitNodes={exit_nodes_str}")
     received = sock.recv(1024).decode("ascii")
     print(received)
     sock.close()
