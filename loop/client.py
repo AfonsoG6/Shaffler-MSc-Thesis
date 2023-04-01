@@ -25,6 +25,7 @@ def run_client(server_host:str, server_port:int, socks_port:int = -1):
             response = s.get(url)
             print(response.content)
             sleep(INTERVAL)
+        log("CLIENT", f"Stopping client")
 
 
 if __name__ == '__main__':
