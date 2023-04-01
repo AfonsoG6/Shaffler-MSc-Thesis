@@ -26,6 +26,7 @@ if __name__ == '__main__':
     prev_exit_nodes: list[Node] = []
     client_threads: dict[str, StoppableThread] = {}
     while True:
+        log("CONTROL", f"Updating exit nodes")
         exit_nodes: list[Node] = control.get_exit_nodes(args.ctrl_port1)
         if exit_nodes != prev_exit_nodes:
             prev_exit_nodes = exit_nodes

@@ -25,6 +25,8 @@ def run_client(server_host:str, server_port:int, socks_port:int = -1):
             response = s.get(url)
             print(response.content)
             sleep(INTERVAL)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--server_host", "-svh", type=str, default="127.0.0.1")
