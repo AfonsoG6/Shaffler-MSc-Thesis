@@ -2,8 +2,6 @@ import requests
 import argparse
 from threading import current_thread
 from utils import StoppableThread, sleep, log
-from time import time
-from datetime import datetime
 
 INTERVAL = 0.1 # in seconds
 

@@ -31,7 +31,7 @@ if __name__ == '__main__':
         if exit_nodes != prev_exit_nodes:
             prev_exit_nodes = exit_nodes
             control.set_exit_nodes(args.ctrl_port2, exit_nodes)
-            new_threads = {}
+            new_threads: dict[str, StoppableThread] = {}
             for node in exit_nodes:
                 if node.fingerprint in client_threads.keys():
                     log("CLIENT", f"Reusing client for exit node {node.fingerprint}~{node.name}")
@@ -40,6 +40,8 @@ if __name__ == '__main__':
                 else:
                     log("CLIENT", f"Launching new client for exit node {node.fingerprint}~{node.name}")
                     new_threads[node.fingerprint] = StoppableThread(target=run_client, args=[args.server_host, args.server_port, args.socks_port2])
+                    new_threads[node.fingerprint].daemon = True
+                    new_threads[node.fingerprint].start()
             # Stop old threads
             for thread in client_threads.values():
                 thread.stop()
