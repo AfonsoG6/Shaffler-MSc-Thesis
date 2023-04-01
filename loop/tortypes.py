@@ -26,8 +26,29 @@ class CircuitStatus:
     build_flags: list[str]
     purpose: str
     time_created: datetime
+    
+    @staticmethod
+    def is_valid(string: str) -> bool:
+        parts = string.split(" ")
+        if len(parts) < 6:
+            return False
+        if not parts[0].isnumeric():
+            return False
+        if parts[1] not in ["LAUNCHED", "BUILT", "EXTENDED", "FAILED", "CLOSED"]:
+            return False
+        if len(parts[2].split(",")) not in [1, 2, 3]:
+            return False
+        if not parts[3].startswith("BUILD_FLAGS="):
+            return False
+        if not parts[4].startswith("PURPOSE="):
+            return False
+        if not parts[5].startswith("TIME_CREATED="):
+            return False
+        return True
 
     def __init__(self, string: str):
+        # Example:
+        # 7 BUILT $FF197204099FA0E507FA46D41FED97D3337B4BAA~relay2,$0A9B1B207FD13A6F117F95CAFA358EEE2234F19A~exit1,$A52CA5B56C64D864F6AE43E56F29ACBD5706DDA1~4uthority BUILD_FLAGS=IS_INTERNAL,NEED_CAPACITY,NEED_UPTIME PURPOSE=HS_VANGUARDS TIME_CREATED=2000-01-01T00:10:07.000000
         parts = string.split(" ")
         self.id = int(parts[0])
         self.status = parts[1]
@@ -51,6 +72,19 @@ class StreamStatus:
     status: str
     circuitStatusId: int
     address: str
+    
+    @staticmethod
+    def is_valid(string: str) -> bool:
+        parts = string.split(" ")
+        if len(parts) < 4:
+            return False
+        if not parts[0].isnumeric():
+            return False
+        if parts[1] not in ["NEW", "NEWRESOLVE", "SENTCONNECT", "SENTRESOLVE", "SUCCEEDED", "DETACHED", "FAILED", "CLOSED"]:
+            return False
+        if not parts[2].isnumeric():
+            return False
+        return True
     
     def __init__(self, string: str):
         # Example:
