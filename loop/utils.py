@@ -1,4 +1,6 @@
 from threading import Condition, Event, Thread
+from time import time
+from datetime import datetime
 
 class StoppableThread(Thread):
     def __init__(self,  *args, **kwargs):
@@ -16,3 +18,6 @@ def sleep(time: float) -> None:
     condition: Condition = Condition()
     with condition:
         condition.wait(timeout=time)
+        
+def log(context: str, message: str) -> None:
+    print(f"{datetime.ctime(datetime.fromtimestamp(time()))} [{context}] {message}")

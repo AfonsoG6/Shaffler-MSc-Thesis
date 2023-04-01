@@ -1,5 +1,5 @@
 from client import run_client
-from utils import StoppableThread, sleep
+from utils import StoppableThread, sleep, log
 from server import run_server
 from tortypes import Node
 import control
@@ -33,11 +33,11 @@ if __name__ == '__main__':
             new_threads = {}
             for node in exit_nodes:
                 if node.fingerprint in client_threads.keys():
-                    print(f"[CONTROL] Reusing client for exit node {node.fingerprint}~{node.name}")
+                    log("CONTROL", f"Reusing client for exit node {node.fingerprint}~{node.name}")
                     new_threads[node.fingerprint] = client_threads[node.fingerprint]
                     client_threads.pop(node.fingerprint)
                 else:
-                    print(f"[CONTROL] Launching new client for exit node {node.fingerprint}~{node.name}")
+                    log("CONTROL", f"Launching new client for exit node {node.fingerprint}~{node.name}")
                     new_threads[node.fingerprint] = StoppableThread(target=run_client, args=[args.server_host, args.server_port, args.socks_port2])
             # Stop old threads
             for thread in client_threads.values():
