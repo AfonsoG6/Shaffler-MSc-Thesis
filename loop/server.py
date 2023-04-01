@@ -24,7 +24,6 @@ def run_server(server_host:str, server_port:int):
             sock=httpd.socket,
             server_side=True)
 
-    log("SERVER", f"Server started on port {server_port}")
     httpd.serve_forever()
 
 
