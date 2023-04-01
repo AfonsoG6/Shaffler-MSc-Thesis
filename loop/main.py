@@ -21,12 +21,11 @@ if __name__ == '__main__':
     server_thread = Thread(target=run_server, args=[args.server_host, args.server_port])
     server_thread.daemon = True
     server_thread.start()
-    print(f"Server started on port {args.server_port}")
+    log("THREADS", f"Server started on port {args.server_port}")
     
     prev_exit_nodes: list[Node] = []
     client_threads: dict[str, StoppableThread] = {}
     while True:
-        log("CONTROL", f"Updating exit nodes")
         exit_nodes: list[Node] = control.get_exit_nodes(args.ctrl_port1)
         if exit_nodes != prev_exit_nodes:
             prev_exit_nodes = exit_nodes
@@ -34,11 +33,11 @@ if __name__ == '__main__':
             new_threads: dict[str, StoppableThread] = {}
             for node in exit_nodes:
                 if node.fingerprint in client_threads.keys():
-                    log("CLIENT", f"Reusing client for exit node {node.fingerprint}~{node.name}")
+                    log("THREADS", f"Reusing client for exit node {node.fingerprint}~{node.name}")
                     new_threads[node.fingerprint] = client_threads[node.fingerprint]
                     client_threads.pop(node.fingerprint)
                 else:
-                    log("CLIENT", f"Launching new client for exit node {node.fingerprint}~{node.name}")
+                    log("THREADS", f"Launching new client for exit node {node.fingerprint}~{node.name}")
                     new_threads[node.fingerprint] = StoppableThread(target=run_client, args=[args.server_host, args.server_port, args.socks_port2])
                     new_threads[node.fingerprint].daemon = True
                     new_threads[node.fingerprint].start()
