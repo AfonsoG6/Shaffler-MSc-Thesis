@@ -1,18 +1,9 @@
 import requests
 import argparse
-from threading import current_thread, Thread, Event
+from threading import current_thread
+from utils import StoppableThread, sleep
 
-class StoppableThread(Thread):
-    def __init__(self,  *args, **kwargs):
-        super(StoppableThread, self).__init__(*args, **kwargs)
-        self.stop_event = Event()
-
-    def stop(self):
-        self.stop_event.set()
-        self.join(0.5)
-
-    def stopped(self):
-        return self.stop_event.is_set()
+INTERVAL = 0.1 # in seconds
 
 def run_client(server_host:str, server_port:int, socks_port:int = -1):
     url = f"https://{server_host}:{server_port}"
@@ -30,7 +21,7 @@ def run_client(server_host:str, server_port:int, socks_port:int = -1):
         while not thread.stopped():
             response = s.get(url)
             print(response.content)
-
+            sleep(INTERVAL)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--server_host", "-svh", type=str, default="127.0.0.1")

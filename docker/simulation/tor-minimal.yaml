@@ -100,4 +100,4 @@ hosts:
       start_time: 10 min
     - path: python3
       args: main.py -svh 11.0.0.100 -svp 29000 -cp1 9001 -sp2 9090 -cp2 9091
-      start_time: 20 min
+      start_time: 11 min

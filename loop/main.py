@@ -1,10 +1,11 @@
-from client import run_client, StoppableThread
+from client import run_client
+from utils import StoppableThread, sleep
 from server import run_server
-from tortypes import *
+from tortypes import Node
 import control
-from threading import Thread, Condition
+
+from threading import Thread
 import argparse
-from time import sleep
 
 UPDATE_INTERVAL = 1 # in seconds
 
@@ -42,6 +43,4 @@ if __name__ == '__main__':
             for thread in client_threads.values():
                 thread.stop()
             client_threads = new_threads
-        condition: Condition = Condition()
-        with condition:
-            condition.wait(timeout=UPDATE_INTERVAL)
+        sleep(UPDATE_INTERVAL)
