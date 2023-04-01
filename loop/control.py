@@ -28,12 +28,13 @@ def get_circuit_status_list(sock: socket.socket) -> list[CircuitStatus]:
     received = sock.recv(4096).decode("ascii")
     print(received)
     received_lines = received.splitlines()
-    del received_lines[0]
     cslst: list[CircuitStatus] = []
     for line in received_lines:
-        if line[0] == ".":
+        line = line.removeprefix("250+circuit-status=")
+        if line == "250 OK":
             break
-        cslst.append(CircuitStatus(line))
+        if CircuitStatus.is_valid(line):
+            cslst.append(CircuitStatus(line))
     return cslst
 
 def get_stream_status_list(sock: socket.socket) -> list[StreamStatus]:
@@ -41,16 +42,13 @@ def get_stream_status_list(sock: socket.socket) -> list[StreamStatus]:
     received = sock.recv(4096).decode("ascii")
     print(received)
     received_lines = received.splitlines()
-    first_line_parts = received_lines[0].split("=")
-    if len(first_line_parts) >= 2:
-        received_lines[0] = first_line_parts[1]
-    else:
-        del received_lines[0]
     sslst: list[StreamStatus] = []
     for line in received_lines:
-        if len(line) < 1 or line[0] == ".":
+        line = line.removeprefix("250-stream-status=")
+        if line == "250 OK":
             break
-        sslst.append(StreamStatus(line))
+        if StreamStatus.is_valid(line):
+            sslst.append(StreamStatus(line))
     return sslst
 
 def get_predicted_exit_node(control_port: int) -> Node|None:
