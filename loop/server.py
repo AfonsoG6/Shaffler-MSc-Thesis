@@ -3,11 +3,14 @@ import ssl
 import random
 import argparse
 
+from utils import log
+
 class RandHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(random.randbytes(1024))
+        log("SERVER", f"Sent 1024 bytes to {self.client_address[0]}:{self.client_address[1]}")
 
 def run_server(server_host:str, server_port:int):
     httpd: HTTPServer = HTTPServer(
@@ -21,6 +24,7 @@ def run_server(server_host:str, server_port:int):
             sock=httpd.socket,
             server_side=True)
 
+    log("SERVER", f"Server started on port {server_port}")
     httpd.serve_forever()
 
 

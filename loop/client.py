@@ -1,7 +1,9 @@
 import requests
 import argparse
 from threading import current_thread
-from utils import StoppableThread, sleep
+from utils import StoppableThread, sleep, log
+from time import time
+from datetime import datetime
 
 INTERVAL = 0.1 # in seconds
 
@@ -19,6 +21,7 @@ def run_client(server_host:str, server_port:int, socks_port:int = -1):
             raise Exception("This function must be run in a StoppableThread")
         
         while not thread.stopped():
+            log("CLIENT", f"Sending request to {url}")
             response = s.get(url)
             print(response.content)
             sleep(INTERVAL)
