@@ -1,15 +1,12 @@
-from client import run_client
+from client import run_client, StoppableThread
 from server import run_server
+from tortypes import *
 import control
 from threading import Thread
 import argparse
+from time import sleep
 
-def update_torclient(ctrl_port1:int, ctrl_port2:int):
-    exit_node = control.get_exit_node(ctrl_port1)
-    if exit_node == None:
-        print("No exit node found")
-        exit(1)
-    control.set_exit_nodes(ctrl_port2, [exit_node])
+UPDATE_INTERVAL = 1 # in seconds
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -20,17 +17,29 @@ if __name__ == '__main__':
     parser.add_argument("--socks_port2", "-sp2", type=int, default=-1)
     args = parser.parse_args()
     
-    update_torclient(args.ctrl_port1, args.ctrl_port2)
-    
-    sock = control.connect(args.ctrl_port1)
-    control.get_stream_status_list(sock)
-    
     server_thread = Thread(target=run_server, args=[args.server_host, args.server_port])
     server_thread.daemon = True
     server_thread.start()
     print(f"Server started on port {args.server_port}")
     
-    run_client(args.server_host, args.server_port, args.socks_port2)
-    print("Client finished")
-    
-    print("Server closing")
+    prev_exit_nodes: list[Node] = []
+    client_threads: dict[str, StoppableThread] = {}
+    while True:
+        exit_nodes: list[Node] = control.get_exit_nodes(args.ctrl_port1)
+        if exit_nodes != prev_exit_nodes:
+            prev_exit_nodes = exit_nodes
+            control.set_exit_nodes(args.ctrl_port2, exit_nodes)
+            new_threads = {}
+            for node in exit_nodes:
+                if node.fingerprint in client_threads.keys():
+                    print(f"[CONTROL] Reusing client for exit node {node}")
+                    new_threads[node.fingerprint] = client_threads[node.fingerprint]
+                    client_threads.pop(node.fingerprint)
+                else:
+                    print(f"[CONTROL] Launching new client for exit node {node}")
+                    new_threads[node.fingerprint] = StoppableThread(target=run_client, args=[args.server_host, args.server_port, args.socks_port2])
+            # Stop old threads
+            for thread in client_threads.values():
+                thread.stop()
+            client_threads = new_threads
+        sleep(0.5)

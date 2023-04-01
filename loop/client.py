@@ -1,5 +1,18 @@
 import requests
 import argparse
+from threading import current_thread, Thread, Event
+
+class StoppableThread(Thread):
+    def __init__(self,  *args, **kwargs):
+        super(StoppableThread, self).__init__(*args, **kwargs)
+        self.stop_event = Event()
+
+    def stop(self):
+        self.stop_event.set()
+        self.join(0.5)
+
+    def stopped(self):
+        return self.stop_event.is_set()
 
 def run_client(server_host:str, server_port:int, socks_port:int = -1):
     url = f"https://{server_host}:{server_port}"
@@ -10,7 +23,11 @@ def run_client(server_host:str, server_port:int, socks_port:int = -1):
         if socks_port > 0:
             s.proxies = {"http": socks5, "https": socks5}
 
-        for i in range(100):
+        thread = current_thread()
+        if not isinstance(thread, StoppableThread):
+            raise Exception("This function must be run in a StoppableThread")
+        
+        while not thread.stopped():
             response = s.get(url)
             print(response.content)
 
