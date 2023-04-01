@@ -2,7 +2,7 @@ from client import run_client, StoppableThread
 from server import run_server
 from tortypes import *
 import control
-from threading import Thread
+from threading import Thread, Condition
 import argparse
 from time import sleep
 
@@ -42,4 +42,6 @@ if __name__ == '__main__':
             for thread in client_threads.values():
                 thread.stop()
             client_threads = new_threads
-        sleep(UPDATE_INTERVAL)
+        condition: Condition = Condition()
+        with condition:
+            condition.wait(timeout=UPDATE_INTERVAL)
