@@ -108,20 +108,10 @@ def set_exit_nodes(control_port: int, exit_nodes: list[Node]):
     print(received)
     sock.close()
 
-def set_address_of_node(control_port: int, node: Node) -> None:
-    sock = connect(control_port)
-    sock.sendall(f"getinfo ns/id/{node.fingerprint}\n".encode("ascii"))
-    log("CONTROL", f"Getting address of {node.fingerprint}~{node.name}")
-    received = sock.recv(4096).decode("ascii")
-    print(received)
-    node.set_address(received)
-
 def map_address(control_port: int, address: str, exit: Node) -> None:
-    if exit.address == None:
-        set_address_of_node(control_port, exit)
     sock = connect(control_port)
-    log("CONTROL", f"Mapping {address} to {exit.address}.{exit.name}.exit")
-    sock.sendall(f"mapaddress {address}={exit.address}.{exit.name}.exit\n".encode("ascii"))
+    log("CONTROL", f"Mapping {address} to {address}.{exit.fingerprint}.exit ({exit.name})")
+    sock.sendall(f"mapaddress {address}={address}.{exit.fingerprint}.exit\n".encode("ascii"))
     received = sock.recv(1024).decode("ascii")
     print(received)
     sock.close()
