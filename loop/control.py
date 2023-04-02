@@ -110,8 +110,8 @@ def set_exit_nodes(control_port: int, exit_nodes: list[Node]):
 
 def get_address_of_node(control_port: int, node: Node) -> str:
     sock = connect(control_port)
-    sock.sendall(f"getinfo md/id/{node.fingerprint}\n".encode("ascii"))
-    log("CONTROL", f"getinfo md/id/{node.fingerprint}")
+    sock.sendall(f"getinfo ns/id/{node.fingerprint}\n".encode("ascii"))
+    log("CONTROL", f"getinfo ns/id/{node.fingerprint}")
     received = sock.recv(4096).decode("ascii")
     print(received)
     return received
