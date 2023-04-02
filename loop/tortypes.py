@@ -1,12 +1,15 @@
 from datetime import datetime
+from utils import log
 
 class Node:
     fingerprint: str
     name: str
+    address: str | None
 
     def __init__(self, string: str):
         self.fingerprint = string.split("~")[0].replace("$", "")
         self.name = string.split("~")[1]
+        self.address = None
     
     def __eq__(self, __value: object) -> bool:
         if isinstance(__value, Node):
@@ -16,6 +19,20 @@ class Node:
     
     def __ne__(self, __value: object) -> bool:
         return not self.__eq__(__value)
+
+    def set_address(self, network_status: str):
+        lines = network_status.splitlines()
+        for line in lines:
+            if line.startswith("r "):
+                # Examples:
+                # r exit1 CpsbIH/ROm8Rf5XK+jWO7iI08Zo aeKo+n3T+flct8KAwpdz0j8eGqA 2038-01-01 00:00:00 11.0.0.21 9111 0
+                # r exit1 CpsbIH/ROm8Rf5XK+jWO7iI08Zo 2038-01-01 00:00:00 11.0.0.21 9111 0
+                parts = line.split(" ")
+                if (len(parts) not in [8, 9]):
+                    raise Exception("Invalid network status line")
+                self.address = parts[-3] + ":" + parts[-2]
+                log("CONTROL", f"Setting address of {self.fingerprint}~{self.name} to {self.address}")
+                return
 
 class CircuitStatus:
     id: int
