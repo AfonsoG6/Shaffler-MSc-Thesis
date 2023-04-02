@@ -20,6 +20,9 @@ class Node:
     def __ne__(self, __value: object) -> bool:
         return not self.__eq__(__value)
 
+    def __hash__(self) -> int:
+        return hash(self.fingerprint)
+
     def set_address(self, network_status: str):
         lines = network_status.splitlines()
         for line in lines:
