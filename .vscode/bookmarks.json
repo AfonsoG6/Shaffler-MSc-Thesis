@@ -84,6 +84,16 @@
 					"label": "CONN->ADDR"
 				}
 			]
+		},
+		{
+			"path": "tor/src/core/or/circuituse.c",
+			"bookmarks": [
+				{
+					"line": 2679,
+					"column": 64,
+					"label": ""
+				}
+			]
 		}
 	]
 }

@@ -32,6 +32,7 @@ if __name__ == '__main__':
             control.set_exit_nodes(args.ctrl_port2, exit_nodes)
             new_threads: dict[str, StoppableThread] = {}
             for node in exit_nodes:
+                control.get_address_of_node(args.ctrl_port2, node)
                 if node.fingerprint in client_threads.keys():
                     log("THREADS", f"Reusing client for exit node {node.fingerprint}~{node.name}")
                     new_threads[node.fingerprint] = client_threads[node.fingerprint]
