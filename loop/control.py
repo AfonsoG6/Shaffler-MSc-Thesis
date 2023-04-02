@@ -108,21 +108,23 @@ def set_exit_nodes(control_port: int, exit_nodes: list[Node]):
     print(received)
     sock.close()
 
-def get_address_of_node(control_port: int, node: Node) -> str:
+def set_address_of_node(control_port: int, node: Node) -> None:
     sock = connect(control_port)
     sock.sendall(f"getinfo ns/id/{node.fingerprint}\n".encode("ascii"))
-    log("CONTROL", f"getinfo ns/id/{node.fingerprint}")
+    log("CONTROL", f"Getting address of {node.fingerprint}~{node.name}")
     received = sock.recv(4096).decode("ascii")
     print(received)
-    return received
+    node.set_address(received)
 
-def map_address(control_port: int, address: str, exit: Node) -> str:
+def map_address(control_port: int, address: str, exit: Node) -> None:
+    if exit.address == None:
+        set_address_of_node(control_port, exit)
     sock = connect(control_port)
-    sock.sendall(f"mapaddress {address}={get_address_of_node(control_port, exit)}.{exit.name}.exit\n".encode("ascii"))
+    log("CONTROL", f"Mapping {address} to {exit.address}.{exit.name}.exit")
+    sock.sendall(f"mapaddress {address}={exit.address}.{exit.name}.exit\n".encode("ascii"))
     received = sock.recv(1024).decode("ascii")
     print(received)
     sock.close()
-    return received
 
 def connect(control_port: int) -> socket.socket:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
