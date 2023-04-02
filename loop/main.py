@@ -46,7 +46,6 @@ if __name__ == '__main__':
     while True:
         exit_nodes: list[Node] = control.get_exit_nodes(args.ctrl_port1)
         if set(exit_nodes) != set(loops.keys()):
-            new_loops: dict[Node, Loop] = {}
             # Stop old and unnecessary loops
             for node in loops.keys():
                 if node not in exit_nodes:
@@ -55,6 +54,6 @@ if __name__ == '__main__':
             # Start new and necessary loops
             for node in exit_nodes:
                 if node not in loops:
-                    new_loops[node] = Loop(id_counter, node, args.server_host, args.server_port, args.ctrl_port2, args.socks_port2)
+                    loops[node] = Loop(id_counter, node, args.server_host, args.server_port, args.ctrl_port2, args.socks_port2)
                     id_counter += 1
         sleep(UPDATE_INTERVAL)
