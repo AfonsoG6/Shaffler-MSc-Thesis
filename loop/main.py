@@ -3,8 +3,6 @@ from utils import StoppableThread, sleep, log
 from server import run_server
 from tortypes import Node
 import control
-
-from threading import Thread
 import argparse
 
 UPDATE_INTERVAL = 1 # in seconds

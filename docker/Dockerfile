@@ -58,7 +58,7 @@ RUN ./configure --disable-asciidoc
 RUN make
 RUN make install
 
-RUN ln -s /root/rendezmix/docker/simulation /root
+RUN ln -s /root/rendezmix/simulation /root
 
 WORKDIR /root/simulation
 RUN find . -type f -exec dos2unix {} \;
@@ -68,3 +68,5 @@ RUN alias sim="/root/simulation/run.sh"
 WORKDIR /root/rendezmix/loop
 RUN apt install -y python3
 RUN pip install -r requirements.txt
+
+WORKDIR /root
