@@ -39,6 +39,15 @@ RUN cmake .. -DCMAKE_INSTALL_PREFIX=/root/.local
 RUN make
 RUN make install
 
+# Setup DeepCoFFEA
+WORKDIR /root
+RUN git clone https://github.com/traffic-analysis/deepcoffea.git
+RUN mkdir /root/deepcoffea/datasets
+WORKDIR /root/deepcoffea/datasets
+RUN gdown --fuzzy https://drive.google.com/file/d/1ZYFXfESD15SAR4Q8hsoVYdTHpTD8Orys/view
+RUN unzip CrawlE_Proc.zip
+RUN rm CrawlE_Proc.zip
+
 # Intall Rendezmix (Tor)
 RUN apt install -y openssl libssl-dev libevent-dev build-essential automake zlib1g zlib1g-dev
 
