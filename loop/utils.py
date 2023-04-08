@@ -17,6 +17,6 @@ def sleep(time: float) -> None:
     condition: Condition = Condition()
     with condition:
         condition.wait(timeout=time)
-        
+
 def log(context: str, message: str) -> None:
     print(f"{datetime.now().strftime('%b %d %H:%M:%S.%f')} [LOG,{context}] {message}")
