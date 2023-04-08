@@ -44,6 +44,7 @@ RUN apt install -y openssl libssl-dev libevent-dev build-essential automake zlib
 
 ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
 COPY ./.ssh /root/.ssh
+RUN dos2unix /root/.ssh/*
 RUN chmod 600 /root/.ssh/*
 RUN chmod 644 /root/.ssh/*.pub
 
