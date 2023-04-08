@@ -42,9 +42,10 @@ RUN make install
 # Intall Rendezmix (Tor)
 RUN apt install -y openssl libssl-dev libevent-dev build-essential automake zlib1g zlib1g-dev
 
-COPY ./.ssh /root/.ssh
-RUN chmod 600 /root/.ssh/*
 ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
+COPY ./.ssh /root/.ssh
+RUN chmod 600 /root/.ssh/id_ed25519
+RUN chmod 600 /root/.ssh/id_ed25519.pub
 
 WORKDIR /root
 RUN git clone git@github.com:AfonsoG6/rendezmix.git
