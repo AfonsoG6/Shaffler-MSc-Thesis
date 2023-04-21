@@ -1,1 +1,6 @@
-datasets/
+deepcoffea/__pycache__/
+deepcoffea/datasets/
+deepcoffea/data/
+
+DeepCorr/__pycache__/
+DeepCorr/dataset/
