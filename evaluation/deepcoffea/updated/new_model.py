@@ -1,15 +1,15 @@
 # The model is the DF model by Sirinam et al
-from keras.models import Model
-from keras.layers import Dense
-from keras.layers import Input
+from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.layers import Dense
+from tensorflow.python.keras.layers import Input
 
-from keras.layers import Activation
-from keras.layers import ELU
-from keras.layers import Conv1D, Conv2D
-from keras.layers import MaxPooling1D, MaxPooling2D
-from keras.layers import Dropout
-from keras.layers.core import Flatten
-from keras.initializers import RandomNormal
+from tensorflow.python.keras.layers import Activation
+from tensorflow.python.keras.layers import ELU
+from tensorflow.python.keras.layers import Conv1D, Conv2D
+from tensorflow.python.keras.layers import MaxPooling1D, MaxPooling2D
+from tensorflow.python.keras.layers import Dropout
+from tensorflow.python.keras.layers.core import Flatten
+from tensorflow.python.keras.initializers import RandomNormal
 
 
 def create_model(input_shape=None, emb_size=None, model_name=""):
