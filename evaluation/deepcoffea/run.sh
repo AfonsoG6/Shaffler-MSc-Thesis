@@ -12,14 +12,6 @@ do
     esac
 done
 
-echo "threshold: $threshold | interval: $interval | windows: $windows | addnum: $addnum"
-
-if [ -z "$interval" ] || [ -z "$windows" ] || [ -z "$addnum" ];
-then
-    echo "Please enter all the arguments"
-    exit 1
-fi
-
 if [ -z "$gpu" ];
 then
     gpu=0
@@ -28,6 +20,14 @@ fi
 if [ -z "$redirect" ];
 then
     redirect=0
+fi
+
+echo "threshold: $threshold | interval: $interval | windows: $windows | addnum: $addnum | use gpu: $gpu | redirect: $redirect"
+
+if [ -z "$interval" ] || [ -z "$windows" ] || [ -z "$addnum" ];
+then
+    echo "Please enter all the arguments"
+    exit 1
 fi
 
 mkdir -p data/
