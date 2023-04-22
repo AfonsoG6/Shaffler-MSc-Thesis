@@ -150,9 +150,11 @@ if __name__ == "__main__":
     args = get_params()
     
     if args.gpu > 0:
-        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(
+        cuda_visible_devices = ",".join(
             [str(i) for i in range(args.gpu)]
         )
+        print("CUDA_VISIBLE_DEVICES", cuda_visible_devices)
+        os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices
         ktf.set_session(get_session())
 
     model_gb = "cnn1d"
