@@ -18,6 +18,11 @@ then
     exit 1
 fi
 
+mkdir -p data/
+mkdir -p data/DeepCCA_model/
+mkdir -p datasets/
+mkdir -p datasets/new_dcf_data/
+
 if [ ! -z "$threshold" ];
 then
     python3 filter.py -t $threshold -i $interval -w $windows -a $addnum
