@@ -1,5 +1,3 @@
-conda create -y --name tf python=3.6.8
-conda activate tf
 conda install -y cudatoolkit=10.0.130 cudnn=7.6.4=cuda10.0_0
 pip install -r requirements.txt
 mkdir -p $CONDA_PREFIX/etc/conda/activate.d
