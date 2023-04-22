@@ -15,6 +15,10 @@ fi
 conda create -y --name $ENV_NAME python=3.6.8
 eval "$(conda shell.bash hook)"
 conda activate $ENV_NAME
+if [ $gpu -lt 1 ];
+then
+    pip install tensorflow=1.13.0
+fi
 pip install -r requirements.txt
 if [ $gpu -gt 0 ];
 then
