@@ -1,3 +1,5 @@
+ENV_NAME="tf"
+
 while getopts t:i:w:a:g:r: flag
 do
     case "${flag}" in
@@ -32,6 +34,9 @@ mkdir -p data/
 mkdir -p data/DeepCCA_model/
 mkdir -p datasets/
 mkdir -p datasets/new_dcf_data/
+
+eval "$(conda shell.bash hook)"
+conda activate $ENV_NAME
 
 if [ ! -z "$threshold" ];
 then
