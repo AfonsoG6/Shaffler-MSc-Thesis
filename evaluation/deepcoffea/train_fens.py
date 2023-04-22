@@ -23,7 +23,6 @@ import keras.backend as K
 
 # Stop the model training when 0.002 to get the best result in the paper!!!!
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 parser = argparse.ArgumentParser()
 
 
@@ -49,6 +48,7 @@ def get_params():
         required=False,
         default="./data/DeepCCA_model/crawle_overlap_new2021_",
     )
+    parser.add_argument("--gpu", "-g", required=False, type=int, default=0)
     args = parser.parse_args()
     return args
 
@@ -148,7 +148,12 @@ def load_whole_seq_new(tor_seq, exit_seq, circuit_labels, test_c, train_c, model
 
 if __name__ == "__main__":
     args = get_params()
-    ktf.set_session(get_session())
+    
+    if args.gpu > 0:
+        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(
+            [str(i) for i in range(args.gpu)]
+        )
+        ktf.set_session(get_session())
 
     model_gb = "cnn1d"
 
