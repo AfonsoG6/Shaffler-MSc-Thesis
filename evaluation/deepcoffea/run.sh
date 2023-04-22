@@ -1,12 +1,13 @@
 #!/usr/bin/bash
 
-while getopts t:i:w:a: flag
+while getopts t:i:w:a:g: flag
 do
     case "${flag}" in
         t) threshold=${OPTARG};;
         i) interval=${OPTARG};;
         w) windows=${OPTARG};;
         a) addnum=${OPTARG};;
+        g) gpu=${OPTARG};;
     esac
 done
 
@@ -16,6 +17,11 @@ if [ -z "$interval" ] || [ -z "$windows" ] || [ -z "$addnum" ];
 then
     echo "Please enter all the arguments"
     exit 1
+fi
+
+if [ -z "$gpu" ];
+then
+    gpu=0
 fi
 
 mkdir -p data/
@@ -29,4 +35,4 @@ then
     python3 new_dcf_parse.py -i $interval -w $windows -a $addnum
 fi
 
-python3 train_fens.py -i $interval -w $windows -a $addnum
+python3 train_fens.py -i $interval -w $windows -a $addnum -g $gpu
