@@ -17,11 +17,10 @@ eval "$(conda shell.bash hook)"
 conda activate $ENV_NAME
 if [ $gpu -lt 1 ];
 then
-    pip install tensorflow=1.13.0
-fi
-pip install -r requirements.txt
-if [ $gpu -gt 0 ];
-then
+    pip install -r requirements-cpu.txt
+else
+    pip install nvidia-pyindex
+    pip install -r requirements-gpu.txt
     conda install -y cudatoolkit=10.0.130 cudnn=7.6.4=cuda10.0_0
     mkdir -p $CONDA_PREFIX/etc/conda/activate.d
     echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/' >> $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
