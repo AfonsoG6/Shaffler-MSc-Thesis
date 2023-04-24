@@ -91,6 +91,7 @@ def Cosine_Similarity_eval(tor_embs, exit_embs, similarity_threshold, single_out
                 if ((not (cos_condithon_a)) and cos_condition_c):
                     TN = TN + 1
 
+        print("TP: ", TP, "FN: ", FN, "FP: ", FP, "TN: ", TN)
         if ((TP + FN) != 0):
             TPR = (float)(TP) / (TP + FN)
         else:
