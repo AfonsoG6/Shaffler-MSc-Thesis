@@ -1,3 +1,4 @@
 # DeepCoFFEA
 tensorflow==1.13.1
 Keras==2.3.0
+sklearn==0.0
