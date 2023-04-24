@@ -274,6 +274,8 @@ if __name__ == "__main__":
         print("CUDA_VISIBLE_DEVICES", cuda_visible_devices)
         os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices
         ktf.set_session(get_session())
+    else:
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
     start_time = time.time()
     model1_path = args.model1 + \
