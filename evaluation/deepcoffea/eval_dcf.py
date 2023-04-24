@@ -181,7 +181,7 @@ def threshold_finder(input_similarity_list, curr_win, gen_ranks, thres_seed, use
     return output_shreshold_list
 
 
-def eval_model(full_or_half, five_or_four, use_new_data, model1_path, model2_path, test_path, thr, use_global,
+def eval_model(full_or_half, minimum_windows_positive, use_new_data, model1_path, model2_path, test_path, thr, use_global,
                muti_output_list, flow, tor_len, exit_len, win_interval, num_windows):
     global total_emb
     global total_vot
@@ -222,7 +222,7 @@ def eval_model(full_or_half, five_or_four, use_new_data, model1_path, model2_pat
     for i in range(num_windows):
         activated_windows.append(i)
     last_activated_window = activated_windows[-1]
-    correlated_shreshold_value = five_or_four
+    correlated_threshold_value = minimum_windows_positive
     thres_seed = thr
 
     for win in range(num_windows):
@@ -262,7 +262,7 @@ def eval_model(full_or_half, five_or_four, use_new_data, model1_path, model2_pat
 
         if win in activated_windows:
             Cosine_Similarity_eval(tor_embs, exit_embs, threshold_result, single_output, win, last_activated_window,
-                                   correlated_shreshold_value, cosine_similarity_table, muti_output_list, flow)
+                                   correlated_threshold_value, cosine_similarity_table, muti_output_list, flow)
 
 
 if __name__ == "__main__":
@@ -295,7 +295,7 @@ if __name__ == "__main__":
 
     flow_length = args.flow
 
-    five_or_four = 2
+    minimum_windows_positive = 1 + args.num_windows//2
 
     rank_multi_output = []
     five_rank_multi_output = []
@@ -308,7 +308,7 @@ if __name__ == "__main__":
     use_new_data = 0
 
     for thr in rank_thr_list:
-        eval_model(flow_length, five_or_four, use_new_data, model1_path, model2_path, test_path, thr, use_global,
+        eval_model(flow_length, minimum_windows_positive, use_new_data, model1_path, model2_path, test_path, thr, use_global,
                    rank_multi_output[epoch_index], args.flow, args.tor_len, args.exit_len, args.win_interval, args.num_windows)
         epoch_index = epoch_index + 1
     end_time = time.time()
