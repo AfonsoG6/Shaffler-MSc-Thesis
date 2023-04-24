@@ -25,10 +25,8 @@ fi
 
 if [ -z "$mode" ];
 then
-    mode=1
+    mode=0
 fi
-
-mode = $mode - 1
 
 echo "mode: $mode | threshold: $threshold | interval: $interval | windows: $windows | addnum: $addnum | use gpu: $gpu | redirect: $redirect"
 
