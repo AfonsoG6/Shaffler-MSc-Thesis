@@ -49,6 +49,8 @@ def get_params():
         default="./data/DeepCCA_model/crawle_overlap_new2021_",
     )
     parser.add_argument("--gpu", "-g", required=False, type=int, default=0)
+    parser.add_argument("--target_loss", "-l",
+                        required=False, type=int, default=0.05)
     args = parser.parse_args()
     return args
 
@@ -148,7 +150,7 @@ def load_whole_seq_new(tor_seq, exit_seq, circuit_labels, test_c, train_c, model
 
 if __name__ == "__main__":
     args = get_params()
-    
+
     if args.gpu > 0:
         cuda_visible_devices = ",".join(
             [str(i) for i in range(args.gpu)]
@@ -400,7 +402,7 @@ if __name__ == "__main__":
             # print(anc_idxs)
             anc_idxs = list(anc_idxs)
             valid_neg_pool = neg_imgs_idx  # .difference(anc_idxs)
-            #print(" valid_neg_pool", valid_neg_pool.shape)
+            # print(" valid_neg_pool", valid_neg_pool.shape)
             return np.random.choice(valid_neg_pool, len(anc_idxs), replace=False)
         final_neg = []
         # for each positive pair
@@ -530,7 +532,7 @@ if __name__ == "__main__":
                 + str(addn)
                 + "_model2_w_superpkt.h5"
             )
-            if (best_loss < 0.002):
+            if (best_loss < args.target_loss):
                 exit(0)
         else:
             print("loss is not improved from {}.".format(str(best_loss)))
