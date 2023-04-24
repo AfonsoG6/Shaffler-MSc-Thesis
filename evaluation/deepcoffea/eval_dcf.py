@@ -295,7 +295,7 @@ if __name__ == "__main__":
 
     flow_length = args.flow
 
-    five_or_four = 9
+    five_or_four = 2
 
     rank_multi_output = []
     five_rank_multi_output = []
