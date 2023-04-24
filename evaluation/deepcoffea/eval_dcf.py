@@ -13,24 +13,29 @@ total_emb = 0
 total_vot = 0
 total_cos = 0
 
-# if you don't use GPU, comment out the following
-os.environ["CUDA_VISIBLE_DEVICES"] = ""
-
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    '--test', default='./data/DeepCCA_model/crawle_overlap_new2021')
-parser.add_argument('--flow', "-f", default=2094)
-parser.add_argument('--tor_len', "-tl", default=500)
-parser.add_argument('--exit_len', "-el", default=800)
-parser.add_argument("--win_interval", "-i", type=int, required=False, default=5)
-parser.add_argument("--num_windows", "-w", type=int, required=False, default=11)
-parser.add_argument("--addnum", "-a", type=int, required=False, default=2)
-parser.add_argument(
-    '--model1', default='./data/DeepCCA_model/crawle_overlap_new2021')
-parser.add_argument(
-    '--model2', default='./data/DeepCCA_model/crawle_overlap_new2021')
-parser.add_argument('--output', default="./data/dcf_result/crawle_dcf0.002")
-args = parser.parse_args()
+
+
+def parse_args():
+    parser.add_argument(
+        '--test', default='./data/DeepCCA_model/crawle_overlap_new2021')
+    parser.add_argument('--flow', "-f", type=int, default=2094)
+    parser.add_argument('--tor_len', "-tl", type=int, default=500)
+    parser.add_argument('--exit_len', "-el", type=int, default=800)
+    parser.add_argument("--win_interval", "-i", type=int,
+                        required=False, default=5)
+    parser.add_argument("--num_windows", "-w", type=int,
+                        required=False, default=11)
+    parser.add_argument("--addnum", "-a", type=int, required=False, default=2)
+    parser.add_argument(
+        '--model1', default='./data/DeepCCA_model/crawle_overlap_new2021')
+    parser.add_argument(
+        '--model2', default='./data/DeepCCA_model/crawle_overlap_new2021')
+    parser.add_argument(
+        '--output', default="./data/dcf_result/crawle_dcf0.002")
+    parser.add_argument("--gpu", "-g", required=False, type=int, default=0)
+    args = parser.parse_args()
+    return args
 
 
 def get_session(gpu_fraction=0.85):
@@ -46,7 +51,7 @@ def ini_cosine_output(single_output_l, input_number):
 
 
 def Cosine_Similarity_eval(tor_embs, exit_embs, similarity_threshold, single_output_l, evaluating_window, last_window,
-                           correlated_shreshold, cosine_similarity_all_list, muti_output_list):
+                           correlated_shreshold, cosine_similarity_all_list, muti_output_list, flow):
 
     global total_vot
     # print('single_output_l ',np.array(single_output_l).shape)
@@ -98,19 +103,19 @@ def Cosine_Similarity_eval(tor_embs, exit_embs, similarity_threshold, single_out
 
         muti_output_list.append(TPR)
         muti_output_list.append(FPR)
-        muti_output_list.append(calculate_bdr(TPR, FPR))
-        print(TPR, FPR, calculate_bdr(TPR, FPR))
+        muti_output_list.append(calculate_bdr(TPR, FPR, flow))
+        print(TPR, FPR, calculate_bdr(TPR, FPR, flow))
 
     # print(".....done!")
     end_time = time.time()
     total_vot = total_vot + (end_time - start_emd)
 
 
-def calculate_bdr(tpr, fpr):
+def calculate_bdr(tpr, fpr, flow):
     TPR = tpr
     FPR = fpr
-    c = 1 / int(args.flow)
-    u = (int(args.flow)-1) / int(args.flow)
+    c = 1 / int(flow)
+    u = (int(flow)-1) / int(flow)
     if ((TPR * c) + (FPR * u)) != 0:
         BDR = (TPR * c) / ((TPR * c) + (FPR * u))
     else:
@@ -118,7 +123,7 @@ def calculate_bdr(tpr, fpr):
     return BDR
 
 
-def preprocessing_new_test_data(win, number_of_interval):
+def preprocessing_new_test_data(win, number_of_interval, flow, tor_len, exit_len):
     npz_path = '../data/obfs_new/obfs4_new_interval' + \
         str(number_of_interval) + '_win' + str(win) + '.npz'
     np_array = np.load(npz_path, encoding='latin1', allow_pickle=True)
@@ -138,21 +143,22 @@ def preprocessing_new_test_data(win, number_of_interval):
     for i in range(0, number_of_traces):
         tor_seq[i] = [float(pair["ipd"]) * 1000.0 for pair in tor_seq[i]] + [float(pair["size"]) / 1000.0 for pair in
                                                                              tor_seq[i]]
-        if len(tor_seq[i]) < (500 * 2):
-            tor_seq[i] = tor_seq[i] + ([0] * ((500 * 2) - (len(tor_seq[i]))))
-        elif len(tor_seq[i]) > (500 * 2):
-            tor_seq[i] = tor_seq[i][0:(500 * 2)]
+        if len(tor_seq[i]) < (tor_len * 2):
+            tor_seq[i] = tor_seq[i] + \
+                ([0] * ((tor_len * 2) - (len(tor_seq[i]))))
+        elif len(tor_seq[i]) > (tor_len * 2):
+            tor_seq[i] = tor_seq[i][0:(tor_len * 2)]
 
         exit_seq[i] = [float(pair["ipd"]) * 1000.0 for pair in exit_seq[i]] + [float(pair["size"]) / 1000.0 for pair
                                                                                in exit_seq[i]]
-        if len(exit_seq[i]) < (800 * 2):
+        if len(exit_seq[i]) < (exit_len * 2):
             exit_seq[i] = exit_seq[i] + \
-                ([0] * ((800 * 2) - (len(exit_seq[i]))))
-        elif len(exit_seq[i]) > (800 * 2):
-            exit_seq[i] = exit_seq[i][0:(800 * 2)]
+                ([0] * ((exit_len * 2) - (len(exit_seq[i]))))
+        elif len(exit_seq[i]) > (exit_len * 2):
+            exit_seq[i] = exit_seq[i][0:(exit_len * 2)]
 
-    tor_test = np.reshape(np.array(list(tor_seq)), (2094, 1000, 1))
-    exit_test = np.reshape(np.array(list(exit_seq)), (2094, 1600, 1))
+    tor_test = np.reshape(np.array(list(tor_seq)), (flow, 1000, 1))
+    exit_test = np.reshape(np.array(list(exit_seq)), (flow, 1600, 1))
     print(tor_test[0][1])
     return (tor_test, exit_test)
 
@@ -175,7 +181,7 @@ def threshold_finder(input_similarity_list, curr_win, gen_ranks, thres_seed, use
 
 
 def eval_model(full_or_half, five_or_four, use_new_data, model1_path, model2_path, test_path, thr, use_global,
-               muti_output_list, soft_muti_output_list):
+               muti_output_list, flow, tor_len, exit_len, win_interval, num_windows):
     global total_emb
     global total_vot
     global total_cos
@@ -183,8 +189,8 @@ def eval_model(full_or_half, five_or_four, use_new_data, model1_path, model2_pat
     test_data = np.load(test_path, allow_pickle=True)
     print(test_data['tor'][0].shape)
     print(test_data['exit'][0].shape)
-    pad_t = int(args.tor_len)*2  # 500*2 #238*2
-    pad_e = int(args.exit_len)*2  # 800*2 #100*2
+    pad_t = tor_len*2  # tor_len*2 #238*2
+    pad_e = exit_len*2  # exit_len*2 #100*2
 
     tor_model = create_model(input_shape=(
         pad_t, 1), emb_size=64, model_name='tor')
@@ -212,13 +218,13 @@ def eval_model(full_or_half, five_or_four, use_new_data, model1_path, model2_pat
     # below are the code that are used for controlling the behavior of the program
 
     activated_windows = []
-    for i in range(args.num_windows):
+    for i in range(num_windows):
         activated_windows.append(i)
     last_activated_window = activated_windows[-1]
     correlated_shreshold_value = five_or_four
     thres_seed = thr
 
-    for win in range(args.num_windows):
+    for win in range(num_windows):
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ We are in window %d ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" % win)
         pos_dist = []
         neg_dist = []
@@ -228,7 +234,7 @@ def eval_model(full_or_half, five_or_four, use_new_data, model1_path, model2_pat
 
         if use_new_data == 1:
             (test_data_tor, test_data_exit) = preprocessing_new_test_data(
-                win, args.win_interval)
+                win, win_interval, flow, tor_len, exit_len)
         elif use_new_data != 1:
             test_data_tor = test_data['tor'][win][:full_or_half]
             test_data_exit = test_data['exit'][win][:full_or_half]
@@ -255,12 +261,20 @@ def eval_model(full_or_half, five_or_four, use_new_data, model1_path, model2_pat
 
         if win in activated_windows:
             Cosine_Similarity_eval(tor_embs, exit_embs, threshold_result, single_output, win, last_activated_window,
-                                   correlated_shreshold_value, cosine_similarity_table, muti_output_list)
+                                   correlated_shreshold_value, cosine_similarity_table, muti_output_list, flow)
 
 
 if __name__ == "__main__":
-    # if you don't use GPU, comment out the following
-    #ktf.set_session(get_session())
+    args = parse_args()
+
+    if args.gpu > 0:
+        cuda_visible_devices = ",".join(
+            [str(i) for i in range(args.gpu)]
+        )
+        print("CUDA_VISIBLE_DEVICES", cuda_visible_devices)
+        os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices
+        ktf.set_session(get_session())
+
     start_time = time.time()
     model1_path = args.model1 + \
         f"_{args.num_windows}_interval{args.win_interval}_addn{args.addnum}_model1_w_superpkt"
@@ -272,11 +286,11 @@ if __name__ == "__main__":
     output_path = args.output + \
         f"_{args.num_windows}_0.02_interval{args.win_interval}_addn{args.addnum}_{args.tor_len}_{args.exit_len}.csv"
     # For time complexity analysis, use only one threshold (e.g., [60])
-    rank_thr_list = [60] # [60, 50, 47, 43, 40, 37, 33, 28, 24, 20, 16.667, 14, 12.5, 11, 10, 9, 8.333, 7, 6.25, 5, 4.545, 3.846, 2.941, 1.667, 1.6, 1.5, 1.4, 1.3, 1.2, 1.1, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2]
+    rank_thr_list = [60]  # [60, 50, 47, 43, 40, 37, 33, 28, 24, 20, 16.667, 14, 12.5, 11, 10, 9, 8.333, 7, 6.25, 5, 4.545, 3.846, 2.941, 1.667, 1.6, 1.5, 1.4, 1.3, 1.2, 1.1, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2]
 
     num_of_thr = len(rank_thr_list)
 
-    flow_length = int(args.flow)
+    flow_length = args.flow
 
     five_or_four = 9
 
@@ -292,7 +306,7 @@ if __name__ == "__main__":
 
     for thr in rank_thr_list:
         eval_model(flow_length, five_or_four, use_new_data, model1_path, model2_path, test_path, thr, use_global,
-                   rank_multi_output[epoch_index], [])
+                   rank_multi_output[epoch_index], args.flow, args.tor_len, args.exit_len, args.win_interval, args.num_windows)
         epoch_index = epoch_index + 1
     end_time = time.time()
     with open(output_path, "w", newline="") as rank_f:
