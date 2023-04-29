@@ -1,7 +1,7 @@
 version: "3.8"
 services:
-  shadow:
-    image: shadow
+  rendezmix:
+    image: rendezmix
     working_dir: /root
     entrypoint: /bin/bash
     build:
@@ -25,7 +25,7 @@ services:
     #     hard: 4194304 # 4M
 
     # Configuration that is equivalent to running:
-    # docker run --privileged -it --tmpfs /dev/shm:rw,nosuid,nodev,exec,size=1024g --security-opt seccomp=unconfined shadow
+    # docker run --privileged -it --tmpfs /dev/shm:rw,nosuid,nodev,exec,size=1024g --security-opt seccomp=unconfined rendezmix
     tmpfs:
       - /dev/shm:rw,nosuid,nodev,exec,size=2g
     security_opt:
