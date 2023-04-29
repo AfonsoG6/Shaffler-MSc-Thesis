@@ -39,19 +39,23 @@ RUN cmake .. -DCMAKE_INSTALL_PREFIX=/root/.local
 RUN make
 RUN make install
 
-# Setup DeepCoFFEA
+# Install OnionTrace
 WORKDIR /root
-RUN git clone https://github.com/traffic-analysis/deepcoffea.git
-RUN mkdir /root/deepcoffea/datasets
-WORKDIR /root/deepcoffea/datasets
-RUN gdown --fuzzy https://drive.google.com/file/d/1ZYFXfESD15SAR4Q8hsoVYdTHpTD8Orys/view
-RUN unzip CrawlE_Proc.zip
-RUN rm CrawlE_Proc.zip
+RUN git clone https://github.com/shadow/oniontrace.git
+
+RUN apt install -y cmake libglib2.0-0 libglib2.0-dev
+
+RUN mkdir build && cd build
+RUN cmake .. -DCMAKE_INSTALL_PREFIX=/root/.local
+RUN make
+
+RUN make install
 
 # Intall Rendezmix (Tor)
 RUN apt install -y openssl libssl-dev libevent-dev build-essential automake zlib1g zlib1g-dev
 
-ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
+# Uncomment next line to force everything from here onwards to be rebuilt
+# ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
 COPY ./.ssh /root/.ssh
 RUN dos2unix /root/.ssh/*
 RUN chmod 600 /root/.ssh/*
@@ -69,15 +73,39 @@ RUN ./configure --disable-asciidoc
 RUN make
 RUN make install
 
-RUN ln -s /root/rendezmix/simulation /root
-
 WORKDIR /root/simulation
 RUN find . -type f -exec dos2unix {} \;
-
-RUN alias sim="/root/simulation/run.sh"
 
 WORKDIR /root/rendezmix/loop
 RUN apt install -y python3
 RUN pip install -r requirements.txt
+
+# Setup tornettools
+
+WORKDIR /root
+RUN git clone https://github.com/shadow/tornettools.git
+
+WORKDIR /root/tornettools
+RUN pip install -r requirements.txt
+RUN pip install --ignore-installed .
+
+RUN mkdir /root/tntdata
+WORKDIR /root/tntdata
+
+RUN wget https://collector.torproject.org/archive/relay-descriptors/consensuses/consensuses-2020-11.tar.xz
+RUN wget https://collector.torproject.org/archive/relay-descriptors/server-descriptors/server-descriptors-2020-11.tar.xz
+RUN wget https://metrics.torproject.org/userstats-relay-country.csv
+RUN wget https://collector.torproject.org/archive/onionperf/onionperf-2020-11.tar.xz
+RUN wget -O bandwidth-2020-11.csv "https://metrics.torproject.org/bandwidth.csv?start=2020-11-01&end=2020-11-30"
+
+RUN tar xaf consensuses-2020-11.tar.xz
+RUN tar xaf server-descriptors-2020-11.tar.xz
+RUN tar xaf onionperf-2020-11.tar.xz
+
+RUN git clone https://github.com/tmodel-ccs2018/tmodel-ccs2018.github.io.git
+
+RUN apt install -y faketime dstat procps xz-utils
+
+ENV PATH "${PATH}:/root/rendezmix/tor/src/core/or:/root/rendezmix/tor/src/app:/root/rendezmix/tor/src/tools"
 
 WORKDIR /root
