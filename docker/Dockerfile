@@ -90,6 +90,8 @@ WORKDIR /root/tornettools
 RUN pip install -r requirements.txt
 RUN pip install --ignore-installed .
 
+RUN apt install -y faketime dstat procps xz-utils wget
+
 RUN mkdir /root/tntdata
 WORKDIR /root/tntdata
 
@@ -105,7 +107,6 @@ RUN tar xaf onionperf-2020-11.tar.xz
 
 RUN git clone https://github.com/tmodel-ccs2018/tmodel-ccs2018.github.io.git
 
-RUN apt install -y faketime dstat procps xz-utils
 
 ENV PATH "${PATH}:/root/rendezmix/tor/src/core/or:/root/rendezmix/tor/src/app:/root/rendezmix/tor/src/tools"
 
