@@ -42,13 +42,14 @@ RUN make install
 # Install OnionTrace
 WORKDIR /root
 RUN git clone https://github.com/shadow/oniontrace.git
+WORKDIR /root/oniontrace/
 
 RUN apt install -y cmake libglib2.0-0 libglib2.0-dev
 
-RUN mkdir build && cd build
+RUN mkdir /root/oniontrace/build
+WORKDIR /root/oniontrace/build
 RUN cmake .. -DCMAKE_INSTALL_PREFIX=/root/.local
 RUN make
-
 RUN make install
 
 # Intall Rendezmix (Tor)
