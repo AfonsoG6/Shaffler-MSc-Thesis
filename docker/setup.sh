@@ -64,7 +64,7 @@ cd ~/simulation
 find . -type f -exec dos2unix {} \;
 
 cd ~/rendezmix/loop
-sudo apt install -y python3
+sudo apt install -y python3 python3-pip
 pip install -r requirements.txt
 
 # Setup tornettools
@@ -87,9 +87,9 @@ wget https://metrics.torproject.org/userstats-relay-country.csv
 wget https://collector.torproject.org/archive/onionperf/onionperf-2020-11.tar.xz
 wget -O bandwidth-2020-11.csv "https://metrics.torproject.org/bandwidth.csv?start=2020-11-01&end=2020-11-30"
 
-tar xaf consensuses-2020-11.tar.xz
-tar xaf server-descriptors-2020-11.tar.xz
-tar xaf onionperf-2020-11.tar.xz
+tar xafv consensuses-2020-11.tar.xz
+tar xafv server-descriptors-2020-11.tar.xz
+tar xafv onionperf-2020-11.tar.xz
 
 git clone https://github.com/tmodel-ccs2018/tmodel-ccs2018.github.io.git
 
