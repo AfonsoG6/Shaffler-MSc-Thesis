@@ -2,6 +2,8 @@ export CC=gcc
 export CONTAINER=ubuntu:20.04
 export BUILDTYPE=release
 
+export MYUSER=$USER
+
 sudo -s -E
 
 touch ~/.profile
@@ -17,10 +19,10 @@ echo "fs.file-max = 10485760" | tee -a /etc/sysctl.conf
 sysctl -p
 
 sed -i 's/# End of file//g' /etc/security/limits.conf
-echo "$USER soft nofile 10485760" | tee -a /etc/security/limits.conf
-echo "$USER hard nofile 10485760" | tee -a /etc/security/limits.conf
-echo "$USER soft nproc unlimited" | tee -a /etc/security/limits.conf
-echo "$USER hard nproc unlimited" | tee -a /etc/security/limits.conf
+echo "$MYUSER soft nofile 10485760" | tee -a /etc/security/limits.conf
+echo "$MYUSER hard nofile 10485760" | tee -a /etc/security/limits.conf
+echo "$MYUSER soft nproc unlimited" | tee -a /etc/security/limits.conf
+echo "$MYUSER hard nproc unlimited" | tee -a /etc/security/limits.conf
 echo "# End of file" | tee -a /etc/security/limits.conf
 
 systemctl set-property user-$UID.slice TasksMax=infinity
