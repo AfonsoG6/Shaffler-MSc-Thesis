@@ -2,8 +2,10 @@ export CC=gcc
 export CONTAINER=ubuntu:20.04
 export BUILDTYPE=release
 
-ln -s /shared/id_ed25519 ~/.ssh/id_ed25519
-ln -s /shared/id_ed25519.pub ~/.ssh/id_ed25519.pub
+cp /shared/id_ed25519 ~/.ssh
+cp /shared/id_ed25519.pub ~/.ssh
+cp /shared/id_ed25519 /root/.ssh
+cp /shared/id_ed25519.pub /root/.ssh
 
 touch ~/.profile
 
