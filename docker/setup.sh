@@ -2,6 +2,9 @@ export CC=gcc
 export CONTAINER=ubuntu:20.04
 export BUILDTYPE=release
 
+ln -s /shared/id_ed25519 ~/.ssh/id_ed25519
+ln -s /shared/id_ed25519.pub ~/.ssh/id_ed25519.pub
+
 touch ~/.profile
 
 apt update -y
@@ -15,10 +18,10 @@ echo "fs.file-max = 10485760" | tee -a /etc/sysctl.conf
 sysctl -p
 
 sed -i 's/# End of file//g' /etc/security/limits.conf
-echo "$MYUSER soft nofile 10485760" | tee -a /etc/security/limits.conf
-echo "$MYUSER hard nofile 10485760" | tee -a /etc/security/limits.conf
-echo "$MYUSER soft nproc unlimited" | tee -a /etc/security/limits.conf
-echo "$MYUSER hard nproc unlimited" | tee -a /etc/security/limits.conf
+echo "vagrant soft nofile 10485760" | tee -a /etc/security/limits.conf
+echo "vagrant hard nofile 10485760" | tee -a /etc/security/limits.conf
+echo "vagrant soft nproc unlimited" | tee -a /etc/security/limits.conf
+echo "vagrant hard nproc unlimited" | tee -a /etc/security/limits.conf
 echo "# End of file" | tee -a /etc/security/limits.conf
 
 systemctl set-property user-$UID.slice TasksMax=infinity
