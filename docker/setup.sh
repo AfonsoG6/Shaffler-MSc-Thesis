@@ -4,6 +4,8 @@ export BUILDTYPE=release
 
 sudo -s -E
 
+touch ~/.profile
+
 apt update -y
 apt upgrade -y
 apt install -y dos2unix git vim
@@ -126,6 +128,7 @@ tar xafv onionperf-2020-11.tar.xz
 
 git clone https://github.com/tmodel-ccs2018/tmodel-ccs2018.github.io.git
 
-export PATH="${PATH}:~/rendezmix/tor/src/core/or:~/rendezmix/tor/src/app:~/rendezmix/tor/src/tools"
+export PATH="$PATH:~/rendezmix/tor/src/core/or:~/rendezmix/tor/src/app:~/rendezmix/tor/src/tools"
+echo "export PATH=\"\$PATH:~/rendezmix/tor/src/core/or:~/rendezmix/tor/src/app:~/rendezmix/tor/src/tools\"" | tee -a ~/.profile
 
 cd ~
