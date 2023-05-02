@@ -2,10 +2,6 @@ export CC=gcc
 export CONTAINER=ubuntu:20.04
 export BUILDTYPE=release
 
-export MYUSER=$USER
-
-sudo -s -E
-
 touch ~/.profile
 
 apt update -y
