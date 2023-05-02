@@ -1,0 +1,3 @@
+SocksTimeout 120
+CircuitStreamTimeout 120
+MaxClientCircuitsPending 1024
