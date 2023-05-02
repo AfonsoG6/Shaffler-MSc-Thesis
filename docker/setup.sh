@@ -44,6 +44,7 @@ sysctl -p
 cd ~
 git clone https://github.com/shadow/shadow.git
 cd ~/shadow
+git checkout tags/v2.4.0
 
 find . -type f -exec dos2unix {} \;
 
