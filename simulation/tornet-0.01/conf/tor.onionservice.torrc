@@ -1,0 +1,7 @@
+ClientOnly 1
+ORPort 0
+DirPort 0
+SocksPort 9050
+HiddenServiceDir hs
+HiddenServicePort 8080 127.0.0.1:80
+UseEntryGuards 0

@@ -1,0 +1,12 @@
+2023-04-30 16:12:44 1682871164.179903 [tornettools] [INFO] Logging system initialized! Logging events to stdout and to '/home/vagrant/tntdata/tornet-0.01/tornettools.simulate.2023-04-30.16.12.44.log'
+2023-04-30 16:12:44 1682871164.180165 [tornettools] [INFO] Seeded standard and numpy PRNGs with seed=1239640799
+2023-04-30 16:12:44 1682871164.180290 [tornettools] [INFO] The argument namespace is: Namespace(command='simulate', do_compress=False, do_version=False, formatter_class=<class '__main__.CustomHelpFormatter'>, func=<function simulate at 0x7f98c66970d0>, prefix='/home/vagrant/tntdata/tornet-0.01', quiet=0, seed=1239640799, shadow_args='--parallelism=5 --seed=666 --template-directory=shadow.data.template', shadow_config='shadow.config.yaml', shadow_exe='/home/vagrant/.local/bin/shadow', tornet_config_path='/home/vagrant/tntdata/tornet-0.01', use_realtime=False)
+2023-04-30 16:12:44 1682871164.199708 [tornettools] [INFO] The platform is: Linux-5.4.0-148-generic-x86_64-with-glibc2.29
+2023-04-30 16:12:44 1682871164.200042 [tornettools] [INFO] System info: uname_result(system='Linux', node='ubuntu-focal', release='5.4.0-148-generic', version='#165-Ubuntu SMP Tue Apr 18 08:53:12 UTC 2023', machine='x86_64', processor='x86_64')
+2023-04-30 16:12:44 1682871164.200856 [tornettools] [INFO] Starting a simulation from tornet prefix /home/vagrant/tntdata/tornet-0.01
+2023-04-30 16:12:44 1682871164.200983 [tornettools] [INFO] Starting dstat
+2023-04-30 16:12:44 1682871164.203978 [tornettools] [INFO] Starting free loop
+2023-04-30 16:12:44 1682871164.205250 [tornettools] [INFO] Starting shadow
+2023-04-30 16:12:44 1682871164.233720 [tornettools] [INFO] Cleaning up
+2023-04-30 16:12:45 1682871165.226804 [tornettools] [INFO] Done simulating; shadow returned code '1'
+2023-04-30 16:12:45 1682871165.227297 [tornettools] [ERROR] Shadow simulation did not complete successfully
