@@ -51,11 +51,15 @@ ci/container_scripts/install_deps.sh
 
 ci/container_scripts/install_extra_deps.sh
 
-export PATH="~/.cargo/bin:$PATH"
+export PATH="$PATH:~/.cargo/bin"
+echo "export PATH=\"\$PATH:~/.cargo/bin\"" | tee -a ~/.profile
+
+source "$HOME/.cargo/env"
+echo "source \"\$HOME/.cargo/env\"" | tee -a ~/.profile
 
 ci/container_scripts/build_and_install.sh
 
-export PATH="~/.local/bin:$PATH"
+export PATH="$PATH:~/.local/bin"
 
 # Install TGen
 cd ~
@@ -133,5 +137,61 @@ git clone https://github.com/tmodel-ccs2018/tmodel-ccs2018.github.io.git
 
 export PATH="$PATH:~/rendezmix/tor/src/core/or:~/rendezmix/tor/src/app:~/rendezmix/tor/src/tools"
 echo "export PATH=\"\$PATH:~/rendezmix/tor/src/core/or:~/rendezmix/tor/src/app:~/rendezmix/tor/src/tools\"" | tee -a ~/.profile
+
+alias stage="cd ~/tntdata; tornettools stage \
+consensuses-2020-11 \
+server-descriptors-2020-11 \
+userstats-relay-country.csv \
+tmodel-ccs2018.github.io \
+--onionperf_data_path onionperf-2020-11 \
+--bandwidth_data_path bandwidth-2020-11.csv \
+--geoip_path ~/rendezmix/tor/src/config/geoip"
+
+echo "alias stage=\"cd ~/tntdata; tornettools stage \
+consensuses-2020-11 \
+server-descriptors-2020-11 \
+userstats-relay-country.csv \
+tmodel-ccs2018.github.io \
+--onionperf_data_path onionperf-2020-11 \
+--bandwidth_data_path bandwidth-2020-11.csv \
+--geoip_path ~/rendezmix/tor/src/config/geoip\"" | tee -a ~/.profile
+
+alias generate="cd ~/tntdata; tornettools generate \
+relayinfo_staging_2020-11-01--2020-11-30.json \
+userinfo_staging_2020-11-01--2020-11-30.json \
+networkinfo_staging.gml \
+tmodel-ccs2018.github.io \
+--network_scale 0.01 \
+--prefix tornet-0.01"
+
+echo "alias generate=\"cd ~/tntdata; tornettools generate \
+relayinfo_staging_2020-11-01--2020-11-30.json \
+userinfo_staging_2020-11-01--2020-11-30.json \
+networkinfo_staging.gml \
+tmodel-ccs2018.github.io \
+--network_scale 0.01 \
+--prefix tornet-0.01\"" | tee -a ~/.profile
+
+alias simulate="cd ~/tntdata; tornettools simulate tornet-0.01"
+
+echo "alias simulate=\"cd ~/tntdata; tornettools simulate tornet-0.01\"" | tee -a ~/.profile
+
+alias parse="cd ~/tntdata; tornettools parse tornet-0.01"
+
+echo "alias parse=\"cd ~/tntdata; tornettools parse tornet-0.01\"" | tee -a ~/.profile
+
+alias plot="cd ~/tntdata; tornettools plot \
+tornet-0.01 \
+--tor_metrics_path tor_metrics_2020-11-01--2020-11-30.json \
+--prefix pdfs"
+
+echo "alias plot=\"cd ~/tntdata; tornettools plot \
+tornet-0.01 \
+--tor_metrics_path tor_metrics_2020-11-01--2020-11-30.json \
+--prefix pdfs\"" | tee -a ~/.profile
+
+alias archive="cd ~/tntdata; tornettools archive tornet-0.01"
+
+echo "alias archive=\"cd ~/tntdata; tornettools archive tornet-0.01\"" | tee -a ~/.profile
 
 cd ~
