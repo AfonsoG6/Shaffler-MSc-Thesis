@@ -1,6 +1,0 @@
-# The following files specify default tor config options for this host.
-%include ../../../conf/tor.common.torrc
-%include ../../../conf/tor.relay.torrc
-%include ../../../conf/tor.relay.exitguard.torrc
-BandwidthRate 104857600
-BandwidthBurst 104857600

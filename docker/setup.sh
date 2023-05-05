@@ -127,7 +127,7 @@ pip install --ignore-installed .
 
 apt install -y faketime dstat procps xz-utils wget
 
-mkdir ~/rendezmix/simulation/data
+mkdir -p ~/rendezmix/simulation/data
 cd ~/rendezmix/simulation/data
 
 wget https://collector.torproject.org/archive/relay-descriptors/consensuses/consensuses-2020-11.tar.xz

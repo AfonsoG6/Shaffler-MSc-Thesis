@@ -1,2 +1,4 @@
 data/
 pdfs*
+**/shadow.data
+**/shadow.log
