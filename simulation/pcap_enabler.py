@@ -11,14 +11,13 @@ def enable_pcap(hosts: dict):
         else:
             host_config["options"] = {"pcap_directory": "."}
 
+
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-f", "--file", type=str, required=True)
 
     args = parser.parse_args()
     filename: str = args.file
-    pcap: bool = args.pcap
-    streamtrace: bool = args.streamtrace
 
     config = yaml.load(open(filename, "r"), Loader=yaml.FullLoader)
     enable_pcap(config["hosts"])
