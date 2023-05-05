@@ -22,8 +22,10 @@ hosts:
         -f torrc
       start_time: 1
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 2
+    options:
+      pcap_directory: .
   4uthority2:
     network_node_id: 327
     ip_addr: 100.0.0.2
@@ -35,8 +37,10 @@ hosts:
         -f torrc
       start_time: 1
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 2
+    options:
+      pcap_directory: .
   4uthority3:
     network_node_id: 1410
     ip_addr: 100.0.0.3
@@ -48,8 +52,10 @@ hosts:
         -f torrc
       start_time: 1
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 2
+    options:
+      pcap_directory: .
   relay1exitguard:
     network_node_id: 1601
     ip_addr: 185.220.102.242
@@ -61,8 +67,10 @@ hosts:
         torrc-defaults -f torrc
       start_time: 2
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 3
+    options:
+      pcap_directory: .
   relay2exitguard:
     network_node_id: 503
     ip_addr: 104.244.76.13
@@ -74,8 +82,10 @@ hosts:
         torrc-defaults -f torrc
       start_time: 2
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 3
+    options:
+      pcap_directory: .
   relay3exitguard:
     network_node_id: 673
     ip_addr: 130.225.244.90
@@ -87,8 +97,10 @@ hosts:
         torrc-defaults -f torrc
       start_time: 2
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 3
+    options:
+      pcap_directory: .
   relay4exitguard:
     network_node_id: 1686
     ip_addr: 62.210.37.82
@@ -100,8 +112,10 @@ hosts:
         torrc-defaults -f torrc
       start_time: 2
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 3
+    options:
+      pcap_directory: .
   relay5exitguard:
     network_node_id: 1601
     ip_addr: 185.220.101.141
@@ -113,8 +127,10 @@ hosts:
         torrc-defaults -f torrc
       start_time: 2
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 3
+    options:
+      pcap_directory: .
   relay6exitguard:
     network_node_id: 1027
     ip_addr: 86.104.194.52
@@ -126,8 +142,10 @@ hosts:
         torrc-defaults -f torrc
       start_time: 2
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 3
+    options:
+      pcap_directory: .
   relay7exitguard:
     network_node_id: 1216
     ip_addr: 51.195.136.190
@@ -139,8 +157,10 @@ hosts:
         torrc-defaults -f torrc
       start_time: 2
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 3
+    options:
+      pcap_directory: .
   relay8exitguard:
     network_node_id: 1594
     ip_addr: 208.68.7.129
@@ -152,8 +172,10 @@ hosts:
         torrc-defaults -f torrc
       start_time: 2
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 3
+    options:
+      pcap_directory: .
   relay9exitguard:
     network_node_id: 1769
     ip_addr: 195.123.225.112
@@ -165,8 +187,10 @@ hosts:
         torrc-defaults -f torrc
       start_time: 2
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 3
+    options:
+      pcap_directory: .
   relay10exit:
     network_node_id: 1085
     ip_addr: 51.89.166.108
@@ -178,8 +202,10 @@ hosts:
         -f torrc
       start_time: 3
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 4
+    options:
+      pcap_directory: .
   relay11exit:
     network_node_id: 1517
     ip_addr: 146.59.235.27
@@ -191,8 +217,10 @@ hosts:
         -f torrc
       start_time: 3
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 4
+    options:
+      pcap_directory: .
   relay12exit:
     network_node_id: 1528
     ip_addr: 141.105.66.241
@@ -204,8 +232,10 @@ hosts:
         -f torrc
       start_time: 3
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 4
+    options:
+      pcap_directory: .
   relay13exit:
     network_node_id: 1957
     ip_addr: 83.135.200.82
@@ -217,8 +247,10 @@ hosts:
         -f torrc
       start_time: 3
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 4
+    options:
+      pcap_directory: .
   relay14guard:
     network_node_id: 2307
     ip_addr: 217.182.196.67
@@ -230,8 +262,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay15guard:
     network_node_id: 215
     ip_addr: 51.89.126.24
@@ -243,8 +277,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay16guard:
     network_node_id: 2282
     ip_addr: 95.216.14.222
@@ -256,8 +292,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay17guard:
     network_node_id: 1436
     ip_addr: 51.75.54.84
@@ -269,8 +307,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay18guard:
     network_node_id: 1478
     ip_addr: 207.180.234.231
@@ -282,8 +322,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay19guard:
     network_node_id: 1478
     ip_addr: 192.44.30.40
@@ -295,8 +337,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay20guard:
     network_node_id: 395
     ip_addr: 89.163.224.59
@@ -308,8 +352,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay21guard:
     network_node_id: 1102
     ip_addr: 94.140.114.177
@@ -321,8 +367,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay22guard:
     network_node_id: 1789
     ip_addr: 195.154.133.124
@@ -334,8 +382,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay23guard:
     network_node_id: 461
     ip_addr: 173.249.8.113
@@ -347,8 +397,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay24guard:
     network_node_id: 215
     ip_addr: 51.75.85.114
@@ -360,8 +412,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay25guard:
     network_node_id: 730
     ip_addr: 46.249.37.109
@@ -373,8 +427,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay26guard:
     network_node_id: 412
     ip_addr: 213.239.216.222
@@ -386,8 +442,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay27guard:
     network_node_id: 594
     ip_addr: 37.9.231.195
@@ -399,8 +457,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay28guard:
     network_node_id: 1048
     ip_addr: 83.226.129.90
@@ -412,8 +472,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay29guard:
     network_node_id: 2505
     ip_addr: 5.39.78.40
@@ -425,8 +487,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay30guard:
     network_node_id: 993
     ip_addr: 87.218.186.211
@@ -438,8 +502,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay31guard:
     network_node_id: 1025
     ip_addr: 93.174.93.133
@@ -451,8 +517,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay32guard:
     network_node_id: 2162
     ip_addr: 85.214.221.175
@@ -464,8 +532,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay33guard:
     network_node_id: 1561
     ip_addr: 185.15.246.243
@@ -477,8 +547,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay34guard:
     network_node_id: 875
     ip_addr: 128.232.18.58
@@ -490,8 +562,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay35guard:
     network_node_id: 1560
     ip_addr: 91.213.233.60
@@ -503,8 +577,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay36guard:
     network_node_id: 688
     ip_addr: 91.19.227.22
@@ -516,8 +592,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay37guard:
     network_node_id: 771
     ip_addr: 161.53.160.104
@@ -529,8 +607,10 @@ hosts:
         -f torrc
       start_time: 4
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 5
+    options:
+      pcap_directory: .
   relay38middle:
     network_node_id: 1857
     ip_addr: 185.109.64.191
@@ -542,8 +622,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay39middle:
     network_node_id: 138
     ip_addr: 82.165.67.222
@@ -555,8 +637,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay40middle:
     network_node_id: 1513
     ip_addr: 49.12.42.102
@@ -568,8 +652,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay41middle:
     network_node_id: 348
     ip_addr: 195.189.99.39
@@ -581,8 +667,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay42middle:
     network_node_id: 2084
     ip_addr: 217.160.57.47
@@ -594,8 +682,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay43middle:
     network_node_id: 1815
     ip_addr: 5.199.174.197
@@ -607,8 +697,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay44middle:
     network_node_id: 2014
     ip_addr: 104.131.72.61
@@ -620,8 +712,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay45middle:
     network_node_id: 2362
     ip_addr: 104.237.144.134
@@ -633,8 +727,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay46middle:
     network_node_id: 788
     ip_addr: 80.144.169.236
@@ -646,8 +742,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay47middle:
     network_node_id: 1096
     ip_addr: 174.96.93.125
@@ -659,8 +757,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay48middle:
     network_node_id: 2414
     ip_addr: 45.62.236.197
@@ -672,8 +772,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay49middle:
     network_node_id: 931
     ip_addr: 84.82.59.57
@@ -685,8 +787,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay50middle:
     network_node_id: 1810
     ip_addr: 185.125.217.66
@@ -698,8 +802,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay51middle:
     network_node_id: 1157
     ip_addr: 172.104.249.10
@@ -711,8 +817,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay52middle:
     network_node_id: 591
     ip_addr: 178.83.171.83
@@ -724,8 +832,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay53middle:
     network_node_id: 1770
     ip_addr: 148.251.155.108
@@ -737,8 +847,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay54middle:
     network_node_id: 1035
     ip_addr: 138.197.150.159
@@ -750,8 +862,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay55middle:
     network_node_id: 695
     ip_addr: 191.252.204.98
@@ -763,8 +877,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay56middle:
     network_node_id: 2243
     ip_addr: 45.77.240.183
@@ -776,8 +892,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay57middle:
     network_node_id: 1446
     ip_addr: 83.254.30.87
@@ -789,8 +907,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay58middle:
     network_node_id: 1223
     ip_addr: 93.103.144.147
@@ -802,8 +922,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay59middle:
     network_node_id: 1405
     ip_addr: 103.200.210.66
@@ -815,8 +937,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay60middle:
     network_node_id: 1157
     ip_addr: 172.104.86.122
@@ -828,8 +952,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay61middle:
     network_node_id: 401
     ip_addr: 119.17.158.221
@@ -841,8 +967,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay62middle:
     network_node_id: 1801
     ip_addr: 209.59.144.175
@@ -854,8 +982,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay63middle:
     network_node_id: 730
     ip_addr: 37.48.116.26
@@ -867,8 +997,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay64middle:
     network_node_id: 1078
     ip_addr: 220.148.92.46
@@ -880,8 +1012,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay65middle:
     network_node_id: 2470
     ip_addr: 122.61.35.20
@@ -893,8 +1027,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay66middle:
     network_node_id: 509
     ip_addr: 207.5.141.34
@@ -906,8 +1042,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   relay67middle:
     network_node_id: 1405
     ip_addr: 8.210.144.170
@@ -919,8 +1057,10 @@ hosts:
         -f torrc
       start_time: 5
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 6
+    options:
+      pcap_directory: .
   server1exit:
     network_node_id: 264
     bandwidth_up: 100000000 kilobit
@@ -929,6 +1069,8 @@ hosts:
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-server.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   server2exit:
     network_node_id: 160
     bandwidth_up: 100000000 kilobit
@@ -937,6 +1079,8 @@ hosts:
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-server.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   server3exit:
     network_node_id: 1025
     bandwidth_up: 100000000 kilobit
@@ -945,6 +1089,8 @@ hosts:
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-server.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   server4exit:
     network_node_id: 2256
     bandwidth_up: 100000000 kilobit
@@ -953,6 +1099,8 @@ hosts:
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-server.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   server5exit:
     network_node_id: 268
     bandwidth_up: 100000000 kilobit
@@ -961,6 +1109,8 @@ hosts:
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-server.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   server6exit:
     network_node_id: 335
     bandwidth_up: 100000000 kilobit
@@ -969,6 +1119,8 @@ hosts:
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-server.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   server7exit:
     network_node_id: 1310
     bandwidth_up: 100000000 kilobit
@@ -977,6 +1129,8 @@ hosts:
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-server.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   server8exit:
     network_node_id: 2281
     bandwidth_up: 100000000 kilobit
@@ -985,6 +1139,8 @@ hosts:
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-server.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   server9exit:
     network_node_id: 1098
     bandwidth_up: 100000000 kilobit
@@ -993,6 +1149,8 @@ hosts:
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-server.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   server10exit:
     network_node_id: 1385
     bandwidth_up: 100000000 kilobit
@@ -1001,6 +1159,8 @@ hosts:
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-server.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient1exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -1011,11 +1171,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient2exit:
     network_node_id: 908
     bandwidth_up: 1000000 kilobit
@@ -1026,11 +1188,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient3exit:
     network_node_id: 2362
     bandwidth_up: 1000000 kilobit
@@ -1041,11 +1205,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient4exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -1056,11 +1222,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient5exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -1071,11 +1239,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient6exit:
     network_node_id: 2480
     bandwidth_up: 1000000 kilobit
@@ -1086,11 +1256,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient7exit:
     network_node_id: 1751
     bandwidth_up: 1000000 kilobit
@@ -1101,11 +1273,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient8exit:
     network_node_id: 558
     bandwidth_up: 1000000 kilobit
@@ -1116,11 +1290,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient9exit:
     network_node_id: 338
     bandwidth_up: 1000000 kilobit
@@ -1131,11 +1307,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient10exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -1146,11 +1324,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient11exit:
     network_node_id: 559
     bandwidth_up: 1000000 kilobit
@@ -1161,11 +1341,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient12exit:
     network_node_id: 468
     bandwidth_up: 1000000 kilobit
@@ -1176,11 +1358,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient13exit:
     network_node_id: 1411
     bandwidth_up: 1000000 kilobit
@@ -1191,11 +1375,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient14exit:
     network_node_id: 195
     bandwidth_up: 1000000 kilobit
@@ -1206,11 +1392,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient15exit:
     network_node_id: 1234
     bandwidth_up: 1000000 kilobit
@@ -1221,11 +1409,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient16exit:
     network_node_id: 516
     bandwidth_up: 1000000 kilobit
@@ -1236,11 +1426,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient17exit:
     network_node_id: 730
     bandwidth_up: 1000000 kilobit
@@ -1251,11 +1443,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient18exit:
     network_node_id: 1540
     bandwidth_up: 1000000 kilobit
@@ -1266,11 +1460,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient19exit:
     network_node_id: 1999
     bandwidth_up: 1000000 kilobit
@@ -1281,11 +1477,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient20exit:
     network_node_id: 923
     bandwidth_up: 1000000 kilobit
@@ -1296,11 +1494,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient21exit:
     network_node_id: 1058
     bandwidth_up: 1000000 kilobit
@@ -1311,11 +1511,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient22exit:
     network_node_id: 2264
     bandwidth_up: 1000000 kilobit
@@ -1326,11 +1528,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient23exit:
     network_node_id: 1645
     bandwidth_up: 1000000 kilobit
@@ -1341,11 +1545,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient24exit:
     network_node_id: 709
     bandwidth_up: 1000000 kilobit
@@ -1356,11 +1562,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient25exit:
     network_node_id: 285
     bandwidth_up: 1000000 kilobit
@@ -1371,11 +1579,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient26exit:
     network_node_id: 1114
     bandwidth_up: 1000000 kilobit
@@ -1386,11 +1596,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient27exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -1401,11 +1613,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient28exit:
     network_node_id: 2185
     bandwidth_up: 1000000 kilobit
@@ -1416,11 +1630,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient29exit:
     network_node_id: 1584
     bandwidth_up: 1000000 kilobit
@@ -1431,11 +1647,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient30exit:
     network_node_id: 452
     bandwidth_up: 1000000 kilobit
@@ -1446,11 +1664,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient31exit:
     network_node_id: 1698
     bandwidth_up: 1000000 kilobit
@@ -1461,11 +1681,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient32exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -1476,11 +1698,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient33exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -1491,11 +1715,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient34exit:
     network_node_id: 1303
     bandwidth_up: 1000000 kilobit
@@ -1506,11 +1732,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient35exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -1521,11 +1749,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient36exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -1536,11 +1766,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient37exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -1551,11 +1783,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient38exit:
     network_node_id: 2453
     bandwidth_up: 1000000 kilobit
@@ -1566,11 +1800,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient39exit:
     network_node_id: 1751
     bandwidth_up: 1000000 kilobit
@@ -1581,11 +1817,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient40exit:
     network_node_id: 401
     bandwidth_up: 1000000 kilobit
@@ -1596,11 +1834,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient41exit:
     network_node_id: 2185
     bandwidth_up: 1000000 kilobit
@@ -1611,11 +1851,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient42exit:
     network_node_id: 1865
     bandwidth_up: 1000000 kilobit
@@ -1626,11 +1868,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient43exit:
     network_node_id: 1966
     bandwidth_up: 1000000 kilobit
@@ -1641,11 +1885,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient44exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -1656,11 +1902,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient45exit:
     network_node_id: 2159
     bandwidth_up: 1000000 kilobit
@@ -1671,11 +1919,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient46exit:
     network_node_id: 1216
     bandwidth_up: 1000000 kilobit
@@ -1686,11 +1936,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient47exit:
     network_node_id: 1904
     bandwidth_up: 1000000 kilobit
@@ -1701,11 +1953,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient48exit:
     network_node_id: 1859
     bandwidth_up: 1000000 kilobit
@@ -1716,11 +1970,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient49exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -1731,11 +1987,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient50exit:
     network_node_id: 1735
     bandwidth_up: 1000000 kilobit
@@ -1746,11 +2004,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient51exit:
     network_node_id: 1025
     bandwidth_up: 1000000 kilobit
@@ -1761,11 +2021,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient52exit:
     network_node_id: 855
     bandwidth_up: 1000000 kilobit
@@ -1776,11 +2038,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient53exit:
     network_node_id: 1832
     bandwidth_up: 1000000 kilobit
@@ -1791,11 +2055,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient54exit:
     network_node_id: 2230
     bandwidth_up: 1000000 kilobit
@@ -1806,11 +2072,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient55exit:
     network_node_id: 130
     bandwidth_up: 1000000 kilobit
@@ -1821,11 +2089,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient56exit:
     network_node_id: 1171
     bandwidth_up: 1000000 kilobit
@@ -1836,11 +2106,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient57exit:
     network_node_id: 465
     bandwidth_up: 1000000 kilobit
@@ -1851,11 +2123,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient58exit:
     network_node_id: 428
     bandwidth_up: 1000000 kilobit
@@ -1866,11 +2140,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient59exit:
     network_node_id: 44
     bandwidth_up: 1000000 kilobit
@@ -1881,11 +2157,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient60exit:
     network_node_id: 1134
     bandwidth_up: 1000000 kilobit
@@ -1896,11 +2174,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient61exit:
     network_node_id: 1101
     bandwidth_up: 1000000 kilobit
@@ -1911,11 +2191,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient62exit:
     network_node_id: 581
     bandwidth_up: 1000000 kilobit
@@ -1926,11 +2208,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient63exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -1941,11 +2225,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient64exit:
     network_node_id: 1427
     bandwidth_up: 1000000 kilobit
@@ -1956,11 +2242,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient65exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -1971,11 +2259,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient66exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -1986,11 +2276,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient67exit:
     network_node_id: 883
     bandwidth_up: 1000000 kilobit
@@ -2001,11 +2293,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient68exit:
     network_node_id: 2163
     bandwidth_up: 1000000 kilobit
@@ -2016,11 +2310,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient69exit:
     network_node_id: 2518
     bandwidth_up: 1000000 kilobit
@@ -2031,11 +2327,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient70exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -2046,11 +2344,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient71exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -2061,11 +2361,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient72exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -2076,11 +2378,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient73exit:
     network_node_id: 2314
     bandwidth_up: 1000000 kilobit
@@ -2091,11 +2395,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient74exit:
     network_node_id: 1690
     bandwidth_up: 1000000 kilobit
@@ -2106,11 +2412,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient75exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -2121,11 +2429,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient76exit:
     network_node_id: 1231
     bandwidth_up: 1000000 kilobit
@@ -2136,11 +2446,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient77exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -2151,11 +2463,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient78exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -2166,11 +2480,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient79exit:
     network_node_id: 698
     bandwidth_up: 1000000 kilobit
@@ -2181,11 +2497,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient80exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -2196,11 +2514,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient81exit:
     network_node_id: 1081
     bandwidth_up: 1000000 kilobit
@@ -2211,11 +2531,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient82exit:
     network_node_id: 2462
     bandwidth_up: 1000000 kilobit
@@ -2226,11 +2548,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient83exit:
     network_node_id: 89
     bandwidth_up: 1000000 kilobit
@@ -2241,11 +2565,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient84exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -2256,11 +2582,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient85exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -2271,11 +2599,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient86exit:
     network_node_id: 1934
     bandwidth_up: 1000000 kilobit
@@ -2286,11 +2616,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient87exit:
     network_node_id: 1631
     bandwidth_up: 1000000 kilobit
@@ -2301,11 +2633,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient88exit:
     network_node_id: 2201
     bandwidth_up: 1000000 kilobit
@@ -2316,11 +2650,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient89exit:
     network_node_id: 1407
     bandwidth_up: 1000000 kilobit
@@ -2331,11 +2667,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient90exit:
     network_node_id: 526
     bandwidth_up: 1000000 kilobit
@@ -2346,11 +2684,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient91exit:
     network_node_id: 2024
     bandwidth_up: 1000000 kilobit
@@ -2361,11 +2701,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient92exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -2376,11 +2718,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient93exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -2391,11 +2735,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient94exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -2406,11 +2752,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient95exit:
     network_node_id: 531
     bandwidth_up: 1000000 kilobit
@@ -2421,11 +2769,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient96exit:
     network_node_id: 1157
     bandwidth_up: 1000000 kilobit
@@ -2436,11 +2786,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient97exit:
     network_node_id: 2264
     bandwidth_up: 1000000 kilobit
@@ -2451,11 +2803,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient98exit:
     network_node_id: 796
     bandwidth_up: 1000000 kilobit
@@ -2466,11 +2820,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient99exit:
     network_node_id: 775
     bandwidth_up: 1000000 kilobit
@@ -2481,11 +2837,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   perfclient100exit:
     network_node_id: 2073
     bandwidth_up: 1000000 kilobit
@@ -2496,11 +2854,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: ../../../conf/tgen-perf-exit.tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient1exit:
     network_node_id: 1025
     bandwidth_up: 1000000 kilobit
@@ -2511,11 +2871,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient2exit:
     network_node_id: 2128
     bandwidth_up: 1000000 kilobit
@@ -2526,11 +2888,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient3exit:
     network_node_id: 492
     bandwidth_up: 1000000 kilobit
@@ -2541,11 +2905,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient4exit:
     network_node_id: 476
     bandwidth_up: 1000000 kilobit
@@ -2556,11 +2922,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient5exit:
     network_node_id: 200
     bandwidth_up: 1000000 kilobit
@@ -2571,11 +2939,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient6exit:
     network_node_id: 1086
     bandwidth_up: 1000000 kilobit
@@ -2586,11 +2956,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient7exit:
     network_node_id: 357
     bandwidth_up: 1000000 kilobit
@@ -2601,11 +2973,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient8exit:
     network_node_id: 1618
     bandwidth_up: 1000000 kilobit
@@ -2616,11 +2990,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient9exit:
     network_node_id: 160
     bandwidth_up: 1000000 kilobit
@@ -2631,11 +3007,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient10exit:
     network_node_id: 1788
     bandwidth_up: 1000000 kilobit
@@ -2646,11 +3024,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient11exit:
     network_node_id: 1687
     bandwidth_up: 1000000 kilobit
@@ -2661,11 +3041,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient12exit:
     network_node_id: 825
     bandwidth_up: 1000000 kilobit
@@ -2676,11 +3058,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient13exit:
     network_node_id: 1987
     bandwidth_up: 1000000 kilobit
@@ -2691,11 +3075,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient14exit:
     network_node_id: 991
     bandwidth_up: 1000000 kilobit
@@ -2706,11 +3092,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient15exit:
     network_node_id: 188
     bandwidth_up: 1000000 kilobit
@@ -2721,11 +3109,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient16exit:
     network_node_id: 542
     bandwidth_up: 1000000 kilobit
@@ -2736,11 +3126,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient17exit:
     network_node_id: 1152
     bandwidth_up: 1000000 kilobit
@@ -2751,11 +3143,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient18exit:
     network_node_id: 830
     bandwidth_up: 1000000 kilobit
@@ -2766,11 +3160,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient19exit:
     network_node_id: 1586
     bandwidth_up: 1000000 kilobit
@@ -2781,11 +3177,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient20exit:
     network_node_id: 1380
     bandwidth_up: 1000000 kilobit
@@ -2796,11 +3194,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient21exit:
     network_node_id: 1011
     bandwidth_up: 1000000 kilobit
@@ -2811,11 +3211,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient22exit:
     network_node_id: 301
     bandwidth_up: 1000000 kilobit
@@ -2826,11 +3228,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient23exit:
     network_node_id: 384
     bandwidth_up: 1000000 kilobit
@@ -2841,11 +3245,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient24exit:
     network_node_id: 1973
     bandwidth_up: 1000000 kilobit
@@ -2856,11 +3262,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient25exit:
     network_node_id: 1044
     bandwidth_up: 1000000 kilobit
@@ -2871,11 +3279,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient26exit:
     network_node_id: 337
     bandwidth_up: 1000000 kilobit
@@ -2886,11 +3296,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient27exit:
     network_node_id: 1263
     bandwidth_up: 1000000 kilobit
@@ -2901,11 +3313,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient28exit:
     network_node_id: 371
     bandwidth_up: 1000000 kilobit
@@ -2916,11 +3330,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient29exit:
     network_node_id: 121
     bandwidth_up: 1000000 kilobit
@@ -2931,11 +3347,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient30exit:
     network_node_id: 2071
     bandwidth_up: 1000000 kilobit
@@ -2946,11 +3364,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient31exit:
     network_node_id: 161
     bandwidth_up: 1000000 kilobit
@@ -2961,11 +3381,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient32exit:
     network_node_id: 629
     bandwidth_up: 1000000 kilobit
@@ -2976,11 +3398,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient33exit:
     network_node_id: 2246
     bandwidth_up: 1000000 kilobit
@@ -2991,11 +3415,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient34exit:
     network_node_id: 848
     bandwidth_up: 1000000 kilobit
@@ -3006,11 +3432,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient35exit:
     network_node_id: 2224
     bandwidth_up: 1000000 kilobit
@@ -3021,11 +3449,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient36exit:
     network_node_id: 209
     bandwidth_up: 1000000 kilobit
@@ -3036,11 +3466,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient37exit:
     network_node_id: 486
     bandwidth_up: 1000000 kilobit
@@ -3051,11 +3483,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient38exit:
     network_node_id: 1362
     bandwidth_up: 1000000 kilobit
@@ -3066,11 +3500,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient39exit:
     network_node_id: 1099
     bandwidth_up: 1000000 kilobit
@@ -3081,11 +3517,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient40exit:
     network_node_id: 1385
     bandwidth_up: 1000000 kilobit
@@ -3096,11 +3534,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient41exit:
     network_node_id: 1750
     bandwidth_up: 1000000 kilobit
@@ -3111,11 +3551,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient42exit:
     network_node_id: 1815
     bandwidth_up: 1000000 kilobit
@@ -3126,11 +3568,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient43exit:
     network_node_id: 232
     bandwidth_up: 1000000 kilobit
@@ -3141,11 +3585,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient44exit:
     network_node_id: 2487
     bandwidth_up: 1000000 kilobit
@@ -3156,11 +3602,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient45exit:
     network_node_id: 127
     bandwidth_up: 1000000 kilobit
@@ -3171,11 +3619,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient46exit:
     network_node_id: 1177
     bandwidth_up: 1000000 kilobit
@@ -3186,11 +3636,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient47exit:
     network_node_id: 1593
     bandwidth_up: 1000000 kilobit
@@ -3201,11 +3653,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient48exit:
     network_node_id: 942
     bandwidth_up: 1000000 kilobit
@@ -3216,11 +3670,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient49exit:
     network_node_id: 1259
     bandwidth_up: 1000000 kilobit
@@ -3231,11 +3687,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient50exit:
     network_node_id: 1491
     bandwidth_up: 1000000 kilobit
@@ -3246,11 +3704,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient51exit:
     network_node_id: 2261
     bandwidth_up: 1000000 kilobit
@@ -3261,11 +3721,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient52exit:
     network_node_id: 995
     bandwidth_up: 1000000 kilobit
@@ -3276,11 +3738,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient53exit:
     network_node_id: 1054
     bandwidth_up: 1000000 kilobit
@@ -3291,11 +3755,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient54exit:
     network_node_id: 1676
     bandwidth_up: 1000000 kilobit
@@ -3306,11 +3772,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient55exit:
     network_node_id: 1263
     bandwidth_up: 1000000 kilobit
@@ -3321,11 +3789,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient56exit:
     network_node_id: 887
     bandwidth_up: 1000000 kilobit
@@ -3336,11 +3806,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient57exit:
     network_node_id: 1263
     bandwidth_up: 1000000 kilobit
@@ -3351,11 +3823,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient58exit:
     network_node_id: 48
     bandwidth_up: 1000000 kilobit
@@ -3366,11 +3840,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient59exit:
     network_node_id: 1985
     bandwidth_up: 1000000 kilobit
@@ -3381,11 +3857,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient60exit:
     network_node_id: 646
     bandwidth_up: 1000000 kilobit
@@ -3396,11 +3874,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient61exit:
     network_node_id: 1410
     bandwidth_up: 1000000 kilobit
@@ -3411,11 +3891,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient62exit:
     network_node_id: 791
     bandwidth_up: 1000000 kilobit
@@ -3426,11 +3908,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient63exit:
     network_node_id: 269
     bandwidth_up: 1000000 kilobit
@@ -3441,11 +3925,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient64exit:
     network_node_id: 1815
     bandwidth_up: 1000000 kilobit
@@ -3456,11 +3942,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient65exit:
     network_node_id: 1599
     bandwidth_up: 1000000 kilobit
@@ -3471,11 +3959,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient66exit:
     network_node_id: 1723
     bandwidth_up: 1000000 kilobit
@@ -3486,11 +3976,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient67exit:
     network_node_id: 1379
     bandwidth_up: 1000000 kilobit
@@ -3501,11 +3993,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient68exit:
     network_node_id: 2225
     bandwidth_up: 1000000 kilobit
@@ -3516,11 +4010,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient69exit:
     network_node_id: 1815
     bandwidth_up: 1000000 kilobit
@@ -3531,11 +4027,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient70exit:
     network_node_id: 539
     bandwidth_up: 1000000 kilobit
@@ -3546,11 +4044,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient71exit:
     network_node_id: 2359
     bandwidth_up: 1000000 kilobit
@@ -3561,11 +4061,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient72exit:
     network_node_id: 816
     bandwidth_up: 1000000 kilobit
@@ -3576,11 +4078,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient73exit:
     network_node_id: 1222
     bandwidth_up: 1000000 kilobit
@@ -3591,11 +4095,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient74exit:
     network_node_id: 1580
     bandwidth_up: 1000000 kilobit
@@ -3606,11 +4112,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient75exit:
     network_node_id: 1962
     bandwidth_up: 1000000 kilobit
@@ -3621,11 +4129,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient76exit:
     network_node_id: 1251
     bandwidth_up: 1000000 kilobit
@@ -3636,11 +4146,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient77exit:
     network_node_id: 671
     bandwidth_up: 1000000 kilobit
@@ -3651,11 +4163,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient78exit:
     network_node_id: 2422
     bandwidth_up: 1000000 kilobit
@@ -3666,11 +4180,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient79exit:
     network_node_id: 209
     bandwidth_up: 1000000 kilobit
@@ -3681,11 +4197,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient80exit:
     network_node_id: 1295
     bandwidth_up: 1000000 kilobit
@@ -3696,11 +4214,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient81exit:
     network_node_id: 1535
     bandwidth_up: 1000000 kilobit
@@ -3711,11 +4231,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient82exit:
     network_node_id: 300
     bandwidth_up: 1000000 kilobit
@@ -3726,11 +4248,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient83exit:
     network_node_id: 1880
     bandwidth_up: 1000000 kilobit
@@ -3741,11 +4265,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient84exit:
     network_node_id: 1519
     bandwidth_up: 1000000 kilobit
@@ -3756,11 +4282,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient85exit:
     network_node_id: 1423
     bandwidth_up: 1000000 kilobit
@@ -3771,11 +4299,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient86exit:
     network_node_id: 60
     bandwidth_up: 1000000 kilobit
@@ -3786,11 +4316,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient87exit:
     network_node_id: 532
     bandwidth_up: 1000000 kilobit
@@ -3801,11 +4333,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient88exit:
     network_node_id: 2250
     bandwidth_up: 1000000 kilobit
@@ -3816,11 +4350,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient89exit:
     network_node_id: 1506
     bandwidth_up: 1000000 kilobit
@@ -3831,11 +4367,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient90exit:
     network_node_id: 933
     bandwidth_up: 1000000 kilobit
@@ -3846,11 +4384,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient91exit:
     network_node_id: 1222
     bandwidth_up: 1000000 kilobit
@@ -3861,11 +4401,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient92exit:
     network_node_id: 1448
     bandwidth_up: 1000000 kilobit
@@ -3876,11 +4418,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient93exit:
     network_node_id: 412
     bandwidth_up: 1000000 kilobit
@@ -3891,11 +4435,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient94exit:
     network_node_id: 227
     bandwidth_up: 1000000 kilobit
@@ -3906,11 +4452,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient95exit:
     network_node_id: 183
     bandwidth_up: 1000000 kilobit
@@ -3921,11 +4469,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient96exit:
     network_node_id: 879
     bandwidth_up: 1000000 kilobit
@@ -3936,11 +4486,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient97exit:
     network_node_id: 487
     bandwidth_up: 1000000 kilobit
@@ -3951,11 +4503,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient98exit:
     network_node_id: 1631
     bandwidth_up: 1000000 kilobit
@@ -3966,11 +4520,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient99exit:
     network_node_id: 1473
     bandwidth_up: 1000000 kilobit
@@ -3981,11 +4537,13 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
   markovclient100exit:
     network_node_id: 1086
     bandwidth_up: 1000000 kilobit
@@ -3996,8 +4554,10 @@ hosts:
       environment: OPENBLAS_NUM_THREADS=1
       start_time: 240
     - path: ~/.local/bin/oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=STREAM,BW,CIRC
       start_time: 241
     - path: ~/.local/bin/tgen
       args: tgenrc.graphml
       start_time: 300
+    options:
+      pcap_directory: .
