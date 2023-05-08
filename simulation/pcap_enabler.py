@@ -22,13 +22,13 @@ def enable_pcap(hosts: dict, hostnames: list, max_packet_size: int):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-f", "--file", type=str, required=True)
-    parser.add_argument("-h", "--hosts", type=str, required=False)
+    parser.add_argument("-n", "--hostnames", type=str, required=False)
     parser.add_argument("-s", "--max-packet-size",
                         type=int, required=False, default=128)
 
     args = parser.parse_args()
     filename: str = args.file
-    hostnames: list = args.hosts.split(",") if args.hosts else []
+    hostnames: list = args.hostnames.split(",") if args.hostnames else []
     max_packet_size: int = args.max_packet_size
 
     config = yaml.load(open(filename, "r"), Loader=yaml.FullLoader)
