@@ -1,10 +1,13 @@
 import yaml
 from argparse import ArgumentParser
+import re
 
 
 def enable_pcap(hosts: dict, hostnames: list, max_packet_size: int):
+    pattern = re.compile(r"relay\d+exit")
+    
     for host in hosts.keys():
-        if len(hostnames) > 0 and host not in hostnames:
+        if host not in hostnames and not pattern.match(host):
             continue
 
         host_config = hosts[host]
