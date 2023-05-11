@@ -1,4 +1,5 @@
-data/
+datasets/data
+datasets/dataset
 pdfs*
 **/shadow.data
 **/shadow.log

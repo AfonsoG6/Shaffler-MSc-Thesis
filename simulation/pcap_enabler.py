@@ -1,5 +1,5 @@
-import yaml
 from argparse import ArgumentParser
+import yaml
 import re
 
 
