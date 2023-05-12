@@ -48,7 +48,7 @@ sysctl -p
 cd ~
 git clone https://github.com/shadow/shadow.git
 cd ~/shadow
-git checkout tags/v2.5.0
+git checkout 5380a99b09cd25c5f93cac183c7f65bd706acbb7
 
 find . -type f -exec dos2unix {} \;
 
@@ -70,6 +70,7 @@ export PATH="$PATH:~/.local/bin"
 cd ~
 git clone https://github.com/shadow/tgen.git
 cd ~/tgen
+git checkout 30c95bbe723ebe5e4d068adfd975b094e00dbe10
 
 apt install -y cmake libglib2.0-dev libigraph-dev
 
@@ -86,6 +87,7 @@ pip install -I ~/tgen/tools
 cd ~
 git clone https://github.com/shadow/oniontrace.git
 cd ~/oniontrace/
+git checkout 3696db43288c8a116e8a1cff42a9c698d1d4ab33
 
 apt install -y cmake libglib2.0-0 libglib2.0-dev
 
@@ -125,10 +127,10 @@ pip install -r requirements.txt
 cd ~
 git clone git@github.com:torproject/tor.git
 cd ~/tor
+git checkout tags/tor-0.4.7.13
 
 chmod 777 -R .
 
-cd ~/tor
 ./autogen.sh
 ./configure --disable-asciidoc
 make
@@ -138,8 +140,9 @@ make install
 
 cd ~
 git clone https://github.com/shadow/tornettools.git
-
 cd ~/tornettools
+git checkout c0f2d5e28e6d6e005a559769c18fb4bff3d4ee8c
+
 pip install -r requirements.txt
 pip install --ignore-installed .
 
