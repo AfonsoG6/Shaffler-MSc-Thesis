@@ -107,7 +107,7 @@ cd ~/rendezmix/tor
 ./autogen.sh
 ./configure --disable-asciidoc
 make
-make install
+#make install
 
 cd ~/simulation
 find . -type f -exec dos2unix {} \;
@@ -115,6 +115,20 @@ find . -type f -exec dos2unix {} \;
 cd ~/rendezmix/loop
 apt install -y python3 python3-pip
 pip install -r requirements.txt
+
+# Install Vanilla Tor
+
+cd ~
+git clone git@github.com:torproject/tor.git
+cd ~/tor
+
+chmod 777 -R .
+
+cd ~/tor
+./autogen.sh
+./configure --disable-asciidoc
+make
+make install
 
 # Setup tornettools
 
@@ -142,8 +156,8 @@ tar xafv onionperf-2020-11.tar.xz
 
 git clone https://github.com/tmodel-ccs2018/tmodel-ccs2018.github.io.git
 
-export PATH="$PATH:~/rendezmix/tor/src/core/or:~/rendezmix/tor/src/app:~/rendezmix/tor/src/tools"
-echo "export PATH=\"\$PATH:~/rendezmix/tor/src/core/or:~/rendezmix/tor/src/app:~/rendezmix/tor/src/tools\"" | tee -a ~/.profile
+export PATH="$PATH:~/tor/src/core/or:~/tor/src/app:~/tor/src/tools"
+echo "export PATH=\"\$PATH:~/tor/src/core/or:~/tor/src/app:~/tor/src/tools\"" | tee -a ~/.profile
 
 alias stage="cd ~/rendezmix/simulation; tornettools stage \
 data/consensuses-2020-11 \
@@ -152,7 +166,7 @@ data/userstats-relay-country.csv \
 data/tmodel-ccs2018.github.io \
 --onionperf_data_path data/onionperf-2020-11 \
 --bandwidth_data_path data/bandwidth-2020-11.csv \
---geoip_path ~/rendezmix/tor/src/config/geoip"
+--geoip_path ~/tor/src/config/geoip"
 
 echo "alias stage=\"cd ~/rendezmix/simulation; tornettools stage \
 data/consensuses-2020-11 \
@@ -161,7 +175,7 @@ data/userstats-relay-country.csv \
 data/tmodel-ccs2018.github.io \
 --onionperf_data_path data/onionperf-2020-11 \
 --bandwidth_data_path data/bandwidth-2020-11.csv \
---geoip_path ~/rendezmix/tor/src/config/geoip\"" | tee -a ~/.profile
+--geoip_path ~/tor/src/config/geoip\"" | tee -a ~/.profile
 
 alias generate="cd ~/rendezmix/simulation; tornettools generate \
 data/relayinfo_staging_2020-11-01--2020-11-30.json \
