@@ -6,6 +6,10 @@ cp /vagrant/.ssh/id_ed25519 ~/.ssh
 cp /vagrant/.ssh/id_ed25519.pub ~/.ssh
 cp /vagrant/.ssh/id_ed25519 /root/.ssh
 cp /vagrant/.ssh/id_ed25519.pub /root/.ssh
+chmod 600 ~/.ssh/id_ed25519
+chmod 644 ~/.ssh/id_ed25519.pub
+chmod 600 /root/.ssh/id_ed25519
+chmod 644 /root/.ssh/id_ed25519.pub
 
 touch ~/.profile
 
