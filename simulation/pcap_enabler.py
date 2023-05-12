@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--file", type=str, required=True)
     parser.add_argument("-n", "--hostnames", type=str, required=False)
     parser.add_argument("-s", "--max-packet-size",
-                        type=int, required=False, default=128)
+                        type=int, required=False, default=21)
 
     args = parser.parse_args()
     filename: str = args.file
