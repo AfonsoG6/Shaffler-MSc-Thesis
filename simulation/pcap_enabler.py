@@ -5,17 +5,17 @@ import re
 
 def enable_pcap(hosts: dict, hostnames: list, max_packet_size: int):
     pattern = re.compile(r"relay\d+exit")
-    
+
     for host in hosts.keys():
         if host not in hostnames and not pattern.match(host):
             continue
 
         host_config = hosts[host]
 
-        if "options" not in host_config.keys():
-            host_config["options"] = {}
-        host_config["options"]["pcap_directory"] = "."
-        host_config["options"]["pcap_capture_size"] = f"{max_packet_size} B"
+        if "host_options" not in host_config.keys():
+            host_config["host_options"] = {}
+        host_config["host_options"]["pcap_enabled"] = "true"
+        host_config["host_options"]["pcap_capture_size"] = f"{max_packet_size} B"
         print(f"PCAP enabled for {host}")
 
 
