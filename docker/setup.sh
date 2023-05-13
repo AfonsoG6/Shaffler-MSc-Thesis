@@ -166,22 +166,22 @@ git clone https://github.com/tmodel-ccs2018/tmodel-ccs2018.github.io.git
 export PATH="$PATH:~/tor/src/core/or:~/tor/src/app:~/tor/src/tools"
 echo "export PATH=\"\$PATH:~/tor/src/core/or:~/tor/src/app:~/tor/src/tools\"" | tee -a ~/.profile
 
-alias stage="cd ~/rendezmix/simulation; tornettools stage \
-data/consensuses-2020-11 \
-data/server-descriptors-2020-11 \
-data/userstats-relay-country.csv \
-data/tmodel-ccs2018.github.io \
---onionperf_data_path data/onionperf-2020-11 \
---bandwidth_data_path data/bandwidth-2020-11.csv \
+alias stage="cd ~/rendezmix/simulation/data; tornettools stage \
+consensuses-2020-11 \
+server-descriptors-2020-11 \
+userstats-relay-country.csv \
+tmodel-ccs2018.github.io \
+--onionperf_data_path onionperf-2020-11 \
+--bandwidth_data_path bandwidth-2020-11.csv \
 --geoip_path ~/tor/src/config/geoip"
 
-echo "alias stage=\"cd ~/rendezmix/simulation; tornettools stage \
-data/consensuses-2020-11 \
-data/server-descriptors-2020-11 \
-data/userstats-relay-country.csv \
-data/tmodel-ccs2018.github.io \
---onionperf_data_path data/onionperf-2020-11 \
---bandwidth_data_path data/bandwidth-2020-11.csv \
+echo "alias stage=\"cd ~/rendezmix/simulation/data; tornettools stage \
+consensuses-2020-11 \
+server-descriptors-2020-11 \
+userstats-relay-country.csv \
+tmodel-ccs2018.github.io \
+--onionperf_data_path onionperf-2020-11 \
+--bandwidth_data_path bandwidth-2020-11.csv \
 --geoip_path ~/tor/src/config/geoip\"" | tee -a ~/.profile
 
 alias generate="cd ~/rendezmix/simulation; tornettools generate \
