@@ -136,6 +136,8 @@ chmod 777 -R .
 make
 make install
 
+ln -s $(which tor) ~/.local/bin/tor
+
 # Setup tornettools
 
 cd ~
