@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import random
 import yaml
 import re
 
@@ -7,12 +8,14 @@ def enable_pcap_clients(hosts: dict, hostnames: list, num_clients: int, max_pack
     pattern = re.compile(r".*client.*")
 
     i: int = 0
-    for host in hosts.keys():
+    host_keys = list(hosts.keys())
+    random.shuffle(host_keys)
+    for host in host_keys:
         if pattern.match(host) and ((len(hostnames) > 0 and host in hostnames) or len(hostnames) == 0):
             if num_clients > 0 and i >= num_clients:
                 break
             i += 1
-            
+
             host_config = hosts[host]
 
             if "host_options" not in host_config.keys():
@@ -43,7 +46,8 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-f", "--file", type=str, required=True)
     parser.add_argument("-n", "--hostnames", type=str, required=False)
-    parser.add_argument("-c", "--num-clients", type=int, required=False, default=-1)
+    parser.add_argument("-c", "--num-clients", type=int,
+                        required=False, default=-1)
     parser.add_argument("-s", "--max-packet-size",
                         type=int, required=False, default=21)
 
@@ -54,7 +58,8 @@ if __name__ == "__main__":
     max_packet_size: int = args.max_packet_size
 
     config = yaml.load(open(filename, "r"), Loader=yaml.FullLoader)
-    enable_pcap_clients(config["hosts"], hostnames, num_clients, max_packet_size)
+    enable_pcap_clients(config["hosts"], hostnames,
+                        num_clients, max_packet_size)
     enable_pcap_exits(config["hosts"], hostnames, max_packet_size)
     print("PCAP traces enabled")
 
