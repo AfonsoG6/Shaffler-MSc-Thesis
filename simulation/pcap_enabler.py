@@ -3,20 +3,35 @@ import yaml
 import re
 
 
-def enable_pcap(hosts: dict, hostnames: list, max_packet_size: int):
+def enable_pcap_clients(hosts: dict, hostnames: list, max_packet_size: int):
+    pattern = re.compile(r".*client.*")
+
+    for host in hosts.keys():
+        if pattern.match(host) and ((len(hostnames) > 0 and host in hostnames) or len(hostnames) == 0):
+            host_config = hosts[host]
+
+            if "host_options" not in host_config.keys():
+                host_config["host_options"] = {}
+            host_config["host_options"]["pcap_enabled"] = True
+            host_config["host_options"]["pcap_capture_size"] = f"{max_packet_size} B"
+            print(f"PCAP enabled for {host}")
+
+            host_config["processes"].append(
+                {"path": "hostname", "args": "-I", "start_time": 60})
+
+
+def enable_pcap_exits(hosts: dict, hostnames: list, max_packet_size: int):
     pattern = re.compile(r"relay\d+exit")
 
     for host in hosts.keys():
-        if host not in hostnames and not pattern.match(host):
-            continue
+        if pattern.match(host) and ((len(hostnames) > 0 and host in hostnames) or len(hostnames) == 0):
+            host_config = hosts[host]
 
-        host_config = hosts[host]
-
-        if "host_options" not in host_config.keys():
-            host_config["host_options"] = {}
-        host_config["host_options"]["pcap_enabled"] = True
-        host_config["host_options"]["pcap_capture_size"] = f"{max_packet_size} B"
-        print(f"PCAP enabled for {host}")
+            if "host_options" not in host_config.keys():
+                host_config["host_options"] = {}
+            host_config["host_options"]["pcap_enabled"] = True
+            host_config["host_options"]["pcap_capture_size"] = f"{max_packet_size} B"
+            print(f"PCAP enabled for {host}")
 
 
 if __name__ == "__main__":
@@ -32,7 +47,8 @@ if __name__ == "__main__":
     max_packet_size: int = args.max_packet_size
 
     config = yaml.load(open(filename, "r"), Loader=yaml.FullLoader)
-    enable_pcap(config["hosts"], hostnames, max_packet_size)
+    enable_pcap_clients(config["hosts"], hostnames, max_packet_size)
+    enable_pcap_exits(config["hosts"], hostnames, max_packet_size)
     print("PCAP traces enabled")
 
     yaml.dump(config, open(filename, "w"),

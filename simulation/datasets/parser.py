@@ -14,7 +14,6 @@ def find_client_paths(data_path: str) -> list:
     for element in os.listdir(data_path):
         if client_pattern.search(element):
             client_paths.append(os.path.join(data_path, element))
-            break
     if len(client_paths) > 0:
         print("Clients found:\n\t"+"\n\t".join(client_paths))
     else:
@@ -24,7 +23,7 @@ def find_client_paths(data_path: str) -> list:
 
 def get_oniontrace_path(client_path: str) -> str:
     oniontrace_path: str = ""
-    oniontrace_pattern = re.compile(r".*\.oniontrace\.1001\.stdout")
+    oniontrace_pattern = re.compile(r"oniontrace\.1001\.stdout")
     for element in os.listdir(client_path):
         if oniontrace_pattern.search(element):
             oniontrace_path = os.path.join(client_path, element)
@@ -38,7 +37,7 @@ def get_oniontrace_path(client_path: str) -> str:
 
 def find_pcap_path(host_path: str) -> str:
     pcap_path: str = ""
-    pcap_pattern = re.compile(r".*-(?!127\.0\.0\.1).*\.pcap")
+    pcap_pattern = re.compile(r"eth\d\.pcap")
     for element in os.listdir(host_path):
         if pcap_pattern.search(element):
             pcap_path = os.path.join(host_path, element)
@@ -69,12 +68,14 @@ def get_stream_id(streams: dict, trace_id: int) -> int:
         id += 13 % sys.maxsize
     return id
 
+
 def parse_oniontrace(oniontrace_path: str, streams: dict) -> None:
     circuits: dict = {}
     circuit_built_pattern = re.compile(r"CIRC \d+ BUILT")
     stream_succeeded_pattern = re.compile(r"STREAM \d+ SUCCEEDED")
     stream_closed_pattern = re.compile(r"STREAM \d+ CLOSED")
 
+    print("Parsing oniontrace file: "+oniontrace_path)
     with open(oniontrace_path, "r") as file:
         while True:
             line: str = file.readline()
@@ -112,22 +113,50 @@ def parse_oniontrace(oniontrace_path: str, streams: dict) -> None:
                 stream_id: int = int(tokens[1])
                 streams[stream_id]["end_time"] = end_time
                 continue
+    stream_ids_to_remove: list = []
     for stream_id in streams.keys():
         stream: dict = streams[stream_id]
+        if not "end_time" in stream.keys():
+            stream_ids_to_remove.append(stream_id)
         circuit_id: int = stream["circuit_id"]
-        streams[stream_id]["guard_name"] = circuits[circuit_id]["guard_name"]
-        streams[stream_id]["exit_name"] = circuits[circuit_id]["exit_name"]
+        if circuit_id in circuits.keys():
+            streams[stream_id]["guard_name"] = circuits[circuit_id]["guard_name"]
+            streams[stream_id]["exit_name"] = circuits[circuit_id]["exit_name"]
+        else:
+            stream_ids_to_remove.append(stream_id)
+    for stream_id in stream_ids_to_remove:
+        streams.pop(stream_id)
 
 
 def find_ip(pcap_path: str) -> str:
-    pattern = re.compile(r"-\d+\.\d+\.\d+\.\d+\.pcap")
-    match = pattern.search(pcap_path)
-    if match:
-        address: str = match.group(0)[1:-5]
-        print(f"IP found: {address}")
-        return address
-    else:
-        raise Exception("No IP found")
+    ip_occurrences: dict = {}
+    i: int = 0
+    with open(pcap_path, "rb") as file:
+        reader: Reader = Reader(file)
+        for timestamp, packet in reader:
+            try:
+                ip: IP = IP(packet)
+            except:
+                print(f"Invalid IP packet: {packet}")
+                continue
+            if not ip.src in ip_occurrences.keys():
+                ip_occurrences[ip.src] = 0
+            if not ip.dst in ip_occurrences.keys():
+                ip_occurrences[ip.dst] = 0
+            ip_occurrences[ip.src] += 1
+            ip_occurrences[ip.dst] += 1
+            if i > 1000:
+                break
+            else:
+                i += 1
+    ip: str = ""
+    for address in ip_occurrences.keys():
+        if ip_occurrences[address] >= 1000:
+            if ip == "":
+                ip = address
+            else:
+                raise Exception("Multiple IPs found")
+    return inet_to_str(ip)
 
 
 def parse_pcap_inflow(client_paths: list, streams: dict, streams_by_guard: dict, hosts_by_address: dict, site_indexes: dict, output_path: str) -> None:
@@ -244,7 +273,14 @@ if __name__ == "__main__":
         os.makedirs(os.path.join(output_path, "dictionaries"))
 
     # Create pairing of (exit fingerprint, server ip) to (start time, end time, circuit id, stream id)
-    client_paths: list = find_client_paths(data_path)
+    aux_client_paths: list = find_client_paths(data_path)
+    client_paths: list = []
+    for client_path in aux_client_paths:
+        try:
+            find_pcap_path(client_path)
+            client_paths.append(client_path)
+        except Exception as e:
+            continue
     streams: dict = {}
     for client_path in client_paths:
         oniontrace_path: str = get_oniontrace_path(client_path)
