@@ -62,9 +62,9 @@ def find_exit_pcap_paths(data_path: str) -> list:
     return pcap_paths
 
 
-def get_stream_id(streams: dict, trace_id: int) -> int:
-    id: int = trace_id
-    while id in streams.keys():
+def get_id(ids: list, tentative_id: int) -> int:
+    id: int = tentative_id
+    while id in ids:
         id += 13 % sys.maxsize
     return id
 
@@ -97,7 +97,7 @@ def parse_oniontrace(oniontrace_path: str, streams: dict) -> None:
                     float(line.split(" ")[2]) - 946684800, 6) - 0.000001
                 idx: int = search.start()
                 tokens: list = line[idx:].split(" ")
-                stream_id: int = get_stream_id(streams, int(tokens[1]))
+                stream_id: int = get_id(list(streams.keys()), int(tokens[1]))
                 circuit_id: int = int(tokens[3])
                 destination_ip: str = tokens[4]
                 streams[stream_id] = {
