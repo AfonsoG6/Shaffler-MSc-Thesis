@@ -68,8 +68,23 @@ def get_id(ids: list, tentative_id: int) -> int:
         id += 13 % sys.maxsize
     return id
 
+def get_all_values(dict_of_dict: dict) -> list:
+    values: list = []
+    for key in dict_of_dict.keys():
+        for key2 in dict_of_dict[key].keys():
+            values.append(dict_of_dict[key][key2])
+    return values
 
-def parse_oniontrace(oniontrace_path: str, streams: dict) -> None:
+circuit_ids: dict = {}
+def get_global_circuit_id(client_idx: int, circuit_id: int) -> int:
+    global circuit_ids
+    if client_idx not in circuit_ids:
+        circuit_ids[client_idx] = {}
+    if circuit_id not in circuit_ids[client_idx]:
+        circuit_ids[client_idx][circuit_id] = get_id(get_all_values(circuit_ids), circuit_id)
+    return circuit_ids[client_idx][circuit_id]
+
+def parse_oniontrace(oniontrace_path: str, streams: dict, client_idx: int) -> None:
     circuits: dict = {}
     circuit_built_pattern = re.compile(r"CIRC \d+ BUILT")
     stream_succeeded_pattern = re.compile(r"STREAM \d+ SUCCEEDED")
@@ -85,7 +100,7 @@ def parse_oniontrace(oniontrace_path: str, streams: dict) -> None:
             if search:
                 idx: int = search.start()
                 tokens: list = line[idx:].split(" ")
-                circuit_id: int = int(tokens[1])
+                circuit_id: int = get_global_circuit_id(client_idx, int(tokens[1]))
                 guard_name: str = tokens[3].split(",")[0].split("~")[1]
                 exit_name: str = tokens[3].split(",")[-1].split("~")[1]
                 circuits[circuit_id] = {
@@ -98,7 +113,7 @@ def parse_oniontrace(oniontrace_path: str, streams: dict) -> None:
                 idx: int = search.start()
                 tokens: list = line[idx:].split(" ")
                 stream_id: int = get_id(list(streams.keys()), int(tokens[1]))
-                circuit_id: int = int(tokens[3])
+                circuit_id: int = get_global_circuit_id(client_idx, int(tokens[3]))
                 destination_ip: str = tokens[4]
                 streams[stream_id] = {
                     "circuit_id": circuit_id, "destination_ip": destination_ip, "start_time": start_time
@@ -282,9 +297,11 @@ if __name__ == "__main__":
         except Exception as e:
             continue
     streams: dict = {}
+    client_idx: int = 0
     for client_path in client_paths:
         oniontrace_path: str = get_oniontrace_path(client_path)
-        parse_oniontrace(oniontrace_path, streams)
+        parse_oniontrace(oniontrace_path, streams, client_idx)
+        client_idx += 1
     with open(os.path.join(output_path, "dictionaries", "streams.json"), "w") as file:
         json.dump(streams, file, indent=4)
 
