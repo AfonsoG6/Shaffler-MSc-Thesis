@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from dpkt.pcap import Reader
 from dpkt.ip import IP, inet_to_str
+from progress_bar import print_progress_bar
 import json
 import yaml
 import sys
@@ -15,7 +16,7 @@ def find_client_paths(data_path: str) -> list:
         if client_pattern.search(element):
             client_paths.append(os.path.join(data_path, element))
     if len(client_paths) > 0:
-        print("Clients found:\n\t"+"\n\t".join(client_paths))
+        print(f"Clients found: {len(client_paths)}")
     else:
         raise Exception("No client folder found")
     return client_paths
@@ -68,6 +69,7 @@ def get_id(ids: list, tentative_id: int) -> int:
         id += 13 % sys.maxsize
     return id
 
+
 def get_all_values(dict_of_dict: dict) -> list:
     values: list = []
     for key in dict_of_dict.keys():
@@ -75,14 +77,19 @@ def get_all_values(dict_of_dict: dict) -> list:
             values.append(dict_of_dict[key][key2])
     return values
 
+
 circuit_ids: dict = {}
+
+
 def get_global_circuit_id(client_idx: int, circuit_id: int) -> int:
     global circuit_ids
     if client_idx not in circuit_ids:
         circuit_ids[client_idx] = {}
     if circuit_id not in circuit_ids[client_idx]:
-        circuit_ids[client_idx][circuit_id] = get_id(get_all_values(circuit_ids), circuit_id)
+        circuit_ids[client_idx][circuit_id] = get_id(
+            get_all_values(circuit_ids), circuit_id)
     return circuit_ids[client_idx][circuit_id]
+
 
 def parse_oniontrace(oniontrace_path: str, streams: dict, client_idx: int) -> None:
     circuits: dict = {}
@@ -90,7 +97,6 @@ def parse_oniontrace(oniontrace_path: str, streams: dict, client_idx: int) -> No
     stream_succeeded_pattern = re.compile(r"STREAM \d+ SUCCEEDED")
     stream_closed_pattern = re.compile(r"STREAM \d+ CLOSED")
 
-    print("Parsing oniontrace file: "+oniontrace_path)
     with open(oniontrace_path, "r") as file:
         while True:
             line: str = file.readline()
@@ -100,7 +106,8 @@ def parse_oniontrace(oniontrace_path: str, streams: dict, client_idx: int) -> No
             if search:
                 idx: int = search.start()
                 tokens: list = line[idx:].split(" ")
-                circuit_id: int = get_global_circuit_id(client_idx, int(tokens[1]))
+                circuit_id: int = get_global_circuit_id(
+                    client_idx, int(tokens[1]))
                 guard_name: str = tokens[3].split(",")[0].split("~")[1]
                 exit_name: str = tokens[3].split(",")[-1].split("~")[1]
                 circuits[circuit_id] = {
@@ -113,7 +120,8 @@ def parse_oniontrace(oniontrace_path: str, streams: dict, client_idx: int) -> No
                 idx: int = search.start()
                 tokens: list = line[idx:].split(" ")
                 stream_id: int = get_id(list(streams.keys()), int(tokens[1]))
-                circuit_id: int = get_global_circuit_id(client_idx, int(tokens[3]))
+                circuit_id: int = get_global_circuit_id(
+                    client_idx, int(tokens[3]))
                 destination_ip: str = tokens[4]
                 streams[stream_id] = {
                     "circuit_id": circuit_id, "destination_ip": destination_ip, "start_time": start_time
@@ -171,19 +179,24 @@ def find_ip(pcap_path: str) -> str:
                 ip = address
             else:
                 raise Exception("Multiple IPs found")
-    return inet_to_str(ip)
+    ip = inet_to_str(ip)
+    print(f"Found IP: {ip}")
+    return ip
 
 
 def parse_pcap_inflow(client_paths: list, streams: dict, streams_by_guard: dict, hosts_by_address: dict, site_indexes: dict, output_path: str) -> None:
-    if not os.path.exists(os.path.join(output_path, "inflow")):
-        os.makedirs(os.path.join(output_path, "inflow"))
-
-    packets: dict = {}
+    if os.path.exists(os.path.join(output_path, "inflow")):
+        os.removedirs(os.path.join(output_path, "inflow"))
+    os.makedirs(os.path.join(output_path, "inflow"))
 
     for client_path in client_paths:
         pcap_path: str = find_pcap_path(client_path)
+        print(f"Parsing {pcap_path}...")
         own_address: str = find_ip(pcap_path)
+        size_processed: int = 24    # bytes of pcap header
+        size: int = os.path.getsize(pcap_path)
         with open(pcap_path, "rb") as file:
+            print_progress_bar(size_processed, size, 50)
             reader: Reader = Reader(file)
             for timestamp, packet in reader:
                 try:
@@ -213,23 +226,24 @@ def parse_pcap_inflow(client_paths: list, streams: dict, streams_by_guard: dict,
                     stream: dict = streams[stream_id]
                     identifier: str = f"{stream['circuit_id']}-{site_indexes[stream['destination_ip']]}"
                     if stream["start_time"] <= timestamp and stream["end_time"] >= timestamp:
-                        if identifier not in packets:
-                            packets[identifier] = []
-                        packets[identifier].append(
-                            f"{timestamp}\t{ip.len*orientation}")
-    for identifier in packets.keys():
-        with open(os.path.join(output_path, "inflow", identifier), "w") as file:
-            file.write("\n".join(packets[identifier]))
+                        with open(os.path.join(output_path, "inflow", identifier), "a") as file:
+                            file.write(f"{timestamp}\t{ip.len*orientation}\n")
+                # bytes of pcap packet header + packet
+                size_processed += 16 + len(packet)
+        print("\n")
 
 
 def parse_pcap_outflow(data_path: str, streams: dict, streams_by_destination: dict, site_indexes: dict, output_path: str) -> None:
     if not os.path.exists(os.path.join(output_path, "outflow")):
         os.makedirs(os.path.join(output_path, "outflow"))
 
-    packets: dict = {}
     for pcap_path in find_exit_pcap_paths(data_path):
+        print(f"Parsing {pcap_path}...")
         own_address: str = find_ip(pcap_path)
+        size_processed: int = 24    # bytes of pcap header
+        size: int = os.path.getsize(pcap_path)
         with open(pcap_path, "rb") as file:
+            print_progress_bar(size_processed, size, 50)
             reader: Reader = Reader(file)
             for timestamp, packet in reader:
                 try:
@@ -256,13 +270,11 @@ def parse_pcap_outflow(data_path: str, streams: dict, streams_by_destination: di
                     stream: dict = streams[stream_id]
                     identifier: str = f"{stream['circuit_id']}-{site_indexes[stream['destination_ip']]}"
                     if stream["start_time"] <= timestamp and stream["end_time"] + 1 >= timestamp:
-                        if identifier not in packets:
-                            packets[identifier] = []
-                        packets[identifier].append(
-                            f"{timestamp}\t{ip.len*orientation}")
-    for identifier in packets.keys():
-        with open(os.path.join(output_path, "outflow", identifier), "w") as file:
-            file.write("\n".join(packets[identifier]))
+                        with open(os.path.join(output_path, "outflow", identifier), "w") as file:
+                            file.write(f"{timestamp}\t{ip.len*orientation}\n")
+                # bytes of pcap packet header + packet
+                size_processed += 16 + len(packet)
+        print("\n")
 
 
 if __name__ == "__main__":
@@ -300,12 +312,14 @@ if __name__ == "__main__":
     client_idx: int = 0
     for client_path in client_paths:
         oniontrace_path: str = get_oniontrace_path(client_path)
+        print(f"Parsing oniontrace file: {oniontrace_path}")
         parse_oniontrace(oniontrace_path, streams, client_idx)
         client_idx += 1
     with open(os.path.join(output_path, "dictionaries", "streams.json"), "w") as file:
         json.dump(streams, file, indent=4)
 
     # Create dictionary of destination address to idx
+    print("Creating site_indexes dictionary...")
     site_indexes: dict = {}
     idx: int = 0
     for stream_id in streams.keys():
@@ -317,6 +331,7 @@ if __name__ == "__main__":
         json.dump(site_indexes, file, indent=4)
 
     # Create dictonary of relay name to ip address
+    print("Creating hosts_by_address dictionary...")
     hosts_by_address: dict = {}
     with open(config_path, "r") as file:
         config: dict = yaml.safe_load(file)
@@ -326,6 +341,8 @@ if __name__ == "__main__":
     with open(os.path.join(output_path, "dictionaries", "hosts_by_address.json"), "w") as file:
         json.dump(hosts_by_address, file, indent=4)
 
+    # Create dictionary of stream id by guard name
+    print("Creating streams_by_guard dictionary...")
     streams_by_guard: dict = {}
     for stream_id in streams.keys():
         guard_name: str = streams[stream_id]["guard_name"]
@@ -335,6 +352,8 @@ if __name__ == "__main__":
     with open(os.path.join(output_path, "dictionaries", "streams_by_guard.json"), "w") as file:
         json.dump(streams_by_guard, file, indent=4)
 
+    # Create dictionary of stream id by destination address
+    print("Creating streams_by_destination dictionary...")
     streams_by_destination: dict = {}
     for stream_id in streams.keys():
         destination_ip: str = streams[stream_id]["destination_ip"].split(":")[
@@ -345,7 +364,9 @@ if __name__ == "__main__":
     with open(os.path.join(output_path, "dictionaries", "streams_by_destination.json"), "w") as file:
         json.dump(streams_by_destination, file, indent=4)
 
+    print("Parsing pcap for inflow files...")
     parse_pcap_inflow(client_paths, streams, streams_by_guard,
                       hosts_by_address, site_indexes, output_path)
+    print("Parsing pcap for outflow files...")
     parse_pcap_outflow(data_path, streams, streams_by_destination,
                        site_indexes, output_path)
