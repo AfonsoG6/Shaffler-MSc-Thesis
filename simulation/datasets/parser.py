@@ -236,8 +236,7 @@ def parse_pcap_inflow(client_paths: list, streams: dict, streams_by_guard: dict,
 def parse_pcap_outflow(data_path: str, streams: dict, streams_by_destination: dict, site_indexes: dict, output_path: str) -> None:
     if os.path.exists(os.path.join(output_path, "outflow")):
         os.remove(os.path.join(output_path, "outflow"))
-    if not os.path.exists(os.path.join(output_path, "outflow")):
-        os.makedirs(os.path.join(output_path, "outflow"))
+    os.makedirs(os.path.join(output_path, "outflow"))
 
     for pcap_path in find_exit_pcap_paths(data_path):
         print(f"Parsing {pcap_path}...")
