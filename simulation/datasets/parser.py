@@ -240,8 +240,8 @@ def parse_pcap_inflow(client_paths: list, streams: dict, streams_by_guard: dict,
                                 file.write(buffer[identifier])
                                 buffer[identifier] = ""
                 # bytes of pcap packet header + packet
-                print(f"Packet size: {len(packet)}")
                 size_processed += 16 + len(packet)
+        print_progress_bar(size_processed, size, 50)
         print("\n")
     if len(buffer) > 0:
         write_buffer_dict(buffer, inflow_path)
@@ -307,6 +307,7 @@ def parse_pcap_outflow(data_path: str, streams: dict, streams_by_destination: di
                                 buffer[identifier] = ""
                 # bytes of pcap packet header + packet
                 size_processed += 16 + len(packet)
+        print_progress_bar(size_processed, size, 50)
         print("\n")
     if len(buffer) > 0:
         write_buffer_dict(buffer, outflow_path)
