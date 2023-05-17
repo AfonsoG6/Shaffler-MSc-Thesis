@@ -185,20 +185,26 @@ def find_ip(pcap_path: str) -> str:
 
 
 def parse_pcap_inflow(client_paths: list, streams: dict, streams_by_guard: dict, hosts_by_address: dict, site_indexes: dict, output_path: str) -> None:
-    if os.path.exists(os.path.join(output_path, "inflow")):
-        os.remove(os.path.join(output_path, "inflow"))
-    os.makedirs(os.path.join(output_path, "inflow"))
+    inflow_path: str = os.path.join(output_path, "inflow")
+    if not os.path.exists(inflow_path):
+        os.makedirs(inflow_path)
 
+    buffer: dict = {}
     for client_path in client_paths:
         pcap_path: str = find_pcap_path(client_path)
         print(f"Parsing {pcap_path}...")
         own_address: str = find_ip(pcap_path)
+        last_printed_size: int = 0
         size_processed: int = 24    # bytes of pcap header
         size: int = os.path.getsize(pcap_path)
+        size_until_update: int = size // 100
+        print_progress_bar(size_processed, size, 50)
         with open(pcap_path, "rb") as file:
             reader: Reader = Reader(file)
             for timestamp, packet in reader:
-                print_progress_bar(size_processed, size, 50)
+                if size_processed - last_printed_size > size_until_update:
+                    print_progress_bar(size_processed, size, 50)
+                    last_printed_size = size_processed
                 try:
                     ip: IP = IP(packet)
                 except:
@@ -226,27 +232,48 @@ def parse_pcap_inflow(client_paths: list, streams: dict, streams_by_guard: dict,
                     stream: dict = streams[stream_id]
                     identifier: str = f"{stream['circuit_id']}-{site_indexes[stream['destination_ip']]}"
                     if stream["start_time"] <= timestamp and stream["end_time"] >= timestamp:
-                        with open(os.path.join(output_path, "inflow", identifier), "a") as file:
-                            file.write(f"{timestamp}\t{ip.len*orientation}\n")
+                        if identifier not in buffer.keys():
+                            buffer[identifier] = ""
+                        buffer[identifier] += f"{timestamp}\t{ip.len*orientation}\n"
+                        if len(buffer[identifier]) > 1048576:  # 1MB
+                            with open(os.path.join(inflow_path, identifier), "a") as file:
+                                file.write(buffer[identifier])
+                                buffer[identifier] = ""
                 # bytes of pcap packet header + packet
+                print(f"Packet size: {len(packet)}")
                 size_processed += 16 + len(packet)
         print("\n")
+    if len(buffer) > 0:
+        write_buffer_dict(buffer, inflow_path)
+
+
+def write_buffer_dict(buffer: dict, inoutflow_path: str) -> None:
+    for identifier in buffer.keys():
+        with open(os.path.join(inoutflow_path, identifier), "a") as file:
+            file.write(buffer[identifier])
+    buffer.clear()
 
 
 def parse_pcap_outflow(data_path: str, streams: dict, streams_by_destination: dict, site_indexes: dict, output_path: str) -> None:
-    if os.path.exists(os.path.join(output_path, "outflow")):
-        os.remove(os.path.join(output_path, "outflow"))
-    os.makedirs(os.path.join(output_path, "outflow"))
+    outflow_path: str = os.path.join(output_path, "outflow")
+    if not os.path.exists(outflow_path):
+        os.makedirs(outflow_path)
 
+    buffer: dict = {}
     for pcap_path in find_exit_pcap_paths(data_path):
         print(f"Parsing {pcap_path}...")
         own_address: str = find_ip(pcap_path)
+        last_printed_size: int = 0
         size_processed: int = 24    # bytes of pcap header
         size: int = os.path.getsize(pcap_path)
+        size_until_update: int = size // 100
+        print_progress_bar(size_processed, size, 50)
         with open(pcap_path, "rb") as file:
             reader: Reader = Reader(file)
             for timestamp, packet in reader:
-                print_progress_bar(size_processed, size, 50)
+                if size_processed - last_printed_size > size_until_update:
+                    print_progress_bar(size_processed, size, 50)
+                    last_printed_size = size_processed
                 try:
                     ip: IP = IP(packet)
                 except:
@@ -271,11 +298,18 @@ def parse_pcap_outflow(data_path: str, streams: dict, streams_by_destination: di
                     stream: dict = streams[stream_id]
                     identifier: str = f"{stream['circuit_id']}-{site_indexes[stream['destination_ip']]}"
                     if stream["start_time"] <= timestamp and stream["end_time"] + 1 >= timestamp:
-                        with open(os.path.join(output_path, "outflow", identifier), "w") as file:
-                            file.write(f"{timestamp}\t{ip.len*orientation}\n")
+                        if identifier not in buffer.keys():
+                            buffer[identifier] = ""
+                        buffer[identifier] += f"{timestamp}\t{ip.len*orientation}\n"
+                        if len(buffer[identifier]) > 1048576:  # 1MB
+                            with open(os.path.join(outflow_path, identifier), "a") as file:
+                                file.write(buffer[identifier])
+                                buffer[identifier] = ""
                 # bytes of pcap packet header + packet
                 size_processed += 16 + len(packet)
         print("\n")
+    if len(buffer) > 0:
+        write_buffer_dict(buffer, outflow_path)
 
 
 if __name__ == "__main__":
