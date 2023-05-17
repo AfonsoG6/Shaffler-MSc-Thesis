@@ -1,6 +1,11 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# Install vagrant-disksize to allow resizing the vagrant box disk.
+unless Vagrant.has_plugin?("vagrant-disksize")
+    raise  Vagrant::Errors::VagrantError.new, "vagrant-disksize plugin is missing. Please install it using 'vagrant plugin install vagrant-disksize' and rerun 'vagrant up'"
+end
+
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
@@ -52,13 +57,16 @@ Vagrant.configure("2") do |config|
   config.vm.provider "virtualbox" do |vb|
     # Display the VirtualBox GUI when booting the machine
     # vb.gui = true
-    
+
     # Customize the amount of memory on the VM:
     # vb.memory = "122880"
-    vb.memory = "65536"
-    vb.cpus = 20
+    # vb.memory = "65536"
+    # vb.memory = "32768"
+    vb.memory = "16384"
+    # vb.cpus = 32
+    vb.cpus = 16
   end
-  config.vm.disk :disk, size: "100GB", primary: true
+  config.disksize.size = "50GB"
   #
   # View the documentation for the provider you are using for more
   # information on available options.
