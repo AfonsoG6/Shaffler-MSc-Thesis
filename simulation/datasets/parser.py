@@ -196,9 +196,9 @@ def parse_pcap_inflow(client_paths: list, streams: dict, streams_by_guard: dict,
         size_processed: int = 24    # bytes of pcap header
         size: int = os.path.getsize(pcap_path)
         with open(pcap_path, "rb") as file:
-            print_progress_bar(size_processed, size, 50)
             reader: Reader = Reader(file)
             for timestamp, packet in reader:
+                print_progress_bar(size_processed, size, 50)
                 try:
                     ip: IP = IP(packet)
                 except:
@@ -243,9 +243,9 @@ def parse_pcap_outflow(data_path: str, streams: dict, streams_by_destination: di
         size_processed: int = 24    # bytes of pcap header
         size: int = os.path.getsize(pcap_path)
         with open(pcap_path, "rb") as file:
-            print_progress_bar(size_processed, size, 50)
             reader: Reader = Reader(file)
             for timestamp, packet in reader:
+                print_progress_bar(size_processed, size, 50)
                 try:
                     ip: IP = IP(packet)
                 except:
