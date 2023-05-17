@@ -186,7 +186,7 @@ def find_ip(pcap_path: str) -> str:
 
 def parse_pcap_inflow(client_paths: list, streams: dict, streams_by_guard: dict, hosts_by_address: dict, site_indexes: dict, output_path: str) -> None:
     if os.path.exists(os.path.join(output_path, "inflow")):
-        os.removedirs(os.path.join(output_path, "inflow"))
+        os.remove(os.path.join(output_path, "inflow"))
     os.makedirs(os.path.join(output_path, "inflow"))
 
     for client_path in client_paths:
@@ -234,6 +234,8 @@ def parse_pcap_inflow(client_paths: list, streams: dict, streams_by_guard: dict,
 
 
 def parse_pcap_outflow(data_path: str, streams: dict, streams_by_destination: dict, site_indexes: dict, output_path: str) -> None:
+    if os.path.exists(os.path.join(output_path, "outflow")):
+        os.remove(os.path.join(output_path, "outflow"))
     if not os.path.exists(os.path.join(output_path, "outflow")):
         os.makedirs(os.path.join(output_path, "outflow"))
 
