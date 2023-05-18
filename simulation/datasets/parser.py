@@ -112,6 +112,7 @@ def parse_oniontrace(oniontrace_path: str, streams: dict, client_idx: int) -> No
                 exit_name: str = tokens[3].split(",")[-1].split("~")[1]
                 circuits[circuit_id] = {
                     "guard_name": guard_name, "exit_name": exit_name}
+                print(f"C{circuit_id}", end=" ")
                 continue
             search = stream_succeeded_pattern.search(line)
             if search:
@@ -126,6 +127,7 @@ def parse_oniontrace(oniontrace_path: str, streams: dict, client_idx: int) -> No
                 streams[stream_id] = {
                     "circuit_id": circuit_id, "destination_ip": destination_ip, "start_time": start_time
                 }
+                print(f"S{stream_id}", end=" ")
                 continue
             search = stream_closed_pattern.search(line)
             if search:
@@ -136,6 +138,7 @@ def parse_oniontrace(oniontrace_path: str, streams: dict, client_idx: int) -> No
                 stream_id: int = int(tokens[1])
                 streams[stream_id]["end_time"] = end_time
                 continue
+    print("\nRemoving streams without end time or known circuit id...")
     stream_ids_to_remove: list = []
     for stream_id in streams.keys():
         stream: dict = streams[stream_id]
@@ -205,6 +208,8 @@ def parse_pcap_inflow(client_paths: list, streams: dict, streams_by_guard: dict,
                 if size_processed - last_printed_size > size_until_update:
                     print_progress_bar(size_processed, size, 50)
                     last_printed_size = size_processed
+                # bytes of pcap packet header + packet
+                size_processed += 16 + len(packet)
                 try:
                     ip: IP = IP(packet)
                 except:
@@ -235,16 +240,13 @@ def parse_pcap_inflow(client_paths: list, streams: dict, streams_by_guard: dict,
                         if identifier not in buffer.keys():
                             buffer[identifier] = ""
                         buffer[identifier] += f"{timestamp}\t{ip.len*orientation}\n"
-                        if len(buffer[identifier]) > 1048576:  # 1MB
+                        if len(buffer[identifier]) > 104857600:  # 100MB
                             with open(os.path.join(inflow_path, identifier), "a") as file:
                                 file.write(buffer[identifier])
                                 buffer[identifier] = ""
-                # bytes of pcap packet header + packet
-                size_processed += 16 + len(packet)
         print_progress_bar(size_processed, size, 50)
         print("\n")
-    if len(buffer) > 0:
-        write_buffer_dict(buffer, inflow_path)
+    write_buffer_dict(buffer, inflow_path)
 
 
 def write_buffer_dict(buffer: dict, inoutflow_path: str) -> None:
@@ -274,6 +276,8 @@ def parse_pcap_outflow(data_path: str, streams: dict, streams_by_destination: di
                 if size_processed - last_printed_size > size_until_update:
                     print_progress_bar(size_processed, size, 50)
                     last_printed_size = size_processed
+                # bytes of pcap packet header + packet
+                size_processed += 16 + len(packet)
                 try:
                     ip: IP = IP(packet)
                 except:
@@ -305,12 +309,9 @@ def parse_pcap_outflow(data_path: str, streams: dict, streams_by_destination: di
                             with open(os.path.join(outflow_path, identifier), "a") as file:
                                 file.write(buffer[identifier])
                                 buffer[identifier] = ""
-                # bytes of pcap packet header + packet
-                size_processed += 16 + len(packet)
         print_progress_bar(size_processed, size, 50)
         print("\n")
-    if len(buffer) > 0:
-        write_buffer_dict(buffer, outflow_path)
+    write_buffer_dict(buffer, outflow_path)
 
 
 if __name__ == "__main__":
