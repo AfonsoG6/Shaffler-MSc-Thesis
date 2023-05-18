@@ -305,7 +305,7 @@ def parse_pcap_outflow(data_path: str, streams: dict, streams_by_destination: di
                         if identifier not in buffer.keys():
                             buffer[identifier] = ""
                         buffer[identifier] += f"{timestamp}\t{ip.len*orientation}\n"
-                        if len(buffer[identifier]) > 1048576:  # 1MB
+                        if len(buffer[identifier]) > 104857600:  # 100MB
                             with open(os.path.join(outflow_path, identifier), "a") as file:
                                 file.write(buffer[identifier])
                                 buffer[identifier] = ""
