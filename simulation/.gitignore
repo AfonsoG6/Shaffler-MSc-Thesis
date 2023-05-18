@@ -1,5 +1,7 @@
+datasets/__pycache__
 datasets/data
 datasets/dataset
+datasets/stage
 pdfs*
 **/shadow.data
 **/shadow.log
