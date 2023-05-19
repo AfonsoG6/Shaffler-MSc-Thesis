@@ -4,8 +4,14 @@ from dpkt.ip import IP, inet_to_str
 import pickle
 import os
 
+def quick_find_ip(client_path: str) -> str:
+    for file in os.listdir(client_path):
+        if file == "hostname.1000.stdout":
+            with open(os.path.join(client_path, file), "r") as file:
+                return file.read().strip()
+    raise Exception("IP not found")
 
-def find_ip(pcap_path: str) -> str:
+def slow_find_ip(pcap_path: str) -> str:
     ip_occurrences: dict = {}
     i: int = 0
     with open(pcap_path, "rb") as file:
@@ -74,7 +80,7 @@ def parse_pcap_outflow(pcap_path: str, output_path: str) -> None:
         os.makedirs(outflow_path)
 
     print(f"Parsing {pcap_path}...")
-    own_address: str = find_ip(pcap_path)
+    own_address: str = slow_find_ip(pcap_path)
     with open(pcap_path, "rb") as file:
         reader: Reader = Reader(file)
         for timestamp, packet in reader:
@@ -121,7 +127,7 @@ def parse_pcap_inflow(pcap_path: str, output_path: str) -> None:
         os.makedirs(inflow_path)
 
     print(f"Parsing {pcap_path}...")
-    own_address: str = find_ip(pcap_path)
+    own_address: str = quick_find_ip(os.path.split(pcap_path)[0])
     with open(pcap_path, "rb") as file:
         reader: Reader = Reader(file)
         for timestamp, packet in reader:
