@@ -22,7 +22,7 @@ def find_client_paths(data_path: str) -> list:
 
 def get_oniontrace_path(client_path: str) -> str:
     oniontrace_path: str = ""
-    oniontrace_pattern = re.compile(r"oniontrace\.1001\.stdout")
+    oniontrace_pattern = re.compile(r"oniontrace\.1002\.stdout")
     for element in os.listdir(client_path):
         if oniontrace_pattern.search(element):
             oniontrace_path = os.path.join(client_path, element)
