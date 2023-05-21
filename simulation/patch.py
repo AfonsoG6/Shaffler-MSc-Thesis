@@ -6,9 +6,10 @@ import re
 import os
 
 
-def patch_clients(hosts: dict, hostnames: list, num_clients: int, max_packet_size: int):
-    pattern = re.compile(r".*client.*")
-
+def patch_clients(hosts: dict, hostnames: list, num_clients: int, max_packet_size: int) -> set:
+    pattern = re.compile(r"perfclient\d+exit")
+    ports = set()
+    
     i: int = 0
     host_keys = list(hosts.keys())
     random.shuffle(host_keys)
@@ -28,29 +29,57 @@ def patch_clients(hosts: dict, hostnames: list, num_clients: int, max_packet_siz
 
             host_config["processes"].append(
                 {"path": "hostname", "args": "-I", "start_time": 60})
+            print(f"Added hostname process to {host}")
+            
+            idx = int(host[len("perfclient"):-len("exit")])
+            port = 20000 + idx
+            ports.add(port)
+            for process in host_config["processes"]:
+                if process["path"].endswith("tgen"):
+                    process["args"] = process["args"].replace("tgen-perf-exit.tgenrc.graphml", f"tgen-perf-exit/{port}.tgenrc.graphml")
+            print(f"Replaced tgenrc path for {host}")
+            patch_client_tgenrc(port, tgen_perf_path, os.path.join(tgen_perf_dir_path, f"{port}.tgenrc.graphml"))
+            print(f"Created duplicate tgenrc for {host} with port {port}")
+            patch_server_tgenrc(port, tgen_server_path, os.path.join(tgen_server_dir_path, f"{port}.tgenrc.graphml"))
+            print(f"Created duplicate tgenrc for {host} with port {port}")
+    return ports
 
 
-def patch_exits(hosts: dict, hostnames: list, max_packet_size: int):
-    pattern = re.compile(r"relay\d+exit")
-
+def patch_servers(hosts: dict, hostnames: list, max_packet_size: int, ports: set):
+    pattern = re.compile(r"server\d+exit")
     for host in hosts.keys():
         if pattern.match(host) and ((len(hostnames) > 0 and host in hostnames) or len(hostnames) == 0):
             host_config = hosts[host]
-
             if "host_options" not in host_config.keys():
                 host_config["host_options"] = {}
             host_config["host_options"]["pcap_enabled"] = True
             host_config["host_options"]["pcap_capture_size"] = f"{max_packet_size} B"
             print(f"PCAP enabled for {host}")
+            
+            for port in ports:
+                process = host_config["processes"][0].copy()
+                process["args"] = process["args"].replace("tgen-server.tgenrc.graphml", f"tgen-server/{port}.tgenrc.graphml")
+                host_config["processes"].append(process)
+            print("Added duplicate tgen processes to server")
 
 def patch_client_tgenrc(new_port: int, original_path: str, target_path: str = ""):
     if target_path == "":
         target_path = original_path
     with open(original_path, "r") as f:
         tgenrc = f.read()
-        tgenrc = tgenrc.replace(":80", f":{new_port}")
+    tgenrc = tgenrc.replace(":80", f":{new_port}")
     with open(target_path, "w") as f:
         f.write(tgenrc)
+        
+def patch_server_tgenrc(new_port: int, original_path: str, target_path: str = ""):
+    if target_path == "":
+        target_path = original_path
+    with open(original_path, "r") as f:
+        tgenrc = f.read()
+        
+    newtgenrc = tgenrc.replace("<data key=\"d0\">80", f"<data key=\"d0\">{new_port}")
+    with open(target_path, "w") as f:
+        f.write(newtgenrc)
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -69,55 +98,19 @@ if __name__ == "__main__":
     
     config_path = os.path.join(simulation, "shadow.config.yaml")
     conf_path = os.path.join(simulation, "conf")
-    hosts_path = os.path.join(simulation, "shadow.data.template", "hosts")
 
     tgen_perf_path = os.path.join(conf_path, "tgen-perf-exit.tgenrc.graphml")
     tgen_perf_dir_path = os.path.join(conf_path, "tgen-perf-exit")
     os.makedirs(tgen_perf_dir_path, exist_ok=True)
     
-    markov_pattern = re.compile(r"markovclient\d+exit")
-    perf_pattern = re.compile(r"perfclient\d+exit")
-    ports_needed = set()
-    for host in os.listdir(hosts_path):
-        if markov_pattern.match(host):
-            idx = int(host[len("markovclient"):-len("exit")])
-            own_port = 10000 + idx
-            ports_needed.add(own_port)
-            patch_client_tgenrc(own_port, os.path.join(hosts_path, host, "tgenrc.graphml"))
-        if perf_pattern.match(host):
-            idx = int(host[len("perfclient"):-len("exit")])
-            own_port = 20000 + idx
-            ports_needed.add(own_port)
-            patch_client_tgenrc(own_port, tgen_perf_path, os.path.join(tgen_perf_dir_path, f"tgen-perf-exit-{own_port}.tgenrc.graphml"))
-
     tgen_server_path = os.path.join(conf_path, "tgen-server.tgenrc.graphml")
     tgen_server_dir_path = os.path.join(conf_path, "tgen-server")
     os.makedirs(tgen_server_dir_path, exist_ok=True)
-    with open(tgen_server_path, "r") as f:
-        tgen_server = f.read()
-    for port in ports_needed:
-        new_tgen_server = tgen_server.replace("<data key=\"d0\">80", f"<data key=\"d0\">{port}")
-        with open(os.path.join(tgen_server_dir_path, f"tgen-server-{port}.tgenrc.graphml"), "w") as f:
-            f.write(new_tgen_server)
 
     config = yaml.load(open(config_path, "r"), Loader=yaml.FullLoader)
     
-    server_pattern = re.compile(r".*server.*")
-    for host in config["hosts"].keys():
-        if server_pattern.match(host):
-            for port in ports_needed:
-                process = config["hosts"][host]["processes"][0].copy()
-                process["args"] = process["args"].replace("tgen-server.tgenrc.graphml", f"tgen-server/tgen-server-{port}.tgenrc.graphml")
-                config["hosts"][host]["processes"].append(process)
-        if perf_pattern.match(host):
-            idx = int(host[len("perfclient"):-len("exit")])
-            own_port = 20000 + idx
-            for process in config["hosts"][host]["processes"]:
-                if process["path"].endswith("tgen"):
-                    process["args"] = process["args"].replace("tgen-perf-exit.tgenrc.graphml", f"tgen-perf-exit/tgen-perf-exit-{own_port}.tgenrc.graphml")
-    
-    patch_clients(config["hosts"], hostnames, num_clients, max_packet_size)
-    patch_exits(config["hosts"], hostnames, max_packet_size)
+    ports = patch_clients(config["hosts"], hostnames, num_clients, max_packet_size)
+    patch_servers(config["hosts"], hostnames, max_packet_size, ports)
     
     yaml.dump(config, open(config_path, "w"), default_flow_style=False, sort_keys=False)
 
