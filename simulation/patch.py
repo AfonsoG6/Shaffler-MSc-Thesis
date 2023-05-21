@@ -43,8 +43,8 @@ def patch_exits(hosts: dict, hostnames: list, max_packet_size: int):
             host_config["host_options"]["pcap_capture_size"] = f"{max_packet_size} B"
             print(f"PCAP enabled for {host}")
 
-def patch_client_tgenrc(new_port: int, original_path: str, target_path: str|None = None):
-    if target_path is None:
+def patch_client_tgenrc(new_port: int, original_path: str, target_path: str = ""):
+    if target_path == "":
         target_path = original_path
     with open(original_path, "r") as f:
         tgenrc = f.read()
