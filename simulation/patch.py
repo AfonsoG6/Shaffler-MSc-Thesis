@@ -81,13 +81,11 @@ if __name__ == "__main__":
     for host in os.listdir(hosts_path):
         if markov_pattern.match(host):
             idx = int(host[len("markovclient"):-len("exit")])
-            print(f"Markov client {idx}")
             own_port = 10000 + idx
             ports_needed.add(own_port)
             patch_client_tgenrc(own_port, os.path.join(hosts_path, host, "tgenrc.graphml"))
         if perf_pattern.match(host):
             idx = int(host[len("perfclient"):-len("exit")])
-            print(f"Perf client {idx}")
             own_port = 20000 + idx
             ports_needed.add(own_port)
             patch_client_tgenrc(own_port, tgen_perf_path, os.path.join(tgen_perf_dir_path, f"tgen-perf-exit-{own_port}.tgenrc.graphml"))
@@ -111,10 +109,16 @@ if __name__ == "__main__":
                 process = config["hosts"][host]["processes"][0].copy()
                 process["args"] = process["args"].replace("tgen-server.tgenrc.graphml", f"tgen-server/tgen-server-{port}.tgenrc.graphml")
                 config["hosts"][host]["processes"].append(process)
+        if perf_pattern.match(host):
+            idx = int(host[len("perfclient"):-len("exit")])
+            own_port = 20000 + idx
+            for process in config["hosts"][host]["processes"]:
+                if process["path"].endswith("tgen"):
+                    process["args"] = process["args"].replace("tgen-perf-exit.tgenrc.graphml", f"tgen-perf-exit/tgen-perf-exit-{own_port}.tgenrc.graphml")
     
     patch_clients(config["hosts"], hostnames, num_clients, max_packet_size)
     patch_exits(config["hosts"], hostnames, max_packet_size)
     
-    print("Done!")
-
     yaml.dump(config, open(config_path, "w"), default_flow_style=False, sort_keys=False)
+
+    print("Done!")
