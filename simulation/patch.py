@@ -56,6 +56,10 @@ def patch_servers(hosts: dict, hostnames: list, max_packet_size: int, ports: set
             host_config["host_options"]["pcap_capture_size"] = f"{max_packet_size} B"
             print(f"PCAP enabled for {host}")
             
+            host_config["processes"].append(
+                {"path": "hostname", "args": "-I", "start_time": 60})
+            print(f"Added hostname process to {host}")
+            
             for port in ports:
                 process = host_config["processes"][0].copy()
                 process["args"] = process["args"].replace("tgen-server.tgenrc.graphml", f"tgen-server/{port}.tgenrc.graphml")
