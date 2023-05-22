@@ -7,11 +7,11 @@ import os
 info_clients: dict = {} # {client_name: [{timestamp, circuit_idx, site_idx}]}
 info_servers: dict = {} # {address: [{timestamp, port, circuit_idx, site_idx}]}
 
-def get_address(client_path: str) -> str:
-    file_path: str = os.path.join(client_path, "hostname.1000.stdout")
+def get_address(host_path: str) -> str:
+    file_path: str = os.path.join(host_path, "hostname.1000.stdout")
     if not os.path.exists(file_path):
         raise Exception(f"Hostname file not found: {file_path}")
-    with open(os.path.join(client_path, "hostname.1000.stdout"), "r") as file:
+    with open(os.path.join(host_path, "hostname.1000.stdout"), "r") as file:
         return file.read().strip()
 
 def get_orientation_client(ip: IP, own_address: str) -> int:
@@ -137,7 +137,7 @@ def main():
     if hostname in info_clients.keys():
         parse_pcap_inflow(info_clients[hostname], hostname, hosts_path, output_path)
     elif hostname.startswith("server"):
-        parse_pcap_outflow(info_servers[hostname], hostname, hosts_path, output_path)
+        parse_pcap_outflow(info_servers[get_address(os.path.join(hosts_path, hostname))], hostname, hosts_path, output_path)
     else:
         raise Exception(f"Invalid hostname: {hostname}")
 
