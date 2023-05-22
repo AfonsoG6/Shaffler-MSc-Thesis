@@ -38,6 +38,9 @@ def get_port(ip: IP, own_address: str) -> int:
     else:
         raise Exception("Packet is not related to the server")
 
+def timestamp_str(timestamp: float) -> str:
+    return "{:.6f}".format(timestamp)
+
 def parse_pcap_outflow(info_server: list, hostname: str, hosts_path: str, output_path: str) -> None:
     outflow_path: str = os.path.join(output_path, "outflow")
     os.makedirs(outflow_path, exist_ok=True)
@@ -67,9 +70,9 @@ def parse_pcap_outflow(info_server: list, hostname: str, hosts_path: str, output
                     continue
                 if port != info_server[idx]["port"]:
                     continue
-                file_path: str = os.path.join(outflow_path, f"{info_server[idx]['circuit_idx']}-{info_server[idx]['site_idx']}")
+                file_path: str = os.path.join(outflow_path, f"{info_server[idx]['circuit_idx']}_{info_server[idx]['site_idx']}")
                 with open(file_path, "a") as file:
-                    file.write(f"{timestamp-info_server[idx]['timestamp']}\t{ip.len*orientation}\n")
+                    file.write(f"{timestamp_str(timestamp-info_server[idx]['timestamp'])}\t{ip.len*orientation}\n")
                 break
 
 
@@ -99,9 +102,9 @@ def parse_pcap_inflow(info_client: list, hostname: str, hosts_path: str, output_
                     orientation = get_orientation_client(IP(packet), own_address)
                 except:
                     continue
-                file_path: str = os.path.join(inflow_path, f"{info_client[idx]['circuit_idx']}-{info_client[idx]['site_idx']}")
+                file_path: str = os.path.join(inflow_path, f"{info_client[idx]['circuit_idx']}_{info_client[idx]['site_idx']}")
                 with open(file_path, "a") as file:
-                    file.write(f"{timestamp-info_client[idx]['timestamp']}\t{ip.len*orientation}\n")
+                    file.write(f"{timestamp_str(timestamp-info_client[idx]['timestamp'])}\t{ip.len*orientation}\n")
                 break
 
 def main():
