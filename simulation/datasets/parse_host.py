@@ -136,9 +136,11 @@ def main():
 
     if hostname in info_clients.keys():
         parse_pcap_inflow(info_clients[hostname], hostname, hosts_path, output_path)
-    elif hostname in info_servers.keys():
+    elif hostname.startswith("server"):
         parse_pcap_outflow(info_servers[hostname], hostname, hosts_path, output_path)
-    
+    else:
+        raise Exception(f"Invalid hostname: {hostname}")
+
     print(f"[{hostname}] Done parsing pcap file for {hostname}")
 
 
