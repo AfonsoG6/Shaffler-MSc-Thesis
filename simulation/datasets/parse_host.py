@@ -68,7 +68,7 @@ def parse_pcap_outflow(info_server: list, hostname: str, hosts_path: str, output
                     port = get_port(ip, own_address)
                 except:
                     continue
-                if port != info_server[idx]["port"]:
+                if (port >= 20000 and port <= 20100) and (port != info_server[idx]["port"]):
                     continue
                 file_path: str = os.path.join(outflow_path, f"{info_server[idx]['circuit_idx']}_{info_server[idx]['site_idx']}")
                 with open(file_path, "a") as file:
