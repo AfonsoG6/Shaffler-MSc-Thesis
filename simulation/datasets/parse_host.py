@@ -69,7 +69,7 @@ def parse_pcap_outflow(info_server: list, hostname: str, hosts_path: str, output
                     continue
                 file_path: str = os.path.join(outflow_path, f"{info_server[idx]['circuit_idx']}-{info_server[idx]['site_idx']}")
                 with open(file_path, "a") as file:
-                    file.write(f"{timestamp}\t{ip.len*orientation}\n")
+                    file.write(f"{timestamp-info_server[idx]['timestamp']}\t{ip.len*orientation}\n")
                 break
 
 
@@ -101,7 +101,7 @@ def parse_pcap_inflow(info_client: list, hostname: str, hosts_path: str, output_
                     continue
                 file_path: str = os.path.join(inflow_path, f"{info_client[idx]['circuit_idx']}-{info_client[idx]['site_idx']}")
                 with open(file_path, "a") as file:
-                    file.write(f"{timestamp}\t{ip.len*orientation}\n")
+                    file.write(f"{timestamp-info_client[idx]['timestamp']}\t{ip.len*orientation}\n")
                 break
 
 def main():
