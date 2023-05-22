@@ -44,7 +44,7 @@ def parse_pcap_outflow(info_server: list, hostname: str, hosts_path: str, output
 
     pcap_path: str = os.path.join(hosts_path, hostname, "eth0.pcap")
     print(f"[{hostname} process] Parsing {pcap_path}...")
-    own_address: str = get_address(hostname)
+    own_address: str = get_address(os.path.join(hosts_path, hostname))
     with open(pcap_path, "rb") as file:
         reader: Reader = Reader(file)
         completed_idx: int = 0
@@ -79,7 +79,7 @@ def parse_pcap_inflow(info_client: list, hostname: str, hosts_path: str, output_
 
     pcap_path: str = os.path.join(hosts_path, hostname, "eth0.pcap")
     print(f"[{hostname} process] Parsing {pcap_path}...")
-    own_address: str = get_address(hostname)
+    own_address: str = get_address(os.path.join(hosts_path, hostname))
     with open(pcap_path, "rb") as file:
         reader: Reader = Reader(file)
         completed_idx: int = 0
