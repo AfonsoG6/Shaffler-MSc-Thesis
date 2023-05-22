@@ -28,8 +28,9 @@ def main():
     hostnames: set = set()
     for hostname in info_clients.keys():
         hostnames.add(hostname)
-    for hostname in info_servers.keys():
-        hostnames.add(hostname)
+    for filename in os.listdir(os.path.join(simulation, "shadow.data", "hosts")):
+        if filename.startswith("server"):
+            hostnames.add(filename)
 
     processes: list = []
     for hostname in hostnames:
