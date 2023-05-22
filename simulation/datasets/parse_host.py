@@ -10,7 +10,7 @@ info_servers: dict = {} # {address: [{timestamp, port, circuit_idx, site_idx}]}
 def get_address(client_path: str) -> str:
     file_path: str = os.path.join(client_path, "hostname.1000.stdout")
     if not os.path.exists(file_path):
-        raise Exception("Hostname file not found")
+        raise Exception(f"Hostname file not found: {file_path}")
     with open(os.path.join(client_path, "hostname.1000.stdout"), "r") as file:
         return file.read().strip()
 
