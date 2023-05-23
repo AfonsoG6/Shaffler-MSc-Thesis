@@ -1,0 +1,11 @@
+2023-05-21 22:00:06 1684706406.716250 [tornettools] [INFO] Logging system initialized! Logging events to stdout and to '/home/vagrant/rendezmix/simulation/tornet-0.005/tornettools.simulate.2023-05-21.22.00.06.log'
+2023-05-21 22:00:06 1684706406.716525 [tornettools] [INFO] Seeded standard and numpy PRNGs with seed=1530732792
+2023-05-21 22:00:06 1684706406.716698 [tornettools] [INFO] The argument namespace is: Namespace(command='simulate', do_compress=False, do_version=False, formatter_class=<class '__main__.CustomHelpFormatter'>, func=<function simulate at 0x7fe4be5e7ee0>, prefix='/home/vagrant/rendezmix/simulation/tornet-0.005', quiet=0, seed=1530732792, shadow_args='--parallelism=16 --seed=666 --template-directory=shadow.data.template', shadow_config='shadow.config.yaml', shadow_exe='/home/vagrant/.local/bin/shadow', tornet_config_path='/home/vagrant/rendezmix/simulation/tornet-0.005', use_realtime=False)
+2023-05-21 22:00:06 1684706406.780078 [tornettools] [INFO] The platform is: Linux-5.4.0-148-generic-x86_64-with-glibc2.29
+2023-05-21 22:00:06 1684706406.780662 [tornettools] [INFO] System info: uname_result(system='Linux', node='ubuntu-focal', release='5.4.0-148-generic', version='#165-Ubuntu SMP Tue Apr 18 08:53:12 UTC 2023', machine='x86_64', processor='x86_64')
+2023-05-21 22:00:06 1684706406.781538 [tornettools] [INFO] Starting a simulation from tornet prefix /home/vagrant/rendezmix/simulation/tornet-0.005
+2023-05-21 22:00:06 1684706406.781673 [tornettools] [INFO] Starting dstat
+2023-05-21 22:00:06 1684706406.785630 [tornettools] [INFO] Starting free loop
+2023-05-21 22:00:06 1684706406.787457 [tornettools] [INFO] Starting shadow
+2023-05-21 23:57:22 1684713442.950367 [tornettools] [INFO] Cleaning up
+2023-05-21 23:57:23 1684713443.709308 [tornettools] [INFO] Done simulating; shadow returned code '0'
