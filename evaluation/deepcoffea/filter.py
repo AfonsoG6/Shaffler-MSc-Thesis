@@ -8,9 +8,9 @@ import argparse
 def get_params():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', '-d', type=str,
-                        default='./datasets/CrawlE_Proc/')
+                        default='./datasets/shadowV_Proc/')
     parser.add_argument('--out', '-o', type=str,
-                        default='./data/CrawlE_Proc_files.txt')
+                        default='./data/shadowV_Proc_files.txt')
     parser.add_argument('--threshold', '-t', type=int, default=10)
     parser.add_argument('--interval', '-i', type=int, default=5)
     parser.add_argument('--windows', '-w', type=int, default=11)
