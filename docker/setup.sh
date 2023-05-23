@@ -153,15 +153,15 @@ apt install -y faketime dstat procps xz-utils wget
 mkdir -p ~/rendezmix/simulation/data
 cd ~/rendezmix/simulation/data
 
-wget https://collector.torproject.org/archive/relay-descriptors/consensuses/consensuses-2020-11.tar.xz
-wget https://collector.torproject.org/archive/relay-descriptors/server-descriptors/server-descriptors-2020-11.tar.xz
+wget https://collector.torproject.org/archive/relay-descriptors/consensuses/consensuses-2023-04.tar.xz
+wget https://collector.torproject.org/archive/relay-descriptors/server-descriptors/server-descriptors-2023-04.tar.xz
 wget https://metrics.torproject.org/userstats-relay-country.csv
-wget https://collector.torproject.org/archive/onionperf/onionperf-2020-11.tar.xz
-wget -O bandwidth-2020-11.csv "https://metrics.torproject.org/bandwidth.csv?start=2020-11-01&end=2020-11-30"
+wget https://collector.torproject.org/archive/onionperf/onionperf-2023-04.tar.xz
+wget -O bandwidth-2023-04.csv "https://metrics.torproject.org/bandwidth.csv?start=2023-04-01&end=2023-04-30"
 
-tar xafv consensuses-2020-11.tar.xz
-tar xafv server-descriptors-2020-11.tar.xz
-tar xafv onionperf-2020-11.tar.xz
+tar xafv consensuses-2023-04.tar.xz
+tar xafv server-descriptors-2023-04.tar.xz
+tar xafv onionperf-2023-04.tar.xz
 
 git clone https://github.com/tmodel-ccs2018/tmodel-ccs2018.github.io.git
 
@@ -169,61 +169,61 @@ export PATH="$PATH:~/tor/src/core/or:~/tor/src/app:~/tor/src/tools"
 echo "export PATH=\"\$PATH:~/tor/src/core/or:~/tor/src/app:~/tor/src/tools\"" | tee -a ~/.profile
 
 alias stage="cd ~/rendezmix/simulation/data; tornettools stage \
-consensuses-2020-11 \
-server-descriptors-2020-11 \
+consensuses-2023-04 \
+server-descriptors-2023-04 \
 userstats-relay-country.csv \
 tmodel-ccs2018.github.io \
---onionperf_data_path onionperf-2020-11 \
---bandwidth_data_path bandwidth-2020-11.csv \
---geoip_path ~/tor/src/config/geoip"
+--onionperf_data_path onionperf-2023-04 \
+--bandwidth_data_path bandwidth-2023-04.csv \
+--geoip_path tor/src/config/geoip"
 
 echo "alias stage=\"cd ~/rendezmix/simulation/data; tornettools stage \
-consensuses-2020-11 \
-server-descriptors-2020-11 \
+consensuses-2023-04 \
+server-descriptors-2023-04 \
 userstats-relay-country.csv \
 tmodel-ccs2018.github.io \
---onionperf_data_path onionperf-2020-11 \
---bandwidth_data_path bandwidth-2020-11.csv \
---geoip_path ~/tor/src/config/geoip\"" | tee -a ~/.profile
+--onionperf_data_path onionperf-2023-04 \
+--bandwidth_data_path bandwidth-2023-04.csv \
+--geoip_path tor/src/config/geoip\"" | tee -a ~/.profile
 
 alias generate="cd ~/rendezmix/simulation; tornettools generate \
-data/relayinfo_staging_2020-11-01--2020-11-30.json \
-data/userinfo_staging_2020-11-01--2020-11-30.json \
+data/relayinfo_staging_2023-04-01--2023-04-30.json \
+data/userinfo_staging_2023-04-01--2023-04-30.json \
 data/networkinfo_staging.gml \
 data/tmodel-ccs2018.github.io \
 -r -e BW,CIRC,STREAM \
---network_scale 0.005 \
---prefix tornet-0.005"
+--network_scale 0.01 \
+--prefix tornet-0.01"
 
 echo "alias generate=\"cd ~/rendezmix/simulation; tornettools generate \
-data/relayinfo_staging_2020-11-01--2020-11-30.json \
-data/userinfo_staging_2020-11-01--2020-11-30.json \
+data/relayinfo_staging_2023-04-01--2023-04-30.json \
+data/userinfo_staging_2023-04-01--2023-04-30.json \
 data/networkinfo_staging.gml \
 data/tmodel-ccs2018.github.io \
 -r -e BW,CIRC,STREAM \
---network_scale 0.005 \
---prefix tornet-0.005\"" | tee -a ~/.profile
+--network_scale 0.01 \
+--prefix tornet-0.01\"" | tee -a ~/.profile
 
-alias simulate="cd ~/rendezmix/simulation; tornettools simulate tornet-0.005"
+alias simulate="cd ~/rendezmix/simulation; tornettools simulate tornet-0.01"
 
-echo "alias simulate=\"cd ~/rendezmix/simulation; tornettools simulate tornet-0.005\"" | tee -a ~/.profile
+echo "alias simulate=\"cd ~/rendezmix/simulation; tornettools simulate tornet-0.01\"" | tee -a ~/.profile
 
-alias parse="cd ~/rendezmix/simulation; tornettools parse tornet-0.005"
+alias parse="cd ~/rendezmix/simulation; tornettools parse tornet-0.01"
 
-echo "alias parse=\"cd ~/rendezmix/simulation; tornettools parse tornet-0.005\"" | tee -a ~/.profile
+echo "alias parse=\"cd ~/rendezmix/simulation; tornettools parse tornet-0.01\"" | tee -a ~/.profile
 
 alias plot="cd ~/rendezmix/simulation; tornettools plot \
-tornet-0.005 \
---tor_metrics_path tor_metrics_2020-11-01--2020-11-30.json \
+tornet-0.01 \
+--tor_metrics_path data/tor_metrics_2023-04-01--2023-04-30.json \
 --prefix pdfs"
 
 echo "alias plot=\"cd ~/rendezmix/simulation; tornettools plot \
-tornet-0.005 \
---tor_metrics_path tor_metrics_2020-11-01--2020-11-30.json \
+tornet-0.01 \
+--tor_metrics_path data/tor_metrics_2023-04-01--2023-04-30.json \
 --prefix pdfs\"" | tee -a ~/.profile
 
-alias archive="cd ~/rendezmix/simulation; tornettools archive tornet-0.005"
+alias archive="cd ~/rendezmix/simulation; tornettools archive tornet-0.01"
 
-echo "alias archive=\"cd ~/rendezmix/simulation; tornettools archive tornet-0.005\"" | tee -a ~/.profile
+echo "alias archive=\"cd ~/rendezmix/simulation; tornettools archive tornet-0.01\"" | tee -a ~/.profile
 
 cd ~
