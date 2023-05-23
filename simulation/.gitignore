@@ -1,7 +1,7 @@
-datasets/__pycache__
-datasets/data
-datasets/dataset
-datasets/stage
+datasets/**/*
+!datasets/*.py
+!datasets/requirements.txt
 pdfs*
 **/shadow.data
 **/shadow.log
+**/*.zip
