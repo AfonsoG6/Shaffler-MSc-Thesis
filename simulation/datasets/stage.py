@@ -25,27 +25,34 @@ def find_clients(hosts_path: str) -> list:
         raise Exception("No client folder found")
     return clients
 
-def circuit_idxs_key(client_name: str, circuit_id: int) -> str:
-    return f"{client_name}-{circuit_id}"
+def circuit_idxs_key(client_name: str, circuit_path: str) -> str:
+    return f"{client_name},{circuit_path}"
 
 def parse_oniontrace(hosts_path: str, hostname: str) -> None:
     global info_clients, info_servers, circuit_idxs, site_idxs
     timestamps: dict = {}
+    circuit_paths: dict = {}
     stream_new_pattern = re.compile(r"STREAM \d+ NEW")
     stream_succeeded_pattern = re.compile(r"STREAM \d+ SUCCEEDED")
+    circ_built_pattern = re.compile(r"CIRC \d+ BUILT")
 
     oniontrace_path: str = os.path.join(hosts_path, hostname, "oniontrace.1002.stdout")
     if not os.path.exists(oniontrace_path):
         raise Exception("Oniontrace file not found")
-    
+
     if hostname not in info_clients.keys():
         info_clients[hostname] = []
-    
+
     with open(oniontrace_path, "r") as file:
         while True:
             line: str = file.readline()
             if len(line) == 0:
                 break
+            match = circ_built_pattern.search(line)
+            if match:
+                tokens: list = line[match.start():].split(" ")
+                circuit_id: int = int(tokens[1])
+                circuit_paths[circuit_id] = tokens[3]
             match = stream_new_pattern.search(line)
             if match:
                 tokens: list = line[match.start():].split(" ")
@@ -67,7 +74,7 @@ def parse_oniontrace(hosts_path: str, hostname: str) -> None:
                 port: int = int(site.split(":")[1])
                 if site not in site_idxs.keys():
                     site_idxs[site] = len(site_idxs.keys())
-                cikey: str = circuit_idxs_key(hostname, circuit_id)
+                cikey: str = circuit_idxs_key(hostname, circuit_paths[circuit_id])
                 if cikey not in circuit_idxs.keys():
                     circuit_idxs[cikey] = len(circuit_idxs.keys())
                 circuit_idx: int = circuit_idxs[cikey]
