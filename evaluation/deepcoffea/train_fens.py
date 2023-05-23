@@ -36,17 +36,17 @@ def get_params():
     parser.add_argument(
         "--input",
         required=False,
-        default="./datasets/new_dcf_data/crawle_new_overlap_interval",
+        default="./datasets/new_dcf_data/shadowV_new_overlap_interval",
     )
     parser.add_argument(
         "--test",
         required=False,
-        default="./data/DeepCCA_model/crawle_overlap_new2021_interval",
+        default="./data/DeepCCA_model/shadowV_overlap_new2021_interval",
     )
     parser.add_argument(
         "--model",
         required=False,
-        default="./data/DeepCCA_model/crawle_overlap_new2021_",
+        default="./data/DeepCCA_model/shadowV_overlap_new2021_",
     )
     parser.add_argument("--gpu", "-g", required=False, type=int, default=0)
     parser.add_argument("--target_loss", "-l",
@@ -137,7 +137,7 @@ def load_whole_seq_new(tor_seq, exit_seq, circuit_labels, test_c, train_c, model
 
     print("train_window1", np.array(train_window1).shape)
     print("train_window2", np.array(train_window1).shape)
-
+    
     return (
         np.array(train_window1),
         np.array(train_window2),
@@ -219,11 +219,14 @@ if __name__ == "__main__":
             if window_index == 0:
                 test_c = []
                 train_c = []
-                sum_ins = 2093
                 keys = list(circuit.keys())
                 random.shuffle(keys)
+                sum_ins = 0
                 for key in keys:
-                    if sum_ins > 0:
+                    sum_ins += circuit[key]
+                sum_train = sum_ins*0.9     # 1-0.0798032860176596 ?
+                for key in keys:
+                    if sum_ins > sum_train:
                         sum_ins -= circuit[key]
                         test_c.append(key)
                     else:
