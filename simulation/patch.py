@@ -89,16 +89,16 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-s", "--simulation", type=str, required=True)
     parser.add_argument("-n", "--hostnames", type=str, required=False)
-    parser.add_argument("-c", "--num-clients", type=int,
-                        required=False, default=-1)
-    parser.add_argument("-p", "--max-packet-size",
-                        type=int, required=False, default=24)
+    parser.add_argument("-c", "--num-clients", type=int, required=False, default=-1)
+    parser.add_argument("-p", "--max-packet-size", type=int, required=False, default=24)
+    parser.add_argument("-d", "--duration", type=float, required=False, default=1)
 
     args = parser.parse_args()
     simulation: str = args.simulation
     hostnames: list = args.hostnames.split(",") if args.hostnames else []
     num_clients: int = args.num_clients
     max_packet_size: int = args.max_packet_size
+    duration: int = args.duration
     
     config_path = os.path.join(simulation, "shadow.config.yaml")
     conf_path = os.path.join(simulation, "conf")
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     os.makedirs(tgen_server_dir_path, exist_ok=True)
 
     config = yaml.load(open(config_path, "r"), Loader=yaml.FullLoader)
-    
+    config["general"]["stop_time"] = int(duration * 3600)
     ports = patch_clients(config["hosts"], hostnames, num_clients, max_packet_size)
     patch_servers(config["hosts"], hostnames, max_packet_size, ports)
     
