@@ -183,8 +183,8 @@ data/userinfo_staging_2023-04-01--2023-04-30.json \
 data/networkinfo_staging.gml \
 data/tmodel-ccs2018.github.io \
 -r -e BW,CIRC,STREAM \
---network_scale 0.01 \
---prefix tornet-0.01"
+--network_scale 0.005 \
+--prefix tornet-0.005"
 
 echo "alias generate=\"cd ~/rendezmix/simulation; tornettools generate \
 data/relayinfo_staging_2023-04-01--2023-04-30.json \
@@ -192,29 +192,29 @@ data/userinfo_staging_2023-04-01--2023-04-30.json \
 data/networkinfo_staging.gml \
 data/tmodel-ccs2018.github.io \
 -r -e BW,CIRC,STREAM \
---network_scale 0.01 \
---prefix tornet-0.01\"" | tee -a ~/.profile
+--network_scale 0.005 \
+--prefix tornet-0.005\"" | tee -a ~/.profile
 
-alias simulate="cd ~/rendezmix/simulation; tornettools simulate tornet-0.01"
+alias simulate="cd ~/rendezmix/simulation; tornettools simulate tornet-0.005"
 
-echo "alias simulate=\"cd ~/rendezmix/simulation; tornettools simulate tornet-0.01\"" | tee -a ~/.profile
+echo "alias simulate=\"cd ~/rendezmix/simulation; tornettools simulate tornet-0.005\"" | tee -a ~/.profile
 
-alias parse="cd ~/rendezmix/simulation; tornettools parse tornet-0.01"
+alias parse="cd ~/rendezmix/simulation; tornettools parse tornet-0.005"
 
-echo "alias parse=\"cd ~/rendezmix/simulation; tornettools parse tornet-0.01\"" | tee -a ~/.profile
+echo "alias parse=\"cd ~/rendezmix/simulation; tornettools parse tornet-0.005\"" | tee -a ~/.profile
 
 alias plot="cd ~/rendezmix/simulation; tornettools plot \
-tornet-0.01 \
+tornet-0.005 \
 --tor_metrics_path data/tor_metrics_2023-04-01--2023-04-30.json \
 --prefix pdfs"
 
 echo "alias plot=\"cd ~/rendezmix/simulation; tornettools plot \
-tornet-0.01 \
+tornet-0.005 \
 --tor_metrics_path data/tor_metrics_2023-04-01--2023-04-30.json \
 --prefix pdfs\"" | tee -a ~/.profile
 
-alias archive="cd ~/rendezmix/simulation; tornettools archive tornet-0.01"
+alias archive="cd ~/rendezmix/simulation; tornettools archive tornet-0.005"
 
-echo "alias archive=\"cd ~/rendezmix/simulation; tornettools archive tornet-0.01\"" | tee -a ~/.profile
+echo "alias archive=\"cd ~/rendezmix/simulation; tornettools archive tornet-0.005\"" | tee -a ~/.profile
 
 cd ~
