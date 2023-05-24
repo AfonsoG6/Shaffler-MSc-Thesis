@@ -1177,23 +1177,23 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
         //  n_conn = TO_CONN(n_chan->conn);
         //  if (n_conn) tor_inet_ntoa(&(n_conn->addr.addr.in_addr), next_node_addr, 64);
         //}
-        if (direction == CELL_DIRECTION_OUT) {
+        //if (direction == CELL_DIRECTION_OUT) {
           //log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,DELAY] (cmd=%d) (p_addr=%s) (n_addr=%s)", cell->command, prev_node_addr, next_node_addr);
-          if (probably_middle_node(conn, circ)) {
-            int res = 0;
-            struct timespec ts = get_sleep_timespec_from_command(cell->command);
-            do {
-              res = nanosleep(&ts, &ts);
-            } while (res && errno == EINTR);
-            //log_info(LD_GENERAL, "[RENDEZMIX,DELAYED] (cmd=%d) (ns=%ld) (p_addr=%s) (n_addr=%s)", cell->command, ts.tv_nsec, prev_node_addr, next_node_addr);
-            cell->command = CELL_RELAY;
-          }
-        }
-        else {
-          // Reject Delay command and replace it with normal command
-          //log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,NORMAL] (cmd=%d) (p_addr=%s) (n_addr=%s)", cell->command, prev_node_addr, next_node_addr);
+        if (probably_middle_node(conn, circ)) {
+          int res = 0;
+          struct timespec ts = get_sleep_timespec_from_command(cell->command);
+          do {
+            res = nanosleep(&ts, &ts);
+          } while (res && errno == EINTR);
+          //log_info(LD_GENERAL, "[RENDEZMIX,DELAYED] (cmd=%d) (ns=%ld) (p_addr=%s) (n_addr=%s)", cell->command, ts.tv_nsec, prev_node_addr, next_node_addr);
           cell->command = CELL_RELAY;
         }
+        //}
+        //else {
+          // Reject Delay command and replace it with normal command
+          //log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,NORMAL] (cmd=%d) (p_addr=%s) (n_addr=%s)", cell->command, prev_node_addr, next_node_addr);
+        //  cell->command = CELL_RELAY;
+        //}
         channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
         break;
       }
