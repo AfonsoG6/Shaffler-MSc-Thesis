@@ -1234,7 +1234,7 @@ get_sleep_timespec_from_command(uint8_t command)
   if (command == CELL_RELAY)
     return (struct timespec){0, 0};
   else
-    return (struct timespec){0, i * 1000000};
+    return (struct timespec){0, i * 100000};
 }
 
 /**
