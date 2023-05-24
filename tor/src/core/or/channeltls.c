@@ -1217,16 +1217,16 @@ probably_middle_node(or_connection_t *conn, circuit_t *circ)
   n_chan = BASE_CHAN_TO_TLS(circ->n_chan);
   if (!n_chan) return false; // Is Exit node
 
-  if (!n_chan->conn) printf("[DEBUGGING] n_chan->conn is NULL\n");
-  if (!n_chan->conn->base_) printf("[DEBUGGING] n_chan->conn->base_ is NULL\n");
+  if (!(n_chan->conn)) printf("[DEBUGGING] n_chan->conn is NULL\n");
+  if (!(n_chan->conn->base_)) printf("[DEBUGGING] n_chan->conn->base_ is NULL\n");
   n_conn = &(n_chan->conn->base_);
   if (!n_conn) return false; // Is Exit node
 
-  if (!conn) printf("[DEBUGGING] conn is NULL\n");
-  if (!conn->base_) printf("[DEBUGGING] conn->base_ is NULL\n");
-  if (!conn->base_.addr) printf("[DEBUGGING] conn->base_.addr is NULL\n");
-  if (!n_conn) printf("[DEBUGGING] n_conn is NULL\n");
-  if (!n_conn->addr) printf("[DEBUGGING] n_conn->addr is NULL\n");
+  if (!(conn)) printf("[DEBUGGING] conn is NULL\n");
+  if (!(conn->base_)) printf("[DEBUGGING] conn->base_ is NULL\n");
+  if (!(conn->base_.addr)) printf("[DEBUGGING] conn->base_.addr is NULL\n");
+  if (!(n_conn)) printf("[DEBUGGING] n_conn is NULL\n");
+  if (!(n_conn->addr)) printf("[DEBUGGING] n_conn->addr is NULL\n");
   prev_node_addr = conn->base_.addr;
   next_node_addr = n_conn->addr;
 
