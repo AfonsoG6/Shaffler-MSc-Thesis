@@ -26,21 +26,6 @@
 			]
 		},
 		{
-			"path": "tor/src/core/or/channeltls.c",
-			"bookmarks": [
-				{
-					"line": 846,
-					"column": 53,
-					"label": ""
-				},
-				{
-					"line": 1174,
-					"column": 30,
-					"label": ""
-				}
-			]
-		},
-		{
 			"path": "tor/src/app/config/resolve_addr.c",
 			"bookmarks": [
 				{
