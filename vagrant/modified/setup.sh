@@ -16,6 +16,7 @@ touch ~/.profile
 apt update -y
 apt upgrade -y
 apt install -y dos2unix git vim
+apt install -y python3 python3-pip
 
 sysctl -w fs.nr_open=10485760
 echo "fs.nr_open = 10485760" | tee -a /etc/sysctl.conf
@@ -113,28 +114,13 @@ cd ~/rendezmix/tor
 ./autogen.sh
 ./configure --disable-asciidoc
 make
-#make install
+make install
 
 cd ~/simulation
 find . -type f -exec dos2unix {} \;
 
 cd ~/rendezmix/loop
-apt install -y python3 python3-pip
 pip install -r requirements.txt
-
-# Install Vanilla Tor
-
-cd ~
-git clone git@github.com:torproject/tor.git
-cd ~/tor
-git checkout tags/tor-0.4.7.13
-
-chmod 777 -R .
-
-./autogen.sh
-./configure --disable-asciidoc
-make
-make install
 
 ln -s $(which tor) ~/.local/bin/tor
 
@@ -152,6 +138,8 @@ apt install -y faketime dstat procps xz-utils wget
 
 mkdir -p ~/rendezmix/simulation/data
 cd ~/rendezmix/simulation/data
+
+chmod 777 -R .
 
 wget https://collector.torproject.org/archive/relay-descriptors/consensuses/consensuses-2023-04.tar.xz
 wget https://collector.torproject.org/archive/relay-descriptors/server-descriptors/server-descriptors-2023-04.tar.xz

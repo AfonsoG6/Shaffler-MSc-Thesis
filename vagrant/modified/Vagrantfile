@@ -60,13 +60,13 @@ Vagrant.configure("2") do |config|
 
     # Customize the amount of memory on the VM:
     # vb.memory = "122880"
-    # vb.memory = "65536"
+    vb.memory = "65536"
     # vb.memory = "32768"
-    vb.memory = "16384"
-    # vb.cpus = 32
-    vb.cpus = 16
+    # vb.memory = "16384"
+    vb.cpus = 32
+    # vb.cpus = 16
   end
-  config.disksize.size = "50GB"
+  config.disksize.size = "100GB"
   #
   # View the documentation for the provider you are using for more
   # information on available options.
