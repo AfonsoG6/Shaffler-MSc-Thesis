@@ -1072,9 +1072,9 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
   channel_tls_t *chan;
   int handshaking;
   circuit_t *circ;
-  int direction;
-  char prev_node_addr[64] = "NULL";
-  char next_node_addr[64] = "NULL";
+  //int direction;
+  //char prev_node_addr[64] = "NULL";
+  //char next_node_addr[64] = "NULL";
   channel_tls_t *n_chan;
   connection_t *n_conn;
 
@@ -1165,10 +1165,10 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
       break;
     default:
       circ = circuit_get_by_circid_channel(cell->circ_id, &(chan->base_));
-      if (!CIRCUIT_IS_ORIGIN(circ) && &(chan->base_) == TO_OR_CIRCUIT(circ)->p_chan && cell->circ_id == TO_OR_CIRCUIT(circ)->p_circ_id)
-        direction = CELL_DIRECTION_OUT;
-      else
-        direction = CELL_DIRECTION_IN;
+      //direction = CELL_DIRECTION_IN;
+      //if (TO_OR_CIRCUIT(circ) && cell && !CIRCUIT_IS_ORIGIN(circ) && &(chan->base_) == TO_OR_CIRCUIT(circ)->p_chan && cell->circ_id == TO_OR_CIRCUIT(circ)->p_circ_id)
+      //  direction = CELL_DIRECTION_OUT;
+      //}
       if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
           cell->command <= CELL_RELAY_DELAY_HIGHEST) {
         //tor_inet_ntoa(&(conn->base_.addr.addr.in_addr), prev_node_addr, 64);
@@ -1213,20 +1213,15 @@ probably_middle_node(or_connection_t *conn, circuit_t *circ)
   connection_t *n_conn;
   tor_addr_t prev_node_addr, next_node_addr;
 
-  if (!circ) printf("[DEBUGGING] circ is NULL\n");
+  if (!conn || !circ) return false;
+
   n_chan = BASE_CHAN_TO_TLS(circ->n_chan);
   if (!n_chan) return false; // Is Exit node
 
-  if (!(n_chan->conn)) printf("[DEBUGGING] n_chan->conn is NULL\n");
-  if (!&(n_chan->conn->base_)) printf("[DEBUGGING] n_chan->conn->base_ is NULL\n");
+
   n_conn = &(n_chan->conn->base_);
   if (!n_conn) return false; // Is Exit node
 
-  if (!(conn)) printf("[DEBUGGING] conn is NULL\n");
-  if (!&(conn->base_)) printf("[DEBUGGING] conn->base_ is NULL\n");
-  if (!&(conn->base_.addr)) printf("[DEBUGGING] conn->base_.addr is NULL\n");
-  if (!(n_conn)) printf("[DEBUGGING] n_conn is NULL\n");
-  if (!&(n_conn->addr)) printf("[DEBUGGING] n_conn->addr is NULL\n");
   prev_node_addr = conn->base_.addr;
   next_node_addr = n_conn->addr;
 
