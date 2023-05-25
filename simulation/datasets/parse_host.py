@@ -112,29 +112,37 @@ def main():
 
     parser = ArgumentParser()
     parser.add_argument("-s", "--simulation", type=str, required=True)
+    parser.add_argument("-b", "--batch_id", type=int, required=True)
     parser.add_argument("-n", "--hostname", type=str, required=True)
     parser.add_argument("-o", "--output_path", type=str, required=True)
     args = parser.parse_args()
 
     # Parse arguments
     simulation: str = args.simulation
+    batch_id: int = args.batch_id
     hostname: str = args.hostname
     output_path: str = args.output_path
-    
+    hosts_path: str = os.path.join(simulation, f"shadow.data.{batch_id}", "hosts")
     stage_path: str = "stage"
-    hosts_path: str = os.path.join(simulation, "shadow.data", "hosts")
+    info_clients_path: str = os.path.join(stage_path, f"info_clients_{batch_id}.pickle")
+    info_servers_path: str = os.path.join(stage_path, f"info_servers_{batch_id}.pickle")
 
     if not os.path.exists(simulation):
         raise Exception(f"Simulation path is not valid: {os.path.abspath(simulation)}")
+    if not os.path.exists(hosts_path):
+        raise Exception(f"Hosts path is not valid: {os.path.abspath(hosts_path)}")
     if not os.path.exists(stage_path):
         raise Exception(f"Stage path is not valid: {os.path.abspath(stage_path)}")
+    if not os.path.exists(info_clients_path):
+        raise Exception(f"Info_Clients path is not valid: {os.path.abspath(info_clients_path)}")
+    if not os.path.exists(info_servers_path):
+        raise Exception(f"Info_Servers path is not valid: {os.path.abspath(info_servers_path)}")
     os.makedirs(output_path, exist_ok=True)
 
-    # Load data
     print(f"[{hostname}] Loading data...")
-    with open(os.path.join(stage_path, "info_clients.pickle"), "rb") as file:
+    with open(info_clients_path, "rb") as file:
         info_clients = pickle.load(file)
-    with open(os.path.join(stage_path, "info_servers.pickle"), "rb") as file:
+    with open(info_servers_path, "rb") as file:
         info_servers = pickle.load(file)
 
     if hostname in info_clients.keys():
