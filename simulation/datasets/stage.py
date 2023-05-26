@@ -20,7 +20,7 @@ def find_clients(hosts_path: str) -> list:
     if len(clients) > 0:
         print(f"Clients found: {len(clients)}")
     else:
-        raise Exception("No client folder found")
+        raise Exception(f"No client folder found in {hosts_path}")
     return clients
 
 def circuit_idxs_key(client_name: str, circuit_path: str) -> str:
@@ -36,7 +36,7 @@ def parse_oniontrace(hostname: str, batch_id: int, hosts_path: str) -> None:
 
     oniontrace_path: str = os.path.join(hosts_path, hostname, "oniontrace.1002.stdout")
     if not os.path.exists(oniontrace_path):
-        raise Exception("Oniontrace file not found")
+        raise Exception(f"Oniontrace file not found for {hostname} in {hosts_path}")
 
     if hostname not in info_clients[batch_id].keys():
         info_clients[batch_id][hostname] = []
