@@ -30,6 +30,7 @@ def parse_oniontrace(hostname: str, batch_id: int, hosts_path: str) -> None:
     global info_clients, info_servers, circuit_idxs, site_counter
     timestamps: dict = {}
     circuit_paths: dict = {}
+    awaiting_circuits: list = []
     stream_new_pattern = re.compile(r"STREAM \d+ NEW")
     stream_succeeded_pattern = re.compile(r"STREAM \d+ SUCCEEDED")
     circ_built_pattern = re.compile(r"CIRC \d+ BUILT")
@@ -56,9 +57,10 @@ def parse_oniontrace(hostname: str, batch_id: int, hosts_path: str) -> None:
                 tokens: list = line[match.start():].split(" ")
                 stream_id: int = int(tokens[1])
                 site: str = tokens[4]
-                if "$" in site:
+                timestamp: float = round(float(line.split(" ")[2]) + CLOCK_SYNC, 6)
+                if "$" in site or timestamp >= 3540:
                     continue
-                timestamps[stream_id] = round(float(line.split(" ")[2]) + CLOCK_SYNC, 6)
+                timestamps[stream_id] = timestamp
                 continue
             match = stream_succeeded_pattern.search(line)
             if match:
@@ -66,16 +68,22 @@ def parse_oniontrace(hostname: str, batch_id: int, hosts_path: str) -> None:
                 stream_id: int = int(tokens[1])
                 circuit_id: int = int(tokens[3])
                 site: str = tokens[4]
-                if "$" in site:
+                if "$" in site or stream_id not in timestamps.keys():
                     continue
                 address: str = site.split(":")[0]
                 port: int = int(site.split(":")[1])
                 site_id: int = site_counter
                 site_counter += 1
-                cikey: str = circuit_idxs_key(hostname, circuit_paths[circuit_id])
-                if cikey not in circuit_idxs.keys():
-                    circuit_idxs[cikey] = len(circuit_idxs.keys())
-                circuit_idx: int = circuit_idxs[cikey]
+                requires_update: bool = False
+                if circuit_id not in circuit_paths.keys():
+                    # Circuit is still unknown
+                    circuit_idx: int = circuit_id
+                    requires_update = True
+                else:
+                    cikey: str = circuit_idxs_key(hostname, circuit_paths[circuit_id])
+                    if cikey not in circuit_idxs.keys():
+                        circuit_idxs[cikey] = len(circuit_idxs.keys())
+                    circuit_idx: int = circuit_idxs[cikey]
                 info_clients[batch_id][hostname].append({
                     "timestamp": timestamps[stream_id],
                     "circuit_idx": circuit_idx,
@@ -89,7 +97,16 @@ def parse_oniontrace(hostname: str, batch_id: int, hosts_path: str) -> None:
                     "circuit_idx": circuit_idx,
                     "site_idx": site_id
                 })
+                if requires_update:
+                    awaiting_circuits.append(info_clients[batch_id][hostname][-1])
+                    awaiting_circuits.append(info_servers[batch_id][address][-1])
                 continue
+    for info in awaiting_circuits:
+        circuit_id: int = info["circuit_idx"]
+        cikey: str = circuit_idxs_key(hostname, circuit_paths[circuit_id])
+        if cikey not in circuit_idxs.keys():
+            circuit_idxs[cikey] = len(circuit_idxs.keys())
+        info["circuit_idx"] = circuit_idxs[cikey]
 
 def main():
     parser = ArgumentParser()
