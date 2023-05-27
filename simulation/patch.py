@@ -7,7 +7,7 @@ import os
 
 
 def patch_clients(hosts: dict, hostnames: list, num_clients: int, max_packet_size: int) -> set:
-    pattern = re.compile(r"perfclient\d+exit")
+    pattern = re.compile(r"markovclient\d+exit")
     ports = set()
     
     i: int = 0
@@ -31,15 +31,13 @@ def patch_clients(hosts: dict, hostnames: list, num_clients: int, max_packet_siz
                 {"path": "hostname", "args": "-I", "start_time": 60})
             print(f"Added hostname process to {host}")
             
-            idx = int(host[len("perfclient"):-len("exit")])
-            port = 20000 + idx
+            idx = int(host[len("markovclient"):-len("exit")])
+            print(f"Markov client {idx}")
+            port = 10000 + idx
             ports.add(port)
-            for process in host_config["processes"]:
-                if process["path"].endswith("tgen"):
-                    process["args"] = process["args"].replace("tgen-perf-exit.tgenrc.graphml", f"tgen-perf-exit/{port}.tgenrc.graphml")
-            print(f"Replaced tgenrc path for {host}")
-            patch_client_tgenrc(port, tgen_perf_path, os.path.join(tgen_perf_dir_path, f"{port}.tgenrc.graphml"))
-            print(f"Created duplicate tgenrc for {host} with port {port}")
+            
+            patch_client_tgenrc(port, os.path.join(hosts_path, host, "tgenrc.graphml"))
+            print(f"Replaced tgenrc for {host}")
             patch_server_tgenrc(port, tgen_server_path, os.path.join(tgen_server_dir_path, f"{port}.tgenrc.graphml"))
             print(f"Created duplicate tgenrc for {host} with port {port}")
     return ports
@@ -74,7 +72,7 @@ def patch_client_tgenrc(new_port: int, original_path: str, target_path: str = ""
     tgenrc = tgenrc.replace(":80", f":{new_port}")
     with open(target_path, "w") as f:
         f.write(tgenrc)
-        
+
 def patch_server_tgenrc(new_port: int, original_path: str, target_path: str = ""):
     if target_path == "":
         target_path = original_path
@@ -102,10 +100,7 @@ if __name__ == "__main__":
     
     config_path = os.path.join(simulation, "shadow.config.yaml")
     conf_path = os.path.join(simulation, "conf")
-
-    tgen_perf_path = os.path.join(conf_path, "tgen-perf-exit.tgenrc.graphml")
-    tgen_perf_dir_path = os.path.join(conf_path, "tgen-perf-exit")
-    os.makedirs(tgen_perf_dir_path, exist_ok=True)
+    hosts_path = os.path.join(simulation, "shadow.data.template", "hosts")
     
     tgen_server_path = os.path.join(conf_path, "tgen-server.tgenrc.graphml")
     tgen_server_dir_path = os.path.join(conf_path, "tgen-server")
