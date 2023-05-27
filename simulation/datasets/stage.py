@@ -102,7 +102,10 @@ def parse_oniontrace(hostname: str, batch_id: int, hosts_path: str) -> None:
                     awaiting_circuits.append(info_servers[batch_id][address][-1])
                 continue
     for info in awaiting_circuits:
+        print(f"Updating circuit index for {hostname} at {info['timestamp']}")
         circuit_id: int = info["circuit_idx"]
+        if circuit_id not in circuit_paths.keys():
+            raise Exception(f"Circuit {circuit_id} not found")
         cikey: str = circuit_idxs_key(hostname, circuit_paths[circuit_id])
         if cikey not in circuit_idxs.keys():
             circuit_idxs[cikey] = len(circuit_idxs.keys())
