@@ -97,7 +97,7 @@ if __name__ == "__main__":
     hostnames: list = args.hostnames.split(",") if args.hostnames else []
     num_clients: int = args.num_clients
     max_packet_size: int = args.max_packet_size
-    duration: int = args.duration
+    duration: float = args.duration
     
     config_path = os.path.join(simulation, "shadow.config.yaml")
     conf_path = os.path.join(simulation, "conf")
