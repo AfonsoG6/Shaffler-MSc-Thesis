@@ -112,6 +112,7 @@ def parse_oniontrace(hostname: str, batch_id: int, hosts_path: str) -> None:
         if cikey not in circuit_idxs.keys():
             circuit_idxs[cikey] = len(circuit_idxs.keys())
         info["circuit_idx"] = circuit_idxs[cikey]
+        print(f"Found circuit index {info['circuit_idx']} for circuit id {circuit_id} with path {circuit_paths[circuit_id]}")
 
 def main():
     parser = ArgumentParser()
@@ -142,19 +143,19 @@ def main():
 
     for batch_id in info_clients.keys():
         with open(os.path.join("stage", f"info_clients_{batch_id}.pickle"), "wb") as file:
-            pickle.dump(info_clients, file)
+            pickle.dump(info_clients[batch_id], file)
         with open(os.path.join("stage", f"info_clients_{batch_id}.json"), "w") as file:
-            json.dump(info_clients, file, indent=4)
+            json.dump(info_clients[batch_id], file, indent=4)
     
     # Sort info_servers by timestamp
     for batch_id in info_servers.keys():
         for address in info_servers[batch_id].keys():
-            info_servers[address].sort(key=lambda x: x["timestamp"])
+            info_servers[batch_id][address].sort(key=lambda x: x["timestamp"])
 
         with open(os.path.join("stage", f"info_servers_{batch_id}.pickle"), "wb") as file:
-            pickle.dump(info_servers, file)
+            pickle.dump(info_servers[batch_id], file)
         with open(os.path.join("stage", f"info_servers_{batch_id}.json"), "w") as file:
-            json.dump(info_servers, file, indent=4)
+            json.dump(info_servers[batch_id], file, indent=4)
 
 if __name__ == "__main__":
     main()
