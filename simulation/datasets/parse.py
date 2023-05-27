@@ -32,7 +32,7 @@ def main():
             hostnames: set = set()
             for hostname in info_clients.keys():
                 hostnames.add(hostname)
-            for filename in os.listdir(os.path.join(simulation, "shadow.data", "hosts")):
+            for filename in os.listdir(os.path.join(simulation, element, "hosts")):
                 if filename.startswith("server"):
                     hostnames.add(filename)
 
