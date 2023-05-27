@@ -98,6 +98,15 @@ if __name__ == "__main__":
         ports.add(10000 + idx)
     patch_servers(config["hosts"], ports)
     
+    for host in config["hosts"].keys():
+        for process in config["hosts"][host]["processes"]:
+            if host.startswith("customclient"):
+                if process["path"].endswith("oniontrace") and process["args"].startswith("Mode=record"):
+                    config["hosts"][host]["processes"].remove(process)
+            else:
+                if process["path"].endswith("oniontrace"):
+                    config["hosts"][host]["processes"].remove(process)
+    
     yaml.dump(config, open(config_path, "w"), default_flow_style=False, sort_keys=False)
 
     print("Done!")

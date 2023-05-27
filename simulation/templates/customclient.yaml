@@ -9,12 +9,9 @@ processes:
   start_time: 240
   expected_final_state: running
 - path: ~/.local/bin/oniontrace
-  args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC,STREAM
+  args: Mode=log TorControlPort=9051 LogLevel=info Events=CIRC,STREAM
   start_time: 241
   expected_final_state: running
-- path: ~/.local/bin/oniontrace
-  args: Mode=record TorControlPort=9051 LogLevel=info RunTime=3299 TraceFile=oniontrace.csv
-  start_time: 300
 - path: ~/.local/bin/tgen
   args: tgenrc.graphml
   start_time: 300
