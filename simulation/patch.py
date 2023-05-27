@@ -48,6 +48,9 @@ def create_client(hosts: dict, idx: int):
                 data = f.read()
                 if file == "tgenrc.graphml":
                     data = data.replace("{port}", str(port))
+                    data = data.replace("{time}", str(random.randint(1, 60)))
+                    data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
+                    data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
                 g.write(data)
     print(f"Created {newhostname} directory")
     config_path = os.path.join(templates_path, "customclient.yaml")

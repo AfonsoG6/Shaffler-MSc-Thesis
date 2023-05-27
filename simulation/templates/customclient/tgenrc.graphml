@@ -15,19 +15,19 @@
   <graph edgedefault="directed">
     <node id="start">
       <data key="d0">info</data>
-      <data key="d1">18</data>
+      <data key="d1">{time}</data>
       <data key="d2">localhost:9050</data>
       <data key="d3">server1exit:{port},server2exit:{port},server3exit:{port},server4exit:{port},server5exit:{port},server6exit:{port},server7exit:{port},server8exit:{port},server9exit:{port},server10exit:{port}</data>
       <data key="d4">5 minutes</data>
       <data key="d5">10 minutes</data>
     </node>
     <node id="traffic">
-      <data key="d6">798826205</data>
+      <data key="d6">{seed}</data>
       <data key="d7">./tgen.tor-flowmodel-300000000usec.graphml</data>
       <data key="d8">./tgen.tor-streammodel-ccs2018.graphml</data>
       <data key="d9">./tgen.tor-packetmodel-ccs2018.graphml</data>
       <data key="d10">path</data>
-      <data key="d11">405573437</data>
+      <data key="d11">{seed}</data>
     </node>
     <edge source="start" target="traffic" />
     <edge source="traffic" target="traffic" />
