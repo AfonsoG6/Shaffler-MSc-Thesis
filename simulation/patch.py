@@ -7,6 +7,7 @@ import os
 
 
 def patch_clients(hosts: dict, hostnames: list, num_clients: int, max_packet_size: int) -> set:
+    global hosts_path, tgen_server_path, tgen_server_dir_path
     pattern = re.compile(r"markovclient\d+exit")
     ports = set()
     
@@ -37,7 +38,7 @@ def patch_clients(hosts: dict, hostnames: list, num_clients: int, max_packet_siz
             ports.add(port)
             
             patch_client_tgenrc(port, os.path.join(hosts_path, host, "tgenrc.graphml"))
-            print(f"Replaced tgenrc for {host}")
+            print(f"Replaced tgenrc for {host} (path: {os.path.join(hosts_path, host, 'tgenrc.graphml')})")
             patch_server_tgenrc(port, tgen_server_path, os.path.join(tgen_server_dir_path, f"{port}.tgenrc.graphml"))
             print(f"Created duplicate tgenrc for {host} with port {port}")
     return ports
