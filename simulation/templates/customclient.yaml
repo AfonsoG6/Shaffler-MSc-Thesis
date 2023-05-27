@@ -1,0 +1,27 @@
+network_node_id: 0
+bandwidth_up: 1000000 kilobit
+bandwidth_down: 1000000 kilobit
+processes:
+- path: ~/.local/bin/tor
+  args: --defaults-torrc torrc-defaults -f torrc
+  environment:
+    OPENBLAS_NUM_THREADS: '1'
+  start_time: 240
+  expected_final_state: running
+- path: ~/.local/bin/oniontrace
+  args: Mode=log TorControlPort=9051 LogLevel=info Events=BW,CIRC,STREAM
+  start_time: 241
+  expected_final_state: running
+- path: ~/.local/bin/oniontrace
+  args: Mode=record TorControlPort=9051 LogLevel=info RunTime=3299 TraceFile=oniontrace.csv
+  start_time: 300
+- path: ~/.local/bin/tgen
+  args: tgenrc.graphml
+  start_time: 300
+  expected_final_state: running
+- path: hostname
+  args: -I
+  start_time: 60
+host_options:
+  pcap_enabled: true
+  pcap_capture_size: 24 B
