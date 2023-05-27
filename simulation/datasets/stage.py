@@ -33,7 +33,7 @@ def parse_oniontrace(hostname: str, batch_id: int, hosts_path: str) -> None:
     awaiting_circuits: list = []
     stream_new_pattern = re.compile(r"STREAM \d+ NEW")
     stream_succeeded_pattern = re.compile(r"STREAM \d+ SUCCEEDED")
-    circ_built_pattern = re.compile(r"CIRC \d+ BUILT")
+    circ_pattern = re.compile(r"CIRC \d+ (BUILT|CLOSED)")
 
     oniontrace_path: str = os.path.join(hosts_path, hostname, "oniontrace.1002.stdout")
     if not os.path.exists(oniontrace_path):
@@ -47,11 +47,13 @@ def parse_oniontrace(hostname: str, batch_id: int, hosts_path: str) -> None:
             line: str = file.readline()
             if len(line) == 0:
                 break
-            match = circ_built_pattern.search(line)
+            match = circ_pattern.search(line)
             if match:
                 tokens: list = line[match.start():].split(" ")
                 circuit_id: int = int(tokens[1])
-                circuit_paths[circuit_id] = tokens[3]
+                if circuit_id not in circuit_paths.keys():
+                    circuit_paths[circuit_id] = tokens[3]
+                continue
             match = stream_new_pattern.search(line)
             if match:
                 tokens: list = line[match.start():].split(" ")
