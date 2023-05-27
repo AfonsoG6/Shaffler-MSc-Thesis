@@ -1,6 +1,0 @@
-"Dstat 0.8.0 CSV output"
-"Author:","Dag Wieers <dag@wieers.com>",,,,"URL:","http://dag.wieers.com/home-made/dstat/"
-"Host:","ubuntu-focal",,,,"User:","vagrant"
-"Cmdline:","dstat -cmstTy --fs --output dstat.log",,,,"Date:","21 May 2023 22:00:06 UTC"
-"total cpu usage",,,,,"memory usage",,,,"swap",,"system","epoch","system",,"filesystem",
-"usr","sys","idl","wai","stl","used","free","buff","cach","used","free","time","epoch","int","csw","files","inodes"
