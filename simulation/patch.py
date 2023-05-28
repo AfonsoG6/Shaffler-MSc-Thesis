@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
     ports: set = set()
     for idx in range(num_clients):
-        create_client(config["hosts"], idx)
+        create_client(config["hosts"], idx, netnodeid)
         ports.add(10000 + idx)
     patch_servers(config["hosts"], ports)
 
