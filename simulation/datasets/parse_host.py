@@ -5,7 +5,7 @@ import pickle
 import os
 
 info_clients: dict = {} # {client_name: [{timestamp, circuit_idx, site_idx}]}
-info_servers: dict = {} # {address: [{timestamp, port, circuit_idx, site_idx}]}
+info_servers: list = [] # [{timestamp, port, circuit_idx, site_idx}]
 
 def get_address(host_path: str) -> str:
     file_path: str = os.path.join(host_path, "hostname.1000.stdout")
@@ -41,7 +41,7 @@ def get_port(ip: IP, own_address: str) -> int:
 def timestamp_str(timestamp: float) -> str:
     return "{:.6f}".format(timestamp)
 
-def parse_pcap_outflow(info_server: list, hostname: str, hosts_path: str, output_path: str) -> None:
+def parse_pcap_outflow(info_servers: list, hostname: str, hosts_path: str, output_path: str) -> None:
     outflow_path: str = os.path.join(output_path, "outflow")
     os.makedirs(outflow_path, exist_ok=True)
 
@@ -57,10 +57,10 @@ def parse_pcap_outflow(info_server: list, hostname: str, hosts_path: str, output
             except:
                 print(f"Invalid IP packet: {packet}")
                 continue
-            for idx in range(completed_idx, len(info_server)):
-                if timestamp < info_server[idx]["timestamp"]:
+            for idx in range(completed_idx, len(info_servers)):
+                if timestamp < info_servers[idx]["timestamp"]:
                     break
-                if timestamp > info_server[idx]["timestamp"] + 60:
+                if timestamp > info_servers[idx]["timestamp"] + 60:
                     completed_idx = max(completed_idx, idx+1)
                     continue
                 try:
@@ -68,11 +68,13 @@ def parse_pcap_outflow(info_server: list, hostname: str, hosts_path: str, output
                     port = get_port(ip, own_address)
                 except:
                     continue
-                if (port == 80) or ((port >= 20000 and port <= 20100) and (port != info_server[idx]["port"])):
+                if (port != info_servers[idx]["port"]):
                     continue
-                file_path: str = os.path.join(outflow_path, f"{info_server[idx]['circuit_idx']}_{info_server[idx]['site_idx']}")
+                dir_path: str = os.path.join(outflow_path, f"{info_servers[idx]['circuit_idx']}_{info_servers[idx]['site_idx']}")
+                os.makedirs(dir_path, exist_ok=True)
+                file_path: str = os.path.join(dir_path, hostname)
                 with open(file_path, "a") as file:
-                    file.write(f"{timestamp_str(timestamp-info_server[idx]['timestamp'])}\t{ip.len*orientation}\n")
+                    file.write(f"{timestamp_str(timestamp-info_servers[idx]['timestamp'])}\t{ip.len*orientation}\n")
                 break
 
 
@@ -112,20 +114,18 @@ def main():
 
     parser = ArgumentParser()
     parser.add_argument("-s", "--simulation", type=str, required=True)
-    parser.add_argument("-b", "--batch_id", type=int, required=True)
     parser.add_argument("-n", "--hostname", type=str, required=True)
     parser.add_argument("-o", "--output_path", type=str, required=True)
     args = parser.parse_args()
 
     # Parse arguments
     simulation: str = args.simulation
-    batch_id: int = args.batch_id
     hostname: str = args.hostname
     output_path: str = args.output_path
-    hosts_path: str = os.path.join(simulation, f"shadow.data.{batch_id}", "hosts")
     stage_path: str = "stage"
-    info_clients_path: str = os.path.join(stage_path, f"info_clients_{batch_id}.pickle")
-    info_servers_path: str = os.path.join(stage_path, f"info_servers_{batch_id}.pickle")
+    hosts_path: str = os.path.join(simulation, f"shadow.data", "hosts")
+    info_clients_path: str = os.path.join(stage_path, f"info_clients.pickle")
+    info_servers_path: str = os.path.join(stage_path, f"info_servers.pickle")
 
     if not os.path.exists(simulation):
         raise Exception(f"Simulation path is not valid: {os.path.abspath(simulation)}")
@@ -148,7 +148,7 @@ def main():
     if hostname in info_clients.keys():
         parse_pcap_inflow(info_clients[hostname], hostname, hosts_path, output_path)
     elif hostname.startswith("server"):
-        parse_pcap_outflow(info_servers[get_address(os.path.join(hosts_path, hostname))], hostname, hosts_path, output_path)
+        parse_pcap_outflow(info_servers, hostname, hosts_path, output_path)
     else:
         raise Exception(f"Invalid hostname: {hostname}")
 
