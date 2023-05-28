@@ -26,7 +26,7 @@ def parse_args():
     parser.add_argument("--addnum", "-a", type=int, required=False, default=2)
     parser.add_argument("--model1", default="./data/DeepCCA_model/shadowV_overlap_new2021")
     parser.add_argument("--model2", default="./data/DeepCCA_model/shadowV_overlap_new2021")
-    parser.add_argument("--output", default="./data/dcf_result/shadowV_dcf0.002")
+    parser.add_argument("--output", default="./data/shadowV_dcf0.002")
     parser.add_argument("--gpu", "-g", required=False, type=int, default=0)
     args = parser.parse_args()
     return args
