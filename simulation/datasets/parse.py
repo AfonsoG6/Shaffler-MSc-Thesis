@@ -20,31 +20,26 @@ def main():
     if not os.path.exists(stage_path):
         raise Exception(f"Stage path is not valid: {os.path.abspath(stage_path)}")
     
-    data_pattern: re.Pattern = re.compile(r"shadow\.data\.\d")
-    for element in os.listdir(simulation):
-        if data_pattern.search(element):
-            batch_id: int = int(element.split(".")[-1])
-            info_clients_path: str = os.path.join(stage_path, f"info_clients_{batch_id}.pickle")
-            print("Loading data...")
-            with open(info_clients_path, "rb") as file:
-                info_clients: dict = pickle.load(file)
-            
-            hostnames: set = set()
-            for hostname in info_clients.keys():
-                hostnames.add(hostname)
-            for filename in os.listdir(os.path.join(simulation, element, "hosts")):
-                if filename.startswith("server"):
-                    hostnames.add(filename)
+    info_clients_path: str = os.path.join(stage_path, f"info_clients.pickle")
+    print("Loading data...")
+    with open(info_clients_path, "rb") as file:
+        info_clients: dict = pickle.load(file)
+    
+    hostnames: set = set()
+    for hostname in info_clients.keys():
+        hostnames.add(hostname)
+    for filename in os.listdir(os.path.join(simulation, "shadow.data", "hosts")):
+        if filename.startswith("server"):
+            hostnames.add(filename)
 
-            processes: list = []
-            for hostname in hostnames:
-                processes.append(Popen(["python3", "parse_host.py",
-                    "-s", simulation,
-                    "-b", str(batch_id),
-                    "-n", hostname,
-                    "-o", output_path]))
-            for process in processes:
-                process.wait()
+    processes: list = []
+    for hostname in hostnames:
+        processes.append(Popen(["python3", "parse_host.py",
+            "-s", simulation,
+            "-n", hostname,
+            "-o", output_path]))
+    for process in processes:
+        process.wait()
 
     print("All processes finished.")
 
