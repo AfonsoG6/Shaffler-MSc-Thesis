@@ -55,6 +55,7 @@ def Cosine_Similarity_eval(tor_embs, exit_embs, similarity_threshold, single_out
         for exit_emb_index in range(0, number_of_lines):
             if cosine_similarity_all_list[tor_emb_index][exit_emb_index] >= t:
                 # print('single_output_l[constant_num + exit_emb_index] ',single_output_l[constant_num + exit_emb_index])
+                bp()
                 single_output_l[constant_num + exit_emb_index] = single_output_l[constant_num + exit_emb_index] + 1
 
     if evaluating_window == last_window:
@@ -280,7 +281,6 @@ if __name__ == "__main__":
     use_new_data = 0
 
     for thr in rank_thr_list:
-        bp()
         eval_model(flow_length, minimum_windows_positive, use_new_data, model1_path, model2_path, test_path, thr, use_global, rank_multi_output[epoch_index], args.flow, args.tor_len, args.exit_len, args.win_interval, args.num_windows)
         epoch_index = epoch_index + 1
     end_time = time.time()
