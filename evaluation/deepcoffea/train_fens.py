@@ -294,15 +294,16 @@ if __name__ == "__main__":
 
     loss = Lambda(cosine_triplet_loss, output_shape=(1,))([pos_sim, neg_sim])
 
-    model_triplet = Model(inputs=[anchor, positive, negative], outputs=loss)
-    print(model_triplet.summary())
+    with tf.distribute.MirroredStrategy().scope():
+        model_triplet = Model(inputs=[anchor, positive, negative], outputs=loss)
+        print(model_triplet.summary())
 
-    opt = optimizers.SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
+        opt = optimizers.SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
 
-    def identity_loss(y_true, y_pred):
-        return K.mean(y_pred - 0 * y_true)
+        def identity_loss(y_true, y_pred):
+            return K.mean(y_pred - 0 * y_true)
 
-    model_triplet.compile(loss=identity_loss, optimizer=opt)
+        model_triplet.compile(loss=identity_loss, optimizer=opt)
 
     batch_size = 128  # batch_size_value
 
