@@ -33,35 +33,18 @@ def get_params():
     parser.add_argument("--num_windows", "-w", required=False, default=11)
     parser.add_argument("--addnum", "-a", required=False, default=2)
     parser.add_argument("--alpha", required=False, default=0.1)
-    parser.add_argument(
-        "--input",
-        required=False,
-        default="./datasets/new_dcf_data/shadowV_new_overlap_interval",
-    )
-    parser.add_argument(
-        "--test",
-        required=False,
-        default="./data/DeepCCA_model/shadowV_overlap_new2021_interval",
-    )
-    parser.add_argument(
-        "--model",
-        required=False,
-        default="./data/DeepCCA_model/shadowV_overlap_new2021_",
-    )
+    parser.add_argument("--input", required=False, default="./datasets/new_dcf_data/shadowV_new_overlap_interval")
+    parser.add_argument("--test", required=False, default="./data/DeepCCA_model/shadowV_overlap_new2021_interval")
+    parser.add_argument("--model", required=False, default="./data/DeepCCA_model/shadowV_overlap_new2021_")
     parser.add_argument("--gpu", "-g", required=False, type=int, default=0)
-    parser.add_argument("--target_loss", "-l",
-                        required=False, type=int, default=0.002)
+    parser.add_argument("--target_loss", "-l", required=False, type=int, default=0.002)
     args = parser.parse_args()
     return args
 
 
 def get_session(gpu_fraction=0.85):
-    gpu_options = tf.GPUOptions(
-        per_process_gpu_memory_fraction=gpu_fraction, allow_growth=True
-    )
-    return tf.Session(
-        config=tf.ConfigProto(gpu_options=gpu_options)
-    )
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=gpu_fraction, allow_growth=True)
+    return tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 
 
 def load_whole_seq_new(tor_seq, exit_seq, circuit_labels, test_c, train_c, model_gb):
@@ -78,14 +61,10 @@ def load_whole_seq_new(tor_seq, exit_seq, circuit_labels, test_c, train_c, model
     window_exit_ipd = []
     print("extract both ipd and size features...")
     for i in range(len(tor_seq)):
-        window_tor_size.append(
-            [float(pair["size"]) / 1000.0 for pair in tor_seq[i]])
-        window_exit_size.append(
-            [float(pair["size"]) / 1000.0 for pair in exit_seq[i]])
-        window_tor_ipd.append(
-            [float(pair["ipd"]) * 1000.0 for pair in tor_seq[i]])
-        window_exit_ipd.append(
-            [float(pair["ipd"]) * 1000.0 for pair in exit_seq[i]])
+        window_tor_size.append([float(pair["size"]) / 1000.0 for pair in tor_seq[i]])
+        window_exit_size.append([float(pair["size"]) / 1000.0 for pair in exit_seq[i]])
+        window_tor_ipd.append([float(pair["ipd"]) * 1000.0 for pair in tor_seq[i]])
+        window_exit_ipd.append([float(pair["ipd"]) * 1000.0 for pair in exit_seq[i]])
 
     print("window_tor_size", np.array(window_tor_size).shape)
     print("window_exit_size", np.array(window_exit_size).shape)
@@ -110,13 +89,8 @@ def load_whole_seq_new(tor_seq, exit_seq, circuit_labels, test_c, train_c, model
     print("window_exit_ipd", window_exit_ipd[10][:10])
 
     for i in range(len(window_tor_ipd)):
-        window_tor.append(
-            np.concatenate((window_tor_ipd[i], window_tor_size[i]), axis=None)
-        )
-        window_exit.append(
-            np.concatenate(
-                (window_exit_ipd[i], window_exit_size[i]), axis=None)
-        )
+        window_tor.append(np.concatenate((window_tor_ipd[i], window_tor_size[i]), axis=None))
+        window_exit.append(np.concatenate((window_exit_ipd[i], window_exit_size[i]), axis=None))
 
     window_tor = np.array(window_tor)
     window_exit = np.array(window_exit)
@@ -137,7 +111,7 @@ def load_whole_seq_new(tor_seq, exit_seq, circuit_labels, test_c, train_c, model
 
     print("train_window1", np.array(train_window1).shape)
     print("train_window2", np.array(train_window1).shape)
-    
+
     return (
         np.array(train_window1),
         np.array(train_window2),
@@ -152,9 +126,7 @@ if __name__ == "__main__":
     args = get_params()
 
     if args.gpu > 0:
-        cuda_visible_devices = ",".join(
-            [str(i) for i in range(args.gpu)]
-        )
+        cuda_visible_devices = ",".join([str(i) for i in range(args.gpu)])
         print("CUDA_VISIBLE_DEVICES", cuda_visible_devices)
         os.environ["CUDA_VISIBLE_DEVICES"] = cuda_visible_devices
         ktf.set_session(get_session())
@@ -185,24 +157,14 @@ if __name__ == "__main__":
     valid_labels = []
 
     for window_index in window_index_list:
-        pickle_path = (
-            args.input
-            + str(interval)
-            + "_win"
-            + str(window_index)
-            + "_addn"
-            + str(addn)
-            + "_w_superpkt.pickle"
-        )
+        pickle_path = args.input + str(interval) + "_win" + str(window_index) + "_addn" + str(addn) + "_w_superpkt.pickle"
 
         with open(pickle_path, "rb") as handle:
             traces = pickle.load(handle)
             tor_seq = traces["tor"]
             exit_seq = traces["exit"]
             labels = traces["label"]
-            circuit_labels = np.array(
-                [int(labels[i].split("_")[0]) for i in range(len(labels))]
-            )
+            circuit_labels = np.array([int(labels[i].split("_")[0]) for i in range(len(labels))])
 
             print(tor_seq[0])
 
@@ -224,7 +186,7 @@ if __name__ == "__main__":
                 sum_ins = 0
                 for key in keys:
                     sum_ins += circuit[key]
-                sum_train = sum_ins*0.9     # 1-0.0798032860176596 ?
+                sum_train = sum_ins * 0.9  # 1-0.0798032860176596 ?
                 for key in keys:
                     if sum_ins > sum_train:
                         sum_ins -= circuit[key]
@@ -244,9 +206,7 @@ if __name__ == "__main__":
             test_set_x2,
             valid_set_x1,
             valid_set_x2,
-        ) = load_whole_seq_new(
-            tor_seq, exit_seq, circuit_labels, test_c, train_c, model_gb
-        )
+        ) = load_whole_seq_new(tor_seq, exit_seq, circuit_labels, test_c, train_c, model_gb)
 
         temp_test1 = []
         temp_test2 = []
@@ -257,52 +217,22 @@ if __name__ == "__main__":
 
         print("train_set_x1", train_set_x1.shape)
         for x in train_set_x1:
-            train_windows1.append(
-                np.reshape(
-                    np.pad(x[:pad_t], (0, pad_t - len(x[:pad_t])),
-                           "constant"), [-1, 1]
-                )
-            )
+            train_windows1.append(np.reshape(np.pad(x[:pad_t], (0, pad_t - len(x[:pad_t])), "constant"), [-1, 1]))
 
         for x in valid_set_x1:
-            valid_windows1.append(
-                np.reshape(
-                    np.pad(x[:pad_t], (0, pad_t - len(x[:pad_t])),
-                           "constant"), [-1, 1]
-                )
-            )
+            valid_windows1.append(np.reshape(np.pad(x[:pad_t], (0, pad_t - len(x[:pad_t])), "constant"), [-1, 1]))
 
         for x in test_set_x1:
-            temp_test1.append(
-                np.reshape(
-                    np.pad(x[:pad_t], (0, pad_t - len(x[:pad_t])),
-                           "constant"), [-1, 1]
-                )
-            )
+            temp_test1.append(np.reshape(np.pad(x[:pad_t], (0, pad_t - len(x[:pad_t])), "constant"), [-1, 1]))
 
         for x in train_set_x2:
-            train_windows2.append(
-                np.reshape(
-                    np.pad(x[:pad_e], (0, pad_e - len(x[:pad_e])),
-                           "constant"), [-1, 1]
-                )
-            )
+            train_windows2.append(np.reshape(np.pad(x[:pad_e], (0, pad_e - len(x[:pad_e])), "constant"), [-1, 1]))
 
         for x in valid_set_x2:
-            valid_windows2.append(
-                np.reshape(
-                    np.pad(x[:pad_e], (0, pad_e - len(x[:pad_e])),
-                           "constant"), [-1, 1]
-                )
-            )
+            valid_windows2.append(np.reshape(np.pad(x[:pad_e], (0, pad_e - len(x[:pad_e])), "constant"), [-1, 1]))
 
         for x in test_set_x2:
-            temp_test2.append(
-                np.reshape(
-                    np.pad(x[:pad_e], (0, pad_e - len(x[:pad_e])),
-                           "constant"), [-1, 1]
-                )
-            )
+            temp_test2.append(np.reshape(np.pad(x[:pad_e], (0, pad_e - len(x[:pad_e])), "constant"), [-1, 1]))
 
         print("temp_test1: ", np.array(temp_test1).shape)
         print("temp_test2: ", np.array(temp_test2).shape)
@@ -310,13 +240,7 @@ if __name__ == "__main__":
         test_windows2.append(np.array(temp_test2))
 
     np.savez_compressed(
-        args.test
-        + str(interval)
-        + "_test"
-        + str(num_windows)
-        + "addn"
-        + str(addn)
-        + "_w_superpkt.npz",
+        args.test + str(interval) + "_test" + str(num_windows) + "addn" + str(addn) + "_w_superpkt.npz",
         tor=np.array(test_windows1),
         exit=np.array(test_windows2),
     )
@@ -339,12 +263,8 @@ if __name__ == "__main__":
     input_shape1 = (pad_t, 1)
     input_shape2 = (pad_e, 1)
 
-    shared_model1 = create_model(
-        input_shape=input_shape1, emb_size=64, model_name="tor"
-    )
-    shared_model2 = create_model(
-        input_shape=input_shape2, emb_size=64, model_name="exit"
-    )
+    shared_model1 = create_model(input_shape=input_shape1, emb_size=64, model_name="tor")
+    shared_model2 = create_model(input_shape=input_shape2, emb_size=64, model_name="exit")
 
     anchor = Input(input_shape1, name="anchor")
     positive = Input(input_shape2, name="positive")
@@ -384,7 +304,7 @@ if __name__ == "__main__":
 
     model_triplet.compile(loss=identity_loss, optimizer=opt)
 
-    batch_size = 64  # batch_size_value
+    batch_size = 128  # batch_size_value
 
     def intersect(a, b):
         return list(set(a) & set(b))
@@ -417,8 +337,7 @@ if __name__ == "__main__":
             # positive similarity
             sim = similarities[anc_idx, pos_idx]
             # find all negatives which are semi(hard)
-            possible_ids = np.where(
-                (similarities[anc_idx] + alpha_value) > sim)[0]
+            possible_ids = np.where((similarities[anc_idx] + alpha_value) > sim)[0]
             possible_ids = intersect(valid_neg_pool, possible_ids)
             appended = False
             for iteration in range(num_retries):
@@ -457,9 +376,7 @@ if __name__ == "__main__":
             self.neg_traces_idx = neg_traces_train_idx
 
             if conv1:
-                self.similarities = build_similarities(
-                    conv1, conv2, self.Xa_all, self.Xp_all
-                )  # compute all similarities including cross pairs
+                self.similarities = build_similarities(conv1, conv2, self.Xa_all, self.Xp_all)  # compute all similarities including cross pairs
             else:
                 self.similarities = None
 
@@ -470,18 +387,10 @@ if __name__ == "__main__":
                     self.cur_train_index = 0  # initialize the index for the next epoch
 
                 # fill one batch
-                traces_a = np.array(
-                    range(self.cur_train_index,
-                          self.cur_train_index + self.batch_size)
-                )
-                traces_p = np.array(
-                    range(self.cur_train_index,
-                          self.cur_train_index + self.batch_size)
-                )
+                traces_a = np.array(range(self.cur_train_index, self.cur_train_index + self.batch_size))
+                traces_p = np.array(range(self.cur_train_index, self.cur_train_index + self.batch_size))
 
-                traces_n = build_negatives(
-                    traces_a, traces_p, self.similarities, self.neg_traces_idx
-                )
+                traces_n = build_negatives(traces_a, traces_p, self.similarities, self.neg_traces_idx)
                 yield (
                     [self.Xa[traces_a], self.Xp[traces_p], self.Xp_all[traces_n]],
                     np.zeros(shape=(traces_a.shape[0])),
@@ -510,32 +419,12 @@ if __name__ == "__main__":
         loss = logs["loss"]
 
         if loss < best_loss:
-            print(
-                "\nloss is improved from {} to {}. save the model".format(
-                    str(best_loss), str(loss)
-                )
-            )
+            print("\nloss is improved from {} to {}. save the model".format(str(best_loss), str(loss)))
 
             best_loss = loss
-            shared_model1.save_weights(
-                args.model
-                + str(num_windows)
-                + "_interval"
-                + str(interval)
-                + "_addn"
-                + str(addn)
-                + "_model1_w_superpkt.h5"
-            )
-            shared_model2.save_weights(
-                args.model
-                + str(num_windows)
-                + "_interval"
-                + str(interval)
-                + "_addn"
-                + str(addn)
-                + "_model2_w_superpkt.h5"
-            )
-            if (best_loss < args.target_loss):
+            shared_model1.save_weights(args.model + str(num_windows) + "_interval" + str(interval) + "_addn" + str(addn) + "_model1_w_superpkt.h5")
+            shared_model2.save_weights(args.model + str(num_windows) + "_interval" + str(interval) + "_addn" + str(addn) + "_model2_w_superpkt.h5")
+            if best_loss < args.target_loss:
                 exit(0)
         else:
             print("loss is not improved from {}.".format(str(best_loss)))
@@ -545,36 +434,20 @@ if __name__ == "__main__":
 
         if epoch % 2 == 0:
             if epoch == 0:
-                model_triplet.fit(
-                    x=gen_hard.next_train(),
-                    steps_per_epoch=train_windows1.shape[0] // batch_size - 1,
-                    epochs=1,
-                    use_multiprocessing=False,
-                    # workers=1,
-                    max_queue_size=1,
-                    verbose=1
-                )
+                model_triplet.fit(x=gen_hard.next_train(), steps_per_epoch=train_windows1.shape[0] // batch_size - 1, epochs=1, verbose=1)
             else:
                 model_triplet.fit(
                     x=gen_hard_even.next_train(),
-                    steps_per_epoch=(
-                        train_windows1.shape[0] // 2) // batch_size - 1,
+                    steps_per_epoch=(train_windows1.shape[0] // 2) // batch_size - 1,
                     epochs=1,
-                    use_multiprocessing=False,
-                    # workers=1,
-                    max_queue_size=1,
                     verbose=1,
                     callbacks=[LambdaCallback(on_epoch_end=saveModel)],
                 )
         else:
             model_triplet.fit(
                 x=gen_hard_odd.next_train(),
-                steps_per_epoch=(
-                    train_windows1.shape[0] // 2) // batch_size - 1,
+                steps_per_epoch=(train_windows1.shape[0] // 2) // batch_size - 1,
                 epochs=1,
-                use_multiprocessing=False,
-                # workers=1,
-                max_queue_size=1,
                 verbose=1,
                 callbacks=[LambdaCallback(on_epoch_end=saveModel)],
             )
