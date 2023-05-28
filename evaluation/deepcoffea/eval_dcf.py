@@ -261,7 +261,8 @@ if __name__ == "__main__":
     output_path = args.output + f"_{args.num_windows}_0.02_interval{args.win_interval}_addn{args.addnum}_{args.tor_len}_{args.exit_len}.csv"
     # For time complexity analysis, use only one threshold (e.g., [60])
     rank_thr_list = [60, 50, 47, 43, 40, 37, 33, 28, 24, 20, 16.667, 14, 12.5, 11, 10, 9, 8.333, 7, 6.25, 5, 4.545, 3.846, 2.941, 1.667, 1.6, 1.5, 1.4, 1.3, 1.2, 1.1, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2]
-
+    # rank_thr_list = [i for i in range(4, 1255, 30)]
+    
     num_of_thr = len(rank_thr_list)
 
     flow_length = args.flow
