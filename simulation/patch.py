@@ -32,7 +32,7 @@ def netnodeid_ok(hosts: dict, netnodeid: int):
             return False
     return True
 
-def create_client(hosts: dict, idx: int):
+def create_client(hosts: dict, idx: int, netnodeid: int = -1):
     global hosts_path, tgen_server_path, tgen_server_dir_path
     
     newhostname: str = f"customclient{idx}"
@@ -61,9 +61,10 @@ def create_client(hosts: dict, idx: int):
     print(f"Created {newhostname} directory")
     config_path = os.path.join(templates_path, "customclient.yaml")
     new_host = yaml.load(open(config_path, "r"), Loader=yaml.FullLoader)
-    netnodeid: int = random.randint(0, 2520)
-    while not netnodeid_ok(hosts, netnodeid):
-        netnodeid = random.randint(0, 2520)
+    if netnodeid == -1:
+        netnodeid: int = random.randint(0, 2520)
+        while not netnodeid_ok(hosts, netnodeid):
+            netnodeid = random.randint(0, 2520)
     new_host["network_node_id"] = netnodeid
     hosts[newhostname] = new_host
     print(f"Added {newhostname} to shadow.config.yaml")
@@ -115,11 +116,15 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--simulation", type=str, required=True)
     parser.add_argument("-c", "--num-clients", type=int, required=False, default=-1)
     parser.add_argument("-d", "--duration", type=float, required=False, default=1)
+    #Flag to specify if we want the same netnodeid for all clients
+    parser.add_argument("-g", "--global_netnodeid", action="store_true", required=False, default=False)
 
     args = parser.parse_args()
     simulation: str = args.simulation
     num_clients: int = args.num_clients
     duration: float = args.duration
+    global_netnodeid: bool = args.global_netnodeid
+    
     
     config_path = os.path.join(simulation, "shadow.config.yaml")
     conf_path = os.path.join(simulation, "conf")
@@ -130,15 +135,21 @@ if __name__ == "__main__":
     os.makedirs(tgen_server_dir_path, exist_ok=True)
     
     nodes: dict = load_nodes()
-
     config = yaml.load(open(config_path, "r"), Loader=yaml.FullLoader)
     config["general"]["stop_time"] = int(duration * 3600)
+    
+    netnodeid: int = -1
+    if global_netnodeid:
+        netnodeid: int = random.randint(0, 2520)
+        while not netnodeid_ok(config["hosts"], netnodeid):
+            netnodeid = random.randint(0, 2520)
+
     ports: set = set()
     for idx in range(num_clients):
         create_client(config["hosts"], idx)
         ports.add(10000 + idx)
     patch_servers(config["hosts"], ports)
-    
+
     for host in config["hosts"].keys():
         for process in config["hosts"][host]["processes"]:
             if host.startswith("customclient"):
@@ -147,7 +158,7 @@ if __name__ == "__main__":
             else:
                 if process["path"].endswith("oniontrace"):
                     config["hosts"][host]["processes"].remove(process)
-    
+
     yaml.dump(config, open(config_path, "w"), default_flow_style=False, sort_keys=False)
 
     print("Done!")
