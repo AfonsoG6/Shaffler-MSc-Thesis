@@ -1,8 +1,8 @@
 from argparse import ArgumentParser
 from subprocess import Popen
 import pickle
+import shutil
 import os
-import re
 
 def main():
     parser = ArgumentParser()
@@ -40,8 +40,27 @@ def main():
             "-o", output_path]))
     for process in processes:
         process.wait()
-
     print("All processes finished.")
+    
+    outflow_path: str = os.path.join(output_path, "outflow")
+    for flow in os.listdir(outflow_path):
+        flow_path: str = os.path.join(outflow_path, flow)
+        if os.path.isdir(flow_path):
+            print(f"Merging {flow}...")
+            data = []
+            for host in os.listdir(flow_path):
+                with open(os.path.join(flow_path, host), "r") as file:
+                    for line in file.readlines():
+                        timestamp: float = float(line.split("\t")[0])
+                        length: int = int(line.split("\t")[1])
+                        data.append((timestamp, length))
+            data.sort(key=lambda x: x[0])
+            shutil.rmtree(flow_path, ignore_errors=True)
+            with open(flow_path, "w") as file:
+                for timestamp, length in data:
+                    file.write(f"{timestamp}\t{length}\n")
+            print(f"Finished merging {flow}.")
+    print("Done.")
 
 if __name__ == "__main__":
     main()
