@@ -270,6 +270,12 @@ if __name__ == "__main__":
             flow_length = int(f.read().strip())
 
     minimum_windows_positive = 1 + args.num_windows // 2
+    if args.num_windows == 7:
+        minimum_windows_positive = 6
+    elif args.num_windows == 9:
+        minimum_windows_positive = 7
+    elif args.num_windows == 11:
+        minimum_windows_positive = 9
 
     rank_multi_output = []
     five_rank_multi_output = []
