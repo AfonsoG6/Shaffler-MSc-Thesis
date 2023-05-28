@@ -60,7 +60,7 @@ def parse_pcap_outflow(info_servers: list, hostname: str, hosts_path: str, outpu
             for idx in range(completed_idx, len(info_servers)):
                 if timestamp < info_servers[idx]["timestamp"]:
                     break
-                if timestamp >= info_servers[idx]["timestamp"] + info_servers[idx]["duration"]:
+                if timestamp > info_servers[idx]["timestamp"] + info_servers[idx]["duration"]:
                     completed_idx = max(completed_idx, idx+1)
                     continue
                 try:
@@ -97,7 +97,7 @@ def parse_pcap_inflow(info_client: list, hostname: str, hosts_path: str, output_
             for idx in range(completed_idx, len(info_client)):
                 if timestamp < info_client[idx]["timestamp"]:
                     break
-                if timestamp >= info_client[idx]["timestamp"] + info_client[idx]["duration"]:
+                if timestamp > info_client[idx]["timestamp"] + info_client[idx]["duration"]:
                     completed_idx = max(completed_idx, idx+1)
                     continue
                 try:
