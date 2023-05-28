@@ -53,6 +53,7 @@ def create_client(hosts: dict, idx: int):
                     data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
                 elif file == "torrc":
                     pick: dict = pick_nodes()
+                    print(f"Picked {pick} for {newhostname}")
                     data = data.replace("{entry}", pick["entry"])
                     data = data.replace("{middle}", pick["middle"])
                     data = data.replace("{exit}", pick["exit"])
