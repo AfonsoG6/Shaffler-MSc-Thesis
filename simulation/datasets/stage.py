@@ -83,8 +83,11 @@ def parse_oniontrace(hostname: str, hosts_path: str, flow_interval: float) -> No
                 print(f"Found flow for {hostname} at {timestamp}")
             match = stream_succeeded_pattern.search(line)
             if match:
-                timestamp: float = round(float(line.split(" ")[2]) + CLOCK_SYNC, 6)
-                last_end_ts = timestamp
+                tokens: list = line[match.start():].split(" ")
+                site: str = tokens[4]
+                if "$" in site:
+                    continue
+                last_end_ts = round(float(line.split(" ")[2]) + CLOCK_SYNC, 6)
 
 def main():
     parser = ArgumentParser()
