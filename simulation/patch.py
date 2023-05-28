@@ -104,9 +104,10 @@ def pick_nodes():
     order: list = ["entry", "middle", "exit"]
     random.shuffle(order)
     for cat in order:
-        pick[cat] = random.choice(nodes[cat])
-        while pick[cat] in pick.values():
-            pick[cat] = random.choice(nodes[cat])
+        choice: str = random.choice(nodes[cat])
+        while choice in pick.values():
+            choice = random.choice(nodes[cat])
+        pick[cat] = choice
     return pick
 
 if __name__ == "__main__":
