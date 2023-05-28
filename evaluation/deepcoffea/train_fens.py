@@ -50,7 +50,7 @@ def get_params():
     )
     parser.add_argument("--gpu", "-g", required=False, type=int, default=0)
     parser.add_argument("--target_loss", "-l",
-                        required=False, type=int, default=0.05)
+                        required=False, type=int, default=0.002)
     args = parser.parse_args()
     return args
 
