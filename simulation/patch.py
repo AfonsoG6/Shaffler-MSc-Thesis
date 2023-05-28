@@ -51,6 +51,11 @@ def create_client(hosts: dict, idx: int):
                     data = data.replace("{time}", str(random.randint(1, 60)))
                     data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
                     data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
+                elif file == "torrc":
+                    pick: dict = pick_nodes()
+                    data = data.replace("{entry}", pick["entry"])
+                    data = data.replace("{middle}", pick["middle"])
+                    data = data.replace("{exit}", pick["exit"])
                 g.write(data)
     print(f"Created {newhostname} directory")
     config_path = os.path.join(templates_path, "customclient.yaml")
@@ -74,6 +79,35 @@ def patch_server_tgenrc(new_port: int, original_path: str, target_path: str = ""
     with open(target_path, "w") as f:
         f.write(newtgenrc)
 
+def load_nodes():
+    global hosts_path
+    nodes: dict = {"entry": [], "middle": [], "exit": []}
+    fingerprints_path = os.path.join(hosts_path, "bwauthority", "v3bw")
+    with open(fingerprints_path, "r") as f:
+        for line in f.readlines():
+            if not line.startswith("node_id"):
+                continue
+            fp: str = line.split("\t")[0].split("=")[1]
+            nick: str = line.split("\t")[2].split("=")[1]
+            if "guard" in nick:
+                nodes["entry"].append(fp)
+            if "exit" in nick:
+                nodes["exit"].append(fp)
+            if "relay" in nick:
+                nodes["middle"].append(fp)
+    return nodes
+
+def pick_nodes():
+    global nodes
+    pick: dict = {}
+    order: list = ["entry", "middle", "exit"]
+    random.shuffle(order)
+    for cat in order:
+        pick[cat] = random.choice(nodes[cat])
+        while pick[cat] in pick.values():
+            pick[cat] = random.choice(nodes[cat])
+    return pick
+
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-s", "--simulation", type=str, required=True)
@@ -92,6 +126,8 @@ if __name__ == "__main__":
     tgen_server_path = os.path.join(conf_path, "tgen-server.tgenrc.graphml")
     tgen_server_dir_path = os.path.join(conf_path, "tgen-server")
     os.makedirs(tgen_server_dir_path, exist_ok=True)
+    
+    nodes: dict = load_nodes()
 
     config = yaml.load(open(config_path, "r"), Loader=yaml.FullLoader)
     config["general"]["stop_time"] = int(duration * 3600)
