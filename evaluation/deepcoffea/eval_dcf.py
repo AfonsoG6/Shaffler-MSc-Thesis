@@ -7,7 +7,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 import csv
 import time
 import argparse
-from pdb import set_trace as bp
 
 
 total_emb = 0
@@ -55,7 +54,6 @@ def Cosine_Similarity_eval(tor_embs, exit_embs, similarity_threshold, single_out
         for exit_emb_index in range(0, number_of_lines):
             if cosine_similarity_all_list[tor_emb_index][exit_emb_index] >= t:
                 # print('single_output_l[constant_num + exit_emb_index] ',single_output_l[constant_num + exit_emb_index])
-                bp()
                 single_output_l[constant_num + exit_emb_index] = single_output_l[constant_num + exit_emb_index] + 1
 
     if evaluating_window == last_window:
@@ -267,6 +265,9 @@ if __name__ == "__main__":
     num_of_thr = len(rank_thr_list)
 
     flow_length = args.flow
+    if os.path.exists("sum_test.txt"):
+        with open("sum_test.txt", "r") as f:
+            flow_length = int(f.read().strip())
 
     minimum_windows_positive = 1 + args.num_windows // 2
 

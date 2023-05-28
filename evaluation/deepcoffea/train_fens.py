@@ -186,11 +186,15 @@ if __name__ == "__main__":
                 sum_ins = 0
                 for key in keys:
                     sum_ins += circuit[key]
-                sum_train = sum_ins * 0.9  # 1-0.0798032860176596 ?
+                sum_test = sum_ins * 0.1  # 0.0798032860176596 ?
+                sum_ins = 0
                 for key in keys:
-                    if sum_ins > sum_train:
-                        sum_ins -= circuit[key]
+                    if sum_ins < sum_test:
                         test_c.append(key)
+                        sum_ins += circuit[key]
+                        if sum_ins >= sum_test:
+                            with open("sum_test.txt", "w") as f:
+                                f.write(str(sum_ins))
                     else:
                         train_c.append(key)
                 test_c = np.array(test_c).astype("int")
