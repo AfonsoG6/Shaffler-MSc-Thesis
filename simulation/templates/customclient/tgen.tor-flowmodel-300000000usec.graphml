@@ -32,8 +32,8 @@
       <data key="d2">emission</data>
       <data key="d3">1.0</data>
       <data key="d4">uniform</data>
-      <data key="d5">100000000</data>
-      <data key="d6">100000000</data>
+      <data key="d5">120000000</data>
+      <data key="d6">120000000</data>
     </edge>
   </graph>
 </graphml>
