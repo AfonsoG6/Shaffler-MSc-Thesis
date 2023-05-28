@@ -28,6 +28,7 @@ def parse_oniontrace(hostname: str, hosts_path: str, flow_interval: float) -> No
     global info_clients, info_servers, site_counter
 
     stream_new_pattern = re.compile(r"STREAM \d+ NEW")
+    stream_succeeded_pattern = re.compile(r"STREAM \d+ SUCCEEDED")
     oniontrace_path: str = os.path.join(hosts_path, hostname, "oniontrace.1002.stdout")
     if not os.path.exists(oniontrace_path):
         raise Exception(f"Oniontrace file not found for {hostname} in {hosts_path}")
@@ -36,7 +37,8 @@ def parse_oniontrace(hostname: str, hosts_path: str, flow_interval: float) -> No
         info_clients[hostname] = []
     circuit_idx: int = int(hostname[len("customclient"):])
     
-    last_timestamp: float = -100000
+    last_start_ts: float = -100000
+    last_end_ts: float = -100000
     
     with open(oniontrace_path, "r") as file:
         while True:
@@ -51,23 +53,38 @@ def parse_oniontrace(hostname: str, hosts_path: str, flow_interval: float) -> No
                 if "$" in site:
                     continue
                 timestamp: float = round(float(line.split(" ")[2]) + CLOCK_SYNC, 6)
-                if timestamp < last_timestamp + flow_interval:
+                if timestamp < last_start_ts + flow_interval:
+                    # Still the same flow
                     continue
-                last_timestamp = timestamp
+                # New flow
+                if last_end_ts > last_start_ts:
+                    # Update the previous flow's duration
+                    duration: float = last_end_ts - last_start_ts
+                    if duration < 60:
+                        duration = 60
+                    info_clients[hostname][-1]["duration"] = duration
+                    info_servers[-1]["duration"] = duration
+                last_start_ts = timestamp
                 site_idx: int = site_counter
                 site_counter += 1
                 info_clients[hostname].append({
                     "timestamp": timestamp,
+                    "duration": flow_interval-0.00001,
                     "circuit_idx": circuit_idx,
                     "site_idx": site_idx
                 })
                 info_servers.append({
                     "timestamp": timestamp,
+                    "duration": flow_interval-0.00001,
                     "port": port,
                     "circuit_idx": circuit_idx,
                     "site_idx": site_idx
                 })
                 print(f"Found flow for {hostname} at {timestamp}")
+            match = stream_succeeded_pattern.search(line)
+            if match:
+                timestamp: float = round(float(line.split(" ")[2]) + CLOCK_SYNC, 6)
+                last_end_ts = timestamp
 
 def main():
     parser = ArgumentParser()

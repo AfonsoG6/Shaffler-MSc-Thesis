@@ -8,13 +8,11 @@ def main():
     parser = ArgumentParser()
     parser.add_argument("-s", "--simulation", type=str, required=True)
     parser.add_argument("-o", "--output_path", type=str, required=False, default="dataset")
-    parser.add_argument("-c", "--capture_interval", type=float, default=150)
     args = parser.parse_args()
     
     # Parse arguments
     simulation: str = args.simulation
     output_path: str = args.output_path
-    capture_interval: float = args.capture_interval
     stage_path: str = "stage"
     
     if not os.path.exists(simulation):
@@ -39,7 +37,6 @@ def main():
         processes.append(Popen(["python3", "parse_host.py",
             "-s", simulation,
             "-n", hostname,
-            "-c", str(capture_interval),
             "-o", output_path]))
     for process in processes:
         process.wait()

@@ -41,7 +41,7 @@ def get_port(ip: IP, own_address: str) -> int:
 def timestamp_str(timestamp: float) -> str:
     return "{:.6f}".format(timestamp)
 
-def parse_pcap_outflow(info_servers: list, hostname: str, hosts_path: str, output_path: str, capture_interval: float) -> None:
+def parse_pcap_outflow(info_servers: list, hostname: str, hosts_path: str, output_path: str) -> None:
     outflow_path: str = os.path.join(output_path, "outflow")
     os.makedirs(outflow_path, exist_ok=True)
 
@@ -60,7 +60,7 @@ def parse_pcap_outflow(info_servers: list, hostname: str, hosts_path: str, outpu
             for idx in range(completed_idx, len(info_servers)):
                 if timestamp < info_servers[idx]["timestamp"]:
                     break
-                if timestamp >= info_servers[idx]["timestamp"] + capture_interval:
+                if timestamp >= info_servers[idx]["timestamp"] + info_servers[idx]["duration"]:
                     completed_idx = max(completed_idx, idx+1)
                     continue
                 try:
@@ -78,7 +78,7 @@ def parse_pcap_outflow(info_servers: list, hostname: str, hosts_path: str, outpu
                 break
 
 
-def parse_pcap_inflow(info_client: list, hostname: str, hosts_path: str, output_path: str, capture_interval: float) -> None:
+def parse_pcap_inflow(info_client: list, hostname: str, hosts_path: str, output_path: str) -> None:
     inflow_path: str = os.path.join(output_path, "inflow")
     os.makedirs(inflow_path, exist_ok=True)
 
@@ -97,7 +97,7 @@ def parse_pcap_inflow(info_client: list, hostname: str, hosts_path: str, output_
             for idx in range(completed_idx, len(info_client)):
                 if timestamp < info_client[idx]["timestamp"]:
                     break
-                if timestamp >= info_client[idx]["timestamp"] + capture_interval:
+                if timestamp >= info_client[idx]["timestamp"] + info_client[idx]["duration"]:
                     completed_idx = max(completed_idx, idx+1)
                     continue
                 try:
@@ -116,14 +116,12 @@ def main():
     parser.add_argument("-s", "--simulation", type=str, required=True)
     parser.add_argument("-n", "--hostname", type=str, required=True)
     parser.add_argument("-o", "--output_path", type=str, required=True)
-    parser.add_argument("-c", "--capture_interval", type=float, default=150)
     args = parser.parse_args()
 
     # Parse arguments
     simulation: str = args.simulation
     hostname: str = args.hostname
     output_path: str = args.output_path
-    capture_interval: float = args.capture_interval
     stage_path: str = "stage"
     hosts_path: str = os.path.join(simulation, f"shadow.data", "hosts")
     info_clients_path: str = os.path.join(stage_path, f"info_clients.pickle")
@@ -148,9 +146,9 @@ def main():
         info_servers = pickle.load(file)
 
     if hostname in info_clients.keys():
-        parse_pcap_inflow(info_clients[hostname], hostname, hosts_path, output_path, capture_interval)
+        parse_pcap_inflow(info_clients[hostname], hostname, hosts_path, output_path)
     elif hostname.startswith("server"):
-        parse_pcap_outflow(info_servers, hostname, hosts_path, output_path, capture_interval)
+        parse_pcap_outflow(info_servers, hostname, hosts_path, output_path)
     else:
         raise Exception(f"Invalid hostname: {hostname}")
 
