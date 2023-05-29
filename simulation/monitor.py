@@ -1,5 +1,7 @@
 import time, os
+from datetime import datetime, timedelta
 from argparse import ArgumentParser
+
 
 def read_last_line(filename: str):
     with open(filename, "rb") as file:
@@ -9,7 +11,12 @@ def read_last_line(filename: str):
         return file.readline().decode()
 
 def get_simulation_time(logfile: str):
-    return float(read_last_line(logfile).split(" ")[2])
+    return convert_time(read_last_line(logfile).split(" ")[2])
+
+def convert_time(time_str: str):
+    time_obj = datetime.strptime(time_str, "%H:%M:%S.%f")
+    duration = timedelta(hours=time_obj.hour, minutes=time_obj.minute, seconds=time_obj.second, microseconds=time_obj.microsecond)
+    return duration.total_seconds()
 
 def main():
     parser = ArgumentParser()
