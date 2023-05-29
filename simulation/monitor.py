@@ -14,6 +14,8 @@ def get_simulation_time(logfile: str):
     return convert_time(read_last_line(logfile).split(" ")[2])
 
 def convert_time(time_str: str):
+    if len(time_str) > 15:
+        time_str = time_str[:15]
     time_obj = datetime.strptime(time_str, "%H:%M:%S.%f")
     duration = timedelta(hours=time_obj.hour, minutes=time_obj.minute, seconds=time_obj.second, microseconds=time_obj.microsecond)
     return duration.total_seconds()
