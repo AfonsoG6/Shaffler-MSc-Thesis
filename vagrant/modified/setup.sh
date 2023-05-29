@@ -49,7 +49,7 @@ sysctl -p
 cd ~
 git clone https://github.com/shadow/shadow.git
 cd ~/shadow
-git checkout 5380a99b09cd25c5f93cac183c7f65bd706acbb7
+git checkout tags/v3.0.0
 
 find . -type f -exec dos2unix {} \;
 
@@ -181,6 +181,7 @@ data/networkinfo_staging.gml \
 data/tmodel-ccs2018.github.io \
 -r -e BW,CIRC,STREAM \
 --network_scale 0.005 \
+--torperf_num_exit 0 \
 --prefix tornet-0.005"
 
 echo "alias generate=\"cd ~/rendezmix/simulation; tornettools generate \
@@ -190,6 +191,7 @@ data/networkinfo_staging.gml \
 data/tmodel-ccs2018.github.io \
 -r -e BW,CIRC,STREAM \
 --network_scale 0.005 \
+--torperf_num_exit 0 \
 --prefix tornet-0.005\"" | tee -a ~/.profile
 
 alias simulate="cd ~/rendezmix/simulation; tornettools simulate tornet-0.005"
