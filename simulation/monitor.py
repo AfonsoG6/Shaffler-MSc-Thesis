@@ -24,4 +24,7 @@ def main():
         t1 = t2
         time.sleep(args.interval)
         t2 = get_simulation_time(logfile)
-        print(f"Current speed: {(t2-t1)/args.interval}s /s", end="\r")
+        print(f"Current speed: {(t2-t1)/args.interval}s /s\t\t", end="\r")
+
+if __name__ == "__main__":
+    main()
