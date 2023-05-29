@@ -41,16 +41,19 @@ def main():
     
     logfile = os.path.join(args.simulation, "shadow.log")
     
-    prev_speed = 0
+    avg_speed = 0
     t2 = get_simulation_time(logfile)
     while True:
         t1 = t2
         time.sleep(args.interval)
         t2 = get_simulation_time(logfile)
         curr_speed = round((t2-t1)/args.interval, 6)
+        if avg_speed == 0:
+            avg_speed = curr_speed
+        else:
+            avg_speed = (avg_speed+curr_speed)/2
         eta = sec_to_dtstr((args.duration*3600-t2)/curr_speed)
-        print(f"Previous SPD: {'{:.6f}'.format(prev_speed)}s /s   Current SPD: {'{:.6f}'.format(curr_speed)}s /s   ETA: {eta}......", end="\r")
-        prev_speed = curr_speed
+        print(f"Average SPD: {'{:.6f}'.format(avg_speed)}s /s   Current SPD: {'{:.6f}'.format(curr_speed)}s /s   ETA: {eta}......", end="\r")
 
 if __name__ == "__main__":
     main()
