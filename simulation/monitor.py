@@ -34,14 +34,14 @@ def main():
     
     logfile = os.path.join(args.simulation, "shadow.log")
     
-    prev_speed = -1
+    prev_speed = 0
     t2 = get_simulation_time(logfile)
     while True:
         t1 = t2
         time.sleep(args.interval)
         t2 = get_simulation_time(logfile)
         curr_speed = round((t2-t1)/args.interval, 6)
-        print(f"|\t\tPrevious SPD: {prev_speed}s /s\t\tCurrent SPD: {curr_speed}s /s\t\t|", end="\r")
+        print(f"Previous SPD: {'{:.6f}'.format(prev_speed)}s /s     Current SPD: {'{:.6f}'.format(curr_speed)}s /s", end="\r")
         prev_speed = curr_speed
 
 if __name__ == "__main__":
