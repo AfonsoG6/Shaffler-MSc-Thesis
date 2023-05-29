@@ -8,7 +8,13 @@ def read_last_line(filename: str):
         file.seek(-2, os.SEEK_END)
         while file.read(1) != b'\n':
             file.seek(-2, os.SEEK_CUR)
-        return file.readline().decode()
+        line = file.readline().decode()
+        while "shadow-worker" not in line:
+            file.seek(-len(line)-2, os.SEEK_CUR)
+            while file.read(1) != b'\n':
+                file.seek(-2, os.SEEK_CUR)
+            line = file.readline().decode()
+        return line
 
 def get_simulation_time(logfile: str):
     return convert_time(read_last_line(logfile).split(" ")[2])
