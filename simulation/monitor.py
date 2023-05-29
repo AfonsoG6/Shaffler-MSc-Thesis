@@ -24,7 +24,7 @@ def convert_time(time_str: str):
         time_str = time_str[:15]
     time_obj = datetime.strptime(time_str, "%H:%M:%S.%f")
     duration = timedelta(hours=time_obj.hour, minutes=time_obj.minute, seconds=time_obj.second, microseconds=time_obj.microsecond)
-    return round(duration.total_seconds(), 6)
+    return duration.total_seconds()
 
 def main():
     parser = ArgumentParser()
@@ -40,7 +40,7 @@ def main():
         t1 = t2
         time.sleep(args.interval)
         t2 = get_simulation_time(logfile)
-        curr_speed = (t2-t1)/args.interval
+        curr_speed = round((t2-t1)/args.interval, 6)
         print(f"|\t\tPrevious SPD: {prev_speed}s /s\t\tCurrent SPD: {curr_speed}s /s\t\t|", end="\r")
         prev_speed = curr_speed
 
