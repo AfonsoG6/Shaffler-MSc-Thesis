@@ -2,6 +2,8 @@ export CC=gcc
 export CONTAINER=ubuntu:20.04
 export BUILDTYPE=release
 
+mkdir -p ~/.ssh
+mkdir -p /root/.ssh
 cp /vagrant/.ssh/id_ed25519 ~/.ssh
 cp /vagrant/.ssh/id_ed25519.pub ~/.ssh
 cp /vagrant/.ssh/id_ed25519 /root/.ssh
