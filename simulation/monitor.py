@@ -27,7 +27,10 @@ def dtstr_to_sec(time_str: str):
     return duration.total_seconds()
 
 def sec_to_dtstr(time_sec: float):
-    return datetime.strptime(str(round(time_sec, 6)), "%S.%f").strftime("%H:%M:%S.%f")
+    hours = int(time_sec // 3600)
+    minutes = int((time_sec % 3600) // 60)
+    seconds = int(time_sec % 60)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 def main():
     parser = ArgumentParser()
