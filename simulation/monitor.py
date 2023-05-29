@@ -27,7 +27,7 @@ def dtstr_to_sec(time_str: str):
     return duration.total_seconds()
 
 def sec_to_dtstr(time_sec: float):
-    return datetime.strptime(str(time_sec), "%S.%f").strftime("%H:%M:%S.%f")
+    return datetime.strptime(str(round(time_sec, 6)), "%S.%f").strftime("%H:%M:%S.%f")
 
 def main():
     parser = ArgumentParser()
