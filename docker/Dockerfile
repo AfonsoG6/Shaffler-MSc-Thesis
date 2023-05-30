@@ -128,7 +128,39 @@ RUN tar xafv onionperf-2023-04.tar.xz
 
 RUN git clone https://github.com/tmodel-ccs2018/tmodel-ccs2018.github.io.git
 
+RUN cp /root/rendezmix/simulation /part
+
+RUN alias stage="cd /part/simulation/data; tornettools stage \
+    consensuses-2023-04 \
+    server-descriptors-2023-04 \
+    userstats-relay-country.csv \
+    tmodel-ccs2018.github.io \
+    --onionperf_data_path onionperf-2023-04 \
+    --bandwidth_data_path bandwidth-2023-04.csv \
+    --geoip_path ~/tor/src/config/geoip"
+
+RUN alias generate="cd /part/simulation; tornettools generate \
+    data/relayinfo_staging_2023-04-01--2023-04-30.json \
+    data/userinfo_staging_2023-04-01--2023-04-30.json \
+    data/networkinfo_staging.gml \
+    data/tmodel-ccs2018.github.io \
+    -r -e BW,CIRC,STREAM \
+    --network_scale 0.005 \
+    --torperf_num_exit 0 \
+    --prefix tornet-0.005"
+
+RUN alias simulate="cd /part/simulation; tornettools simulate tornet-0.005"
+
+RUN alias parse="cd /part/simulation; tornettools parse tornet-0.005"
+
+RUN alias plot="cd /part/simulation; tornettools plot \
+    tornet-0.005 \
+    --tor_metrics_path data/tor_metrics_2023-04-01--2023-04-30.json \
+    --prefix pdfs"
+
+RUN alias archive="cd /part/simulation; tornettools archive tornet-0.005"
+
 
 ENV PATH "${PATH}:/root/tor/src/core/or:/root/tor/src/app:/root/tor/src/tools"
 
-WORKDIR /root
+WORKDIR /part/simulation

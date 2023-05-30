@@ -31,3 +31,11 @@ services:
     security_opt:
       - seccomp:unconfined
     privileged: true
+    volumes:
+      - "partition:/part"
+volumes:
+    partition:
+      driver_opts:
+        type: tmpfs
+        o: "size=100g"
+        device: tmpfs
