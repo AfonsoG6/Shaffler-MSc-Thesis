@@ -128,8 +128,6 @@ RUN tar xafv onionperf-2023-04.tar.xz
 
 RUN git clone https://github.com/tmodel-ccs2018/tmodel-ccs2018.github.io.git
 
-RUN cp /root/rendezmix/simulation /part
-
 RUN alias stage="cd /part/simulation/data; tornettools stage \
     consensuses-2023-04 \
     server-descriptors-2023-04 \
@@ -163,4 +161,4 @@ RUN alias archive="cd /part/simulation; tornettools archive tornet-0.005"
 
 ENV PATH "${PATH}:/root/tor/src/core/or:/root/tor/src/app:/root/tor/src/tools"
 
-WORKDIR /part/simulation
+WORKDIR /
