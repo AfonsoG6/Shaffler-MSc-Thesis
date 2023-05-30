@@ -12,6 +12,7 @@ RUN apt install -y dos2unix git vim
 WORKDIR /root
 RUN git clone https://github.com/shadow/shadow.git
 WORKDIR /root/shadow
+RUN git checkout tags/v3.0.0
 
 RUN find . -type f -exec dos2unix {} \;
 
@@ -30,6 +31,7 @@ ENV PATH "/root/.local/bin:${PATH}"
 WORKDIR /root
 RUN git clone https://github.com/shadow/tgen.git
 WORKDIR /root/tgen
+RUN git checkout 30c95bbe723ebe5e4d068adfd975b094e00dbe10
 
 RUN apt install -y cmake libglib2.0-dev libigraph-dev
 
@@ -43,6 +45,7 @@ RUN make install
 WORKDIR /root
 RUN git clone https://github.com/shadow/oniontrace.git
 WORKDIR /root/oniontrace/
+RUN git checkout 3696db43288c8a116e8a1cff42a9c698d1d4ab33
 
 RUN apt install -y cmake libglib2.0-0 libglib2.0-dev
 
@@ -52,7 +55,7 @@ RUN cmake .. -DCMAKE_INSTALL_PREFIX=/root/.local
 RUN make
 RUN make install
 
-# Intall Rendezmix (Tor)
+# Install Rendezmix (Tor)
 RUN apt install -y openssl libssl-dev libevent-dev build-essential automake zlib1g zlib1g-dev
 
 # Uncomment next line to force everything from here onwards to be rebuilt
@@ -72,7 +75,7 @@ WORKDIR /root/rendezmix/tor
 RUN ./autogen.sh
 RUN ./configure --disable-asciidoc
 RUN make
-RUN make install
+#RUN make install
 
 WORKDIR /root/simulation
 RUN find . -type f -exec dos2unix {} \;
@@ -80,6 +83,20 @@ RUN find . -type f -exec dos2unix {} \;
 WORKDIR /root/rendezmix/loop
 RUN apt install -y python3
 RUN pip install -r requirements.txt
+
+# Install Vanilla Tor
+RUN git clone git@github.com:torproject/tor.git
+WORKDIR /root/tor
+RUN git checkout tags/tor-0.4.7.13
+
+RUN chmod 777 -R .
+
+RUN ./autogen.sh
+RUN ./configure --disable-asciidoc
+RUN make
+#RUN make install
+
+RUN ln -s $(which tor) ~/.local/bin/tor
 
 # Setup tornettools
 
@@ -92,22 +109,25 @@ RUN pip install --ignore-installed .
 
 RUN apt install -y faketime dstat procps xz-utils wget
 
-RUN mkdir /root/tntdata
-WORKDIR /root/tntdata
+RUN mkdir /root/rendezmix/simulation/data
+WORKDIR /root/rendezmix/simulation/data
 
-RUN wget https://collector.torproject.org/archive/relay-descriptors/consensuses/consensuses-2020-11.tar.xz
-RUN wget https://collector.torproject.org/archive/relay-descriptors/server-descriptors/server-descriptors-2020-11.tar.xz
+RUN chmod 777 -R .
+
+RUN wget https://collector.torproject.org/archive/relay-descriptors/consensuses/consensuses-2023-04.tar.xz
+RUN wget https://collector.torproject.org/archive/relay-descriptors/server-descriptors/server-descriptors-2023-04.tar.xz
 RUN wget https://metrics.torproject.org/userstats-relay-country.csv
-RUN wget https://collector.torproject.org/archive/onionperf/onionperf-2020-11.tar.xz
-RUN wget -O bandwidth-2020-11.csv "https://metrics.torproject.org/bandwidth.csv?start=2020-11-01&end=2020-11-30"
+RUN wget https://collector.torproject.org/archive/onionperf/onionperf-2023-04.tar.xz
+RUN wget -O bandwidth-2023-04.csv "https://metrics.torproject.org/bandwidth.csv?start=2023-04-01&end=2023-04-30"
 
-RUN tar xaf consensuses-2020-11.tar.xz
-RUN tar xaf server-descriptors-2020-11.tar.xz
-RUN tar xaf onionperf-2020-11.tar.xz
+
+RUN tar xafv consensuses-2023-04.tar.xz
+RUN tar xafv server-descriptors-2023-04.tar.xz
+RUN tar xafv onionperf-2023-04.tar.xz
 
 RUN git clone https://github.com/tmodel-ccs2018/tmodel-ccs2018.github.io.git
 
 
-ENV PATH "${PATH}:/root/rendezmix/tor/src/core/or:/root/rendezmix/tor/src/app:/root/rendezmix/tor/src/tools"
+ENV PATH "${PATH}:/root/tor/src/core/or:/root/tor/src/app:/root/tor/src/tools"
 
 WORKDIR /root
