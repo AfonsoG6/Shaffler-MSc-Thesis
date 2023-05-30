@@ -85,6 +85,7 @@ RUN apt install -y python3
 RUN pip install -r requirements.txt
 
 # Install Vanilla Tor
+WORKDIR /root
 RUN git clone git@github.com:torproject/tor.git
 WORKDIR /root/tor
 RUN git checkout tags/tor-0.4.7.13
