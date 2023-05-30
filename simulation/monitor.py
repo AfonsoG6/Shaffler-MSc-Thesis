@@ -48,6 +48,9 @@ def main():
     avg_speed = 0
     t2 = get_simulation_time(logfile)
     while True:
+        if not os.path.exists(logfile):
+            time.sleep(args.interval)
+            continue
         t1 = t2
         time.sleep(args.interval)
         t2 = get_simulation_time(logfile)
@@ -57,6 +60,8 @@ def main():
         else:
             avg_speed = avg_speed*3/4 + curr_speed*1/4
         eta = sec_to_dtstr((args.duration * 3600 - t2) / avg_speed)
+        with open("monitor.log", "a") as file:
+            file.write(f"{datetime.now()},{curr_speed},{avg_speed},{eta}\n")
         print(f"Average SPD: {'{:.6f}'.format(avg_speed)}s /s   Current SPD: {'{:.6f}'.format(curr_speed)}s /s   ETA: {eta}......", end="\r")
 
 
