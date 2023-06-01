@@ -20,6 +20,7 @@ import argparse
 import random
 import pickle
 import keras.backend as K
+from datetime import datetime
 
 # Stop the model training when 0.002 to get the best result in the paper!!!!
 
@@ -38,13 +39,15 @@ def get_params():
     parser.add_argument("--model", required=False, default="./data/DeepCCA_model/shadowV_overlap_new2021_")
     parser.add_argument("--gpu", "-g", required=False, type=int, default=0)
     parser.add_argument("--target_loss", "-l", required=False, type=int, default=0.002)
+    parser.add_argument("--max_duration", "-md", required=False, type=float, default=24) # In hours
+    parser.add_argument("--max_epochs", "-me", required=False, type=int, default=1000)
     args = parser.parse_args()
     return args
 
 
 def get_session(gpu_fraction=0.85):
-    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=gpu_fraction, allow_growth=True)
-    return tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+    gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=gpu_fraction, allow_growth=True)
+    return tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
 
 
 def load_whole_seq_new(tor_seq, exit_seq, circuit_labels, test_c, train_c, model_gb):
@@ -416,11 +419,15 @@ if __name__ == "__main__":
     description = "coffeh2"
 
     best_loss = sys.float_info.max
+    start_time = datetime.now()
 
-    def saveModel(epoch, logs):
-        global best_loss
+    def saveModel(e, logs):
+        global best_loss, epoch
 
         loss = logs["loss"]
+        
+        with open("train_log.txt", "a") as f:
+            f.write(f"Epoch {epoch}: {loss}\n")
 
         if loss < best_loss:
             print("\nloss is improved from {} to {}. save the model".format(str(best_loss), str(loss)))
@@ -428,12 +435,18 @@ if __name__ == "__main__":
             best_loss = loss
             shared_model1.save_weights(args.model + str(num_windows) + "_interval" + str(interval) + "_addn" + str(addn) + "_model1_w_superpkt.h5")
             shared_model2.save_weights(args.model + str(num_windows) + "_interval" + str(interval) + "_addn" + str(addn) + "_model2_w_superpkt.h5")
-            if best_loss < args.target_loss:
-                exit(0)
         else:
             print("loss is not improved from {}.".format(str(best_loss)))
 
     for epoch in range(nb_epochs):
+        time_passed = datetime.now() - start_time
+        if best_loss < args.target_loss or time_passed.seconds > args.max_duration*3600 or epoch > args.max_epochs:
+            with open("train_results.txt", "w") as f:
+                f.write("loss: " + str(best_loss) + "\n")
+                f.write("epochs: " + str(epoch) + "\n")
+                f.write("duration: " + str(time_passed) + "\n")
+            exit(0)
+            
         print("built new hard generator for epoch " + str(epoch))
 
         if epoch % 2 == 0:
