@@ -28,7 +28,7 @@ def parse_oniontrace(hostname: str, hosts_path: str, flow_interval: float) -> No
     global info_clients, info_servers, site_counter
 
     stream_new_pattern = re.compile(r"STREAM \d+ NEW")
-    stream_succeeded_pattern = re.compile(r"STREAM \d+ SUCCEEDED")
+    stream_closed_pattern = re.compile(r"STREAM \d+ CLOSED")
     oniontrace_path: str = os.path.join(hosts_path, hostname, "oniontrace.1002.stdout")
     if not os.path.exists(oniontrace_path):
         raise Exception(f"Oniontrace file not found for {hostname} in {hosts_path}")
@@ -81,7 +81,7 @@ def parse_oniontrace(hostname: str, hosts_path: str, flow_interval: float) -> No
                     "site_idx": site_idx
                 })
                 print(f"Found flow for {hostname} at {timestamp}")
-            match = stream_succeeded_pattern.search(line)
+            match = stream_closed_pattern.search(line)
             if match:
                 tokens: list = line[match.start():].split(" ")
                 site: str = tokens[4]
