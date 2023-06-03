@@ -17,6 +17,7 @@
 #include "lib/container/handles.h"
 
 #include "core/or/cell_queue_st.h"
+#include <time.h>
 #include "ext/ht.h"
 
 struct hs_token_t;
@@ -248,6 +249,9 @@ struct circuit_t {
 
   /** Congestion control fields */
   struct congestion_control_t *ccontrol;
+
+  /** Delay State (RENDEZMIX) */
+  short delay_state;
 };
 
 #endif /* !defined(CIRCUIT_ST_H) */

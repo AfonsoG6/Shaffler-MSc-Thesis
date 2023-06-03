@@ -41,6 +41,10 @@
 
 #define CHANNELTLS_PRIVATE
 
+#include "lib/crypt_ops/crypto_rand.h"
+#include <math.h>
+#include <src/ext/siphash.h>
+
 #include "core/or/or.h"
 #include "core/or/channel.h"
 #include "core/or/channeltls.h"
@@ -1072,11 +1076,6 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
   channel_tls_t *chan;
   int handshaking;
   circuit_t *circ;
-  //int direction;
-  //char prev_node_addr[64] = "NULL";
-  //char next_node_addr[64] = "NULL";
-  channel_tls_t *n_chan;
-  connection_t *n_conn;
 
   tor_assert(cell);
   tor_assert(conn);
@@ -1160,83 +1159,30 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
        * These are all transport independent and we pass them up through the
        * channel_t mechanism.  They are ultimately handled in command.c.
        */
-      if (cell->command == CELL_RELAY) log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,NORMAL]");
       channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
       break;
     default:
       circ = circuit_get_by_circid_channel(cell->circ_id, &(chan->base_));
-      //direction = CELL_DIRECTION_IN;
-      //if (TO_OR_CIRCUIT(circ) && cell && !CIRCUIT_IS_ORIGIN(circ) && &(chan->base_) == TO_OR_CIRCUIT(circ)->p_chan && cell->circ_id == TO_OR_CIRCUIT(circ)->p_circ_id)
-      //  direction = CELL_DIRECTION_OUT;
-      //}
       if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
           cell->command <= CELL_RELAY_DELAY_HIGHEST) {
-        //tor_inet_ntoa(&(conn->base_.addr.addr.in_addr), prev_node_addr, 64);
-        //n_chan = BASE_CHAN_TO_TLS(circ->n_chan);
-        //if (n_chan) {
-        //  n_conn = TO_CONN(n_chan->conn);
-        //  if (n_conn) tor_inet_ntoa(&(n_conn->addr.addr.in_addr), next_node_addr, 64);
-        //}
-        //if (direction == CELL_DIRECTION_OUT) {
-          //log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,DELAY] (cmd=%d) (p_addr=%s) (n_addr=%s)", cell->command, prev_node_addr, next_node_addr);
         if (probably_middle_node(conn, circ)) {
           int res = 0;
-          struct timespec ts = get_sleep_timespec_from_command(cell->command);
+          struct timespec ts = get_delay_timespec(circ, cell->command);
           do {
             res = nanosleep(&ts, &ts);
           } while (res && errno == EINTR);
-          //log_info(LD_GENERAL, "[RENDEZMIX,DELAYED] (cmd=%d) (ns=%ld) (p_addr=%s) (n_addr=%s)", cell->command, ts.tv_nsec, prev_node_addr, next_node_addr);
           cell->command = CELL_RELAY;
         }
-        //}
-        //else {
-          // Reject Delay command and replace it with normal command
-          //log_info(LD_GENERAL, "[RENDEZMIX,RECEIVED,NORMAL] (cmd=%d) (p_addr=%s) (n_addr=%s)", cell->command, prev_node_addr, next_node_addr);
-        //  cell->command = CELL_RELAY;
-        //}
         channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
         break;
       }
 
       log_fn(LOG_INFO, LD_PROTOCOL,
-             "Cell of unknown type (%d) received in channeltls.c.  "
-             "Dropping.",
-             cell->command);
-             break;
+            "Cell of unknown type (%d) received in channeltls.c.  "
+            "Dropping.",
+            cell->command);
+      break;
   }
-}
-
-int
-probably_middle_node(or_connection_t *conn, circuit_t *circ)
-{
-  channel_tls_t *n_chan;
-  connection_t *n_conn;
-  tor_addr_t prev_node_addr, next_node_addr;
-
-  if (!conn || !circ) return false;
-
-  n_chan = BASE_CHAN_TO_TLS(circ->n_chan);
-  if (!n_chan) return false; // Is Exit node
-
-
-  n_conn = &(n_chan->conn->base_);
-  if (!n_conn) return false; // Is Exit node
-
-  prev_node_addr = conn->base_.addr;
-  next_node_addr = n_conn->addr;
-
-  // We're probably a middle node if the previous and next nodes are in the nodelist
-  return nodelist_probably_contains_address(&prev_node_addr) && nodelist_probably_contains_address(&next_node_addr);
-}
-
-struct timespec
-get_sleep_timespec_from_command(uint8_t command)
-{
-  int i = command - CELL_RELAY_DELAY_LOWEST;
-  if (command == CELL_RELAY)
-    return (struct timespec){0, 0};
-  else
-    return (struct timespec){0, i * 100000};
 }
 
 /**
@@ -2666,4 +2612,583 @@ channel_tls_process_authenticate_cell(var_cell_t *cell, channel_tls_t *chan)
   var_cell_free(expected_cell);
 
 #undef ERR
+}
+
+/** ----------------------------------------------- RENDEZMIX
+ * ------------------------------------------------------- */
+
+int
+probably_middle_node(or_connection_t *conn, circuit_t *circ)
+{
+  channel_tls_t *n_chan;
+  connection_t *n_conn;
+  tor_addr_t prev_node_addr, next_node_addr;
+
+  if (!conn || !circ)
+    return false;
+
+  n_chan = BASE_CHAN_TO_TLS(circ->n_chan);
+  if (!n_chan)
+    return false; // Is Exit node
+
+  n_conn = &(n_chan->conn->base_);
+  if (!n_conn)
+    return false; // Is Exit node
+
+  prev_node_addr = conn->base_.addr;
+  next_node_addr = n_conn->addr;
+
+  // We're probably a middle node if the previous and next nodes are in the
+  // nodelist
+  return nodelist_probably_contains_address(&prev_node_addr) &&
+         nodelist_probably_contains_address(&next_node_addr);
+}
+
+struct timespec
+get_sleep_timespec_from_command(uint8_t command)
+{
+  int i = command - CELL_RELAY_DELAY_LOWEST;
+  if (command == CELL_RELAY)
+    return (struct timespec){0, 0};
+  else
+    return (struct timespec){0, i * 100000};
+}
+
+/**
+ * Count number of one bits in 32-bit word.
+ */
+unsigned
+bitcount32(uint32_t x)
+{
+  /* Count two-bit groups.  */
+  x -= (x >> 1) & UINT32_C(0x55555555);
+
+  /* Count four-bit groups.  */
+  x = ((x >> 2) & UINT32_C(0x33333333)) + (x & UINT32_C(0x33333333));
+
+  /* Count eight-bit groups.  */
+  x = (x + (x >> 4)) & UINT32_C(0x0f0f0f0f);
+
+  /* Sum all eight-bit groups, and extract the sum.  */
+  return (x * UINT32_C(0x01010101)) >> 24;
+}
+
+/**
+ * Count leading zeros in 32-bit word.
+ */
+unsigned
+clz32(uint32_t x)
+{
+  /* Round up to a power of two.  */
+  x |= x >> 1;
+  x |= x >> 2;
+  x |= x >> 4;
+  x |= x >> 8;
+  x |= x >> 16;
+
+  /* Subtract count of one bits from 32.  */
+  return (32 - bitcount32(x));
+}
+
+/**
+ * Draw a floating-point number in [0, 1] with uniform distribution.
+ *
+ * Note that the probability of returning 0 is less than 2^-1074, so
+ * callers need not check for it.  However, callers that cannot handle
+ * rounding to 1 must deal with that, because it occurs with
+ * probability 2^-54, which is small but nonnegligible.
+ */
+double
+random_uniform_01(void)
+{
+  uint32_t z, x, hi, lo;
+  double s;
+
+  /*
+   * Draw an exponent, geometrically distributed, but give up if
+   * we get a run of more than 1088 zeros, which really means the
+   * system is broken.
+   */
+  z = 0;
+  while ((x = crypto_fast_rng_get_u32(get_thread_fast_rng())) == 0) {
+    if (z >= 1088)
+      /* Your bit sampler is broken.  Go home.  */
+      return 0;
+    z += 32;
+  }
+  z += clz32(x);
+
+  /*
+   * Pick 32-bit halves of an odd normalized significand.
+   * Picking it odd breaks ties in the subsequent rounding, which
+   * occur only with measure zero in the uniform distribution on
+   * [0, 1].
+   */
+  hi = crypto_fast_rng_get_u32(get_thread_fast_rng()) | UINT32_C(0x80000000);
+  lo = crypto_fast_rng_get_u32(get_thread_fast_rng()) | UINT32_C(0x00000001);
+
+  /* Round to nearest scaled significand in [2^63, 2^64].  */
+  s = hi * (double)4294967296 + lo;
+
+  /* Rescale into [1/2, 1] and apply exponent in one swell foop.  */
+  return s * ldexp(1, -(64 + z));
+}
+
+double
+gen_normal_variate(void)
+{
+  /* the Box-Muller method */
+  double u = random_uniform_01();
+  double v = random_uniform_01();
+
+  /* this gives us 2 normally-distributed values, x and y */
+  double two = (double)2;
+  double x = sqrt(-two * log(u)) * cos(two * M_PI * v);
+  // double y = sqrt(-two * log(u)) * sin(two * M_PI * v);
+
+  return x;
+}
+
+double
+gen_normal_value(double location, double scale)
+{
+  /* location is mu, scale is sigma */
+  double x = gen_normal_variate();
+  return location + (scale * x);
+}
+
+double
+gen_lognormal_value(double location, double scale)
+{
+  /* location is mu, scale is sigma */
+  double x = gen_normal_value(location, scale);
+  return exp(x);
+}
+
+void
+update_circ_delay_state(circuit_t *circ)
+{
+  double r = random_uniform_01();
+  if (circ->delay_state == 0 || circ->delay_state == 7) {
+    if (r <= 0.48422233533746367) {
+      circ->delay_state = 4;
+    } else if (r <= 0.00011210882712886669) {
+      circ->delay_state = 2;
+    } else if (r <= 0.048311895120149606) {
+      circ->delay_state = 18;
+    } else if (r <= 0.0817713232861395) {
+      circ->delay_state = 11;
+    } else if (r <= 0.01222658175971136) {
+      circ->delay_state = 14;
+    } else if (r <= 0.027659992815981683) {
+      circ->delay_state = 25;
+    } else {
+      circ->delay_state = 22;
+    }
+  } else if (circ->delay_state == 1) {
+    if (r <= 0.7657245908846061) {
+      circ->delay_state = 1;
+    } else if (r <= 0.0011770205409058262) {
+      circ->delay_state = 4;
+    } else if (r <= 0.08119769763560547) {
+      circ->delay_state = 2;
+    } else if (r <= 0.14994551344913976) {
+      circ->delay_state = 5;
+    } else {
+      circ->delay_state = 3;
+    }
+  } else if (circ->delay_state == 2) {
+    if (r <= 0.0009415666434313743) {
+      circ->delay_state = 1;
+    } else if (r <= 0.07436311421424684) {
+      circ->delay_state = 8;
+    } else {
+      circ->delay_state = 7;
+    }
+  } else if (circ->delay_state == 3) {
+    if (r <= 0.001585360932443046) {
+      circ->delay_state = 1;
+    } else if (r <= 0.003970548989495985) {
+      circ->delay_state = 4;
+    } else {
+      circ->delay_state = 3;
+    }
+  } else if (circ->delay_state == 4) {
+    if (r <= 0.32738529471081923) {
+      circ->delay_state = 4;
+    } else if (r <= 0.09252584225830883) {
+      circ->delay_state = 2;
+    } else if (r <= 0.007050092494961132) {
+      circ->delay_state = 3;
+    } else {
+      circ->delay_state = 8;
+    }
+  } else if (circ->delay_state == 5) {
+    if (r <= 0.8702266273371771) {
+      circ->delay_state = 9;
+    } else {
+      circ->delay_state = 8;
+    }
+  } else if (circ->delay_state == 6) {
+    if (r <= 0.5952267052723844) {
+      circ->delay_state = 4;
+    } else {
+      circ->delay_state = 5;
+    }
+  } else if (circ->delay_state == 7) {
+    circ->delay_state = 0;
+  } else if (circ->delay_state == 8) {
+    if (r <= 0.21435897031255202) {
+      circ->delay_state = 1;
+    } else if (r <= 0.4807142333457296) {
+      circ->delay_state = 4;
+    } else if (r <= 0.013549434512710555) {
+      circ->delay_state = 6;
+    } else if (r <= 0.1426685407583068) {
+      circ->delay_state = 2;
+    } else if (r <= 0.06683102030358856) {
+      circ->delay_state = 5;
+    } else {
+      circ->delay_state = 8;
+    }
+  } else if (circ->delay_state == 9) {
+    if (r <= 0.03304505046631963) {
+      circ->delay_state = 6;
+    } else if (r <= 0.013588716676204121) {
+      circ->delay_state = 2;
+    } else {
+      circ->delay_state = 8;
+    }
+  } else if (circ->delay_state == 10) {
+    circ->delay_state = 0;
+  } else if (circ->delay_state == 11) {
+    if (r <= 0.5261725990531061) {
+      circ->delay_state = 15;
+    } else {
+      circ->delay_state = 14;
+    }
+  } else if (circ->delay_state == 12) {
+    if (r <= 0.8060557678125009) {
+      circ->delay_state = 11;
+    } else if (r <= 0.11109758853142893) {
+      circ->delay_state = 15;
+    } else {
+      circ->delay_state = 14;
+    }
+  } else if (circ->delay_state == 13) {
+    if (r <= 0.057059288829301016) {
+      circ->delay_state = 17;
+    } else if (r <= 0.5490386361530137) {
+      circ->delay_state = 13;
+    } else if (r <= 0.39313164844934456) {
+      circ->delay_state = 14;
+    } else {
+      circ->delay_state = 10;
+    }
+  } else if (circ->delay_state == 14) {
+    if (r <= 0.005151548429997901) {
+      circ->delay_state = 12;
+    } else {
+      circ->delay_state = 15;
+    }
+  } else if (circ->delay_state == 15) {
+    if (r <= 0.007760355201749844) {
+      circ->delay_state = 18;
+    } else if (r <= 0.12095994736437347) {
+      circ->delay_state = 17;
+    } else if (r <= 0.013777469646465985) {
+      circ->delay_state = 11;
+    } else if (r <= 0.8401025383828099) {
+      circ->delay_state = 13;
+    } else {
+      circ->delay_state = 10;
+    }
+  } else if (circ->delay_state == 16) {
+    circ->delay_state = 0;
+  } else if (circ->delay_state == 17) {
+    if (r <= 0.06803328536405931) {
+      circ->delay_state = 18;
+    } else if (r <= 0.062411530976212354) {
+      circ->delay_state = 17;
+    } else if (r <= 0.4852512651253924) {
+      circ->delay_state = 11;
+    } else if (r <= 0.0966806759416866) {
+      circ->delay_state = 13;
+    } else if (r <= 0.13168700950067863) {
+      circ->delay_state = 15;
+    } else {
+      circ->delay_state = 14;
+    }
+  } else if (circ->delay_state == 18) {
+    if (r <= 0.023960634001724497) {
+      circ->delay_state = 18;
+    } else if (r <= 0.2529383611043248) {
+      circ->delay_state = 12;
+    } else {
+      circ->delay_state = 10;
+    }
+  } else if (circ->delay_state == 19) {
+    if (r <= 0.9545002826362771) {
+      circ->delay_state = 19;
+    } else {
+      circ->delay_state = 25;
+    }
+  } else if (circ->delay_state == 20) {
+    if (r <= 0.27740003506150723) {
+      circ->delay_state = 26;
+    } else if (r <= 0.0002634363920387579) {
+      circ->delay_state = 27;
+    } else if (r <= 0.7186997805973834) {
+      circ->delay_state = 22;
+    } else {
+      circ->delay_state = 24;
+    }
+  } else if (circ->delay_state == 21) {
+    circ->delay_state = 24;
+  } else if (circ->delay_state == 22) {
+    if (r <= 0.6337722299058604) {
+      circ->delay_state = 19;
+    } else if (r <= 0.12264197906739213) {
+      circ->delay_state = 20;
+    } else if (r <= 0.1866481366464418) {
+      circ->delay_state = 23;
+    } else if (r <= 0.03759228535857586) {
+      circ->delay_state = 22;
+    } else {
+      circ->delay_state = 24;
+    }
+  } else if (circ->delay_state == 23) {
+    if (r <= 0.2237970022370368) {
+      circ->delay_state = 27;
+    } else if (r <= 0.16473415535521918) {
+      circ->delay_state = 25;
+    } else if (r <= 0.5450910422025015) {
+      circ->delay_state = 22;
+    } else {
+      circ->delay_state = 24;
+    }
+  } else if (circ->delay_state == 24) {
+    circ->delay_state = 0;
+  } else if (circ->delay_state == 25) {
+    circ->delay_state = 22;
+  } else if (circ->delay_state == 26) {
+    if (r <= 0.8432124122369418) {
+      circ->delay_state = 20;
+    } else if (r <= 0.15672878839143337) {
+      circ->delay_state = 23;
+    } else {
+      circ->delay_state = 21;
+    }
+  } else if (circ->delay_state == 27) {
+    if (r <= 0.00022080773970710712) {
+      circ->delay_state = 19;
+    } else if (r <= 0.6966674856141924) {
+      circ->delay_state = 27;
+    } else {
+      circ->delay_state = 22;
+    }
+  } else {
+    circ->delay_state = 0;
+  }
+}
+
+double
+generate_delay(short delay_state)
+{
+  double r = random_uniform_01();
+  if (delay_state == 1) {
+    if (r <= 0.0034835458860367633) {
+      return +gen_lognormal_value(0.051847852837667484, 0.4313753227110513);
+    } else {
+      return -gen_lognormal_value(1.5613079749773369, 1.3236454515429048);
+    }
+  } else if (delay_state == 2) {
+    if (r <= 0.16925032790007336) {
+      return +gen_lognormal_value(9.726173990383355, 4.624292511448072);
+    } else {
+      return -gen_lognormal_value(9.844949788579289, 5.804913922295352);
+    }
+  } else if (delay_state == 3) {
+    if (r <= 0.9947603131346284) {
+      return +gen_lognormal_value(2.5006914284606596, 3.0848590099521074);
+    } else {
+      return -gen_lognormal_value(11.415549412678544, 1.558288488568937);
+    }
+  } else if (delay_state == 4) {
+    if (r <= 0.9974875299536993) {
+      return +gen_lognormal_value(9.601166738519833, 4.288759108489901);
+    } else {
+      return -gen_lognormal_value(0.04194035527539296, 4.3302746900294125);
+    }
+  } else if (delay_state == 5) {
+    if (r <= 0.002511820660442746) {
+      return +gen_lognormal_value(0.006963634471183598, 0.020992917571834923);
+    } else {
+      return -gen_lognormal_value(1.440554681621282, 1.0847993280285542);
+    }
+  } else if (delay_state == 6) {
+    if (r <= 0.5925574933307974) {
+      return +gen_lognormal_value(21.65928359955767, 0.01428295093047503);
+    } else {
+      return -gen_lognormal_value(0.11910343773485123, 1.3467637819826719);
+    }
+  } else if (delay_state == 8) {
+    if (r <= 0.0028086063594126346) {
+      return +gen_lognormal_value(0.5310087909244855, 5.711722902506983);
+    } else {
+      return -gen_lognormal_value(9.300091195226809, 5.179371804079101);
+    }
+  } else if (delay_state == 9) {
+    if (r <= 0.013508467521115758) {
+      return +gen_lognormal_value(3.743768872177823, 0.02181916140293295);
+    } else {
+      return -gen_lognormal_value(1.1524247334603754, 0.2972942063924452);
+    }
+  } else if (delay_state == 11) {
+    if (r <= 0.9932709800054623) {
+      return +gen_lognormal_value(12.054129972967305, 0.2804431061267399);
+    } else {
+      return -gen_lognormal_value(3.865140787336832, 0.11176258873549383);
+    }
+  } else if (delay_state == 12) {
+    if (r <= 0.9840040696145151) {
+      return +gen_lognormal_value(3.745186952556943, 4.936612988220717);
+    } else {
+      return -gen_lognormal_value(2.100404502358204, 0.01);
+    }
+  } else if (delay_state == 13) {
+    if (r <= 0.00017476360453499862) {
+      return +gen_lognormal_value(2.4262618904848825, 0.05438947958009118);
+    } else {
+      return -gen_lognormal_value(1.2690890206828604, 0.4979900289399);
+    }
+  } else if (delay_state == 14) {
+    if (r <= 0.03062143037572028) {
+      return +gen_lognormal_value(1.4243274275874147, 0.15378579158612937);
+    } else {
+      return -gen_lognormal_value(1.26523803512239, 0.5107416300589547);
+    }
+  } else if (delay_state == 15) {
+    if (r <= 0.06218869601343935) {
+      return +gen_lognormal_value(11.732605450463735, 1.390105356891117);
+    } else {
+      return -gen_lognormal_value(7.569386806986627, 3.1651283706941244);
+    }
+  } else if (delay_state == 16) {
+    if (r <= 0.9552675826779253) {
+      return +gen_lognormal_value(1.4995452347044123, 0.6536147966954244);
+    } else {
+      return -gen_lognormal_value(8.769025567710923, 0.012944193612080365);
+    }
+  } else if (delay_state == 17) {
+    if (r <= 0.12264814942867472) {
+      return +gen_lognormal_value(5.831797684940486, 5.210708094182786);
+    } else {
+      return -gen_lognormal_value(12.378285828584897, 2.1310248934264457);
+    }
+  } else if (delay_state == 18) {
+    if (r <= 0.9234001502458875) {
+      return +gen_lognormal_value(12.24319511178232, 3.3245607966604744);
+    } else {
+      return -gen_lognormal_value(11.403899035836785, 1.3183085383927289);
+    }
+  } else if (delay_state == 19) {
+    if (r <= 3.6851389898790605e-05) {
+      return +gen_lognormal_value(1.5989728616077235, 3.100120210657259);
+    } else {
+      return -gen_lognormal_value(1.2178556790559212, 0.7759091510327616);
+    }
+  } else if (delay_state == 20) {
+    if (r <= 2.505444343617205e-05) {
+      return +gen_lognormal_value(4.125224460337367, 0.012944193612080365);
+    } else {
+      return -gen_lognormal_value(1.5351557427800535, 0.49006743555833365);
+    }
+  } else if (delay_state == 21) {
+    if (r <= 0.7249863037899782) {
+      return +gen_lognormal_value(0.10878205915927994, 1.0941713005959057);
+    } else {
+      return -gen_lognormal_value(0.6318416943746638, 0.6814887675180509);
+    }
+  } else if (delay_state == 22) {
+    if (r <= 0.14740090760335917) {
+      return +gen_lognormal_value(10.408463261268366, 2.888582078395884);
+    } else {
+      return -gen_lognormal_value(9.037725133418196, 3.45917497323462);
+    }
+  } else if (delay_state == 23) {
+    if (r <= 0.6335347808952112) {
+      return +gen_lognormal_value(7.244965330902024, 4.7826470761901625);
+    } else {
+      return -gen_lognormal_value(10.81603769216758, 3.731810885861834);
+    }
+  } else if (delay_state == 25) {
+    if (r <= 0.03469883962570794) {
+      return +gen_lognormal_value(11.952508404086355, 0.9337402913190664);
+    } else {
+      return -gen_lognormal_value(1.1486316420277847, 0.40355904225829475);
+    }
+  } else if (delay_state == 26) {
+    if (r <= 0.5010796190354109) {
+      return +gen_lognormal_value(5.684702330114157, 2.0936050600157206);
+    } else {
+      return -gen_lognormal_value(0.5822691699342099, 0.03876095613154783);
+    }
+  } else if (delay_state == 27) {
+    if (r <= 0.9999062368081795) {
+      return +gen_lognormal_value(1.244514804105052, 0.7565704611459563);
+    } else {
+      return -gen_lognormal_value(0.38003967175013964, 0.42604844788034657);
+    }
+  } else {
+    return 0.0;
+  }
+}
+
+double
+get_delay_microseconds(circuit_t *circ)
+{
+  double sum_delay = 0;
+  double delay = 0;
+  do {
+    do {
+      update_circ_delay_state(circ);
+    } while (circ->delay_state == 0 || circ->delay_state == 7 ||
+             circ->delay_state == 10 || circ->delay_state == 24);
+
+    delay = generate_delay(circ->delay_state);
+    if (delay < 0)
+      sum_delay -= delay;
+    else
+      sum_delay += delay;
+  } while (delay < 0);
+  return sum_delay;
+}
+
+double
+get_delay_scale_factor(uint8_t command)
+{
+  return (double)(command - CELL_RELAY_DELAY_LOWEST) /
+         (CELL_RELAY_DELAY_HIGHEST - CELL_RELAY_DELAY_LOWEST);
+}
+
+struct timespec
+get_delay_timespec(circuit_t *circ, uint8_t command)
+{
+  double ms, scale;
+  struct timespec ts;
+  if (command == CELL_RELAY) {
+    ts.tv_sec = 0;
+    ts.tv_nsec = 0;
+    return ts;
+  }
+  else {
+    ms = get_delay_microseconds(circ);
+    scale = get_delay_scale_factor(command);
+    ms *= scale;
+    ts.tv_sec = (time_t)(ms / 1e6);
+    ts.tv_nsec = (time_t)((ms - ts.tv_sec * 1e6) * 1e3);
+    log_info(LD_GENERAL, "[RENDEZMIX][DELAYED] scale=%f ms=%f", scale, ms);
+    return ts;
+  }
 }
