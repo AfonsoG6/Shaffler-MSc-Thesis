@@ -17,16 +17,16 @@ parser = argparse.ArgumentParser()
 
 
 def parse_args():
-    parser.add_argument("--test", default="./data/DeepCCA_model/shadowV_overlap_new2021")
+    parser.add_argument("--test", default="./data/DeepCCA_model/shadowM_overlap_new2021")
     parser.add_argument("--flow", "-f", type=int, default=2094)
     parser.add_argument("--tor_len", "-tl", type=int, default=500)
     parser.add_argument("--exit_len", "-el", type=int, default=800)
     parser.add_argument("--win_interval", "-i", type=int, required=False, default=5)
     parser.add_argument("--num_windows", "-w", type=int, required=False, default=11)
     parser.add_argument("--addnum", "-a", type=int, required=False, default=2)
-    parser.add_argument("--model1", default="./data/DeepCCA_model/shadowV_overlap_new2021")
-    parser.add_argument("--model2", default="./data/DeepCCA_model/shadowV_overlap_new2021")
-    parser.add_argument("--output", default="./data/shadowV_dcf0.002")
+    parser.add_argument("--model1", default="./data/DeepCCA_model/shadowM_overlap_new2021")
+    parser.add_argument("--model2", default="./data/DeepCCA_model/shadowM_overlap_new2021")
+    parser.add_argument("--output", default="./data/shadowM_dcf0.002")
     parser.add_argument("--gpu", "-g", required=False, type=int, default=0)
     args = parser.parse_args()
     return args

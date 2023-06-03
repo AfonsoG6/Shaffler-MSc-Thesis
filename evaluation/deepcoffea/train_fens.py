@@ -34,9 +34,9 @@ def get_params():
     parser.add_argument("--num_windows", "-w", required=False, default=11)
     parser.add_argument("--addnum", "-a", required=False, default=2)
     parser.add_argument("--alpha", required=False, default=0.1)
-    parser.add_argument("--input", required=False, default="./datasets/new_dcf_data/shadowV_new_overlap_interval")
-    parser.add_argument("--test", required=False, default="./data/DeepCCA_model/shadowV_overlap_new2021_interval")
-    parser.add_argument("--model", required=False, default="./data/DeepCCA_model/shadowV_overlap_new2021_")
+    parser.add_argument("--input", required=False, default="./datasets/new_dcf_data/shadowM_new_overlap_interval")
+    parser.add_argument("--test", required=False, default="./data/DeepCCA_model/shadowM_overlap_new2021_interval")
+    parser.add_argument("--model", required=False, default="./data/DeepCCA_model/shadowM_overlap_new2021_")
     parser.add_argument("--gpu", "-g", required=False, type=int, default=0)
     parser.add_argument("--target_loss", "-l", required=False, type=int, default=0.002)
     parser.add_argument("--max_duration", "-md", required=False, type=float, default=24) # In hours
