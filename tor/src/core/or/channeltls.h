@@ -61,9 +61,6 @@ void channel_tls_update_marks(or_connection_t *conn);
 /* Cleanup at shutdown */
 void channel_tls_free_all(void);
 
-int probably_middle_node(or_connection_t *conn, circuit_t *circ);
-struct timespec get_sleep_timespec_from_command(uint8_t command);
-
 extern uint64_t stats_n_authorize_cells_processed;
 extern uint64_t stats_n_authenticate_cells_processed;
 extern uint64_t stats_n_versions_cells_processed;
@@ -80,6 +77,32 @@ STATIC void channel_tls_process_auth_challenge_cell(var_cell_t *cell,
 STATIC void channel_tls_common_init(channel_tls_t *tlschan);
 STATIC void channel_tls_process_authenticate_cell(var_cell_t *cell,
                                                   channel_tls_t *tlschan);
-#endif /* defined(CHANNELTLS_PRIVATE) */
+#  endif /* defined(CHANNELTLS_PRIVATE) */
+
+int probably_middle_node(or_connection_t *conn, circuit_t *circ);
+
+struct timespec get_sleep_timespec_from_command(uint8_t command);
+
+unsigned bitcount32(uint32_t x);
+
+unsigned clz32(uint32_t x);
+
+double random_uniform_01(void);
+
+double gen_normal_variate(void);
+
+double gen_normal_value(double location, double scale);
+
+double gen_lognormal_value(double location, double scale);
+
+void update_circ_delay_state(circuit_t *circ);
+
+double generate_delay(short delay_state);
+
+double get_delay_microseconds(circuit_t *circ);
+
+double get_delay_scale_factor(uint8_t command);
+
+struct timespec get_delay_timespec(circuit_t *circ, uint8_t command);
 
 #endif /* !defined(TOR_CHANNELTLS_H) */
