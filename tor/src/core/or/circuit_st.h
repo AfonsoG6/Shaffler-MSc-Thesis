@@ -17,7 +17,6 @@
 #include "lib/container/handles.h"
 
 #include "core/or/cell_queue_st.h"
-#include <time.h>
 #include "ext/ht.h"
 
 struct hs_token_t;
