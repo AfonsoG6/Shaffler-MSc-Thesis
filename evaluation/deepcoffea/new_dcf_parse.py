@@ -6,11 +6,11 @@ import argparse
 def get_params():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', '-d', type=str,
-                        default='./datasets/shadowV_Proc/')
+                        default='./datasets/shadowM_Proc/')
     parser.add_argument('--list', '-l', type=str,
-                        default='./data/shadowV_Proc_files.txt')
+                        default='./data/shadowM_Proc_files.txt')
     parser.add_argument('--prefix', '-p', type=str,
-                        default='./datasets/new_dcf_data/shadowV_new_overlap_interval')
+                        default='./datasets/new_dcf_data/shadowM_new_overlap_interval')
     parser.add_argument('--interval', '-i', type=int, default=5)
     parser.add_argument('--windows', '-w', type=int, default=11)
     parser.add_argument('--addnum', '-a', type=int, default=2)
