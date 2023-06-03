@@ -87,7 +87,7 @@ unsigned bitcount32(uint32_t x);
 
 unsigned clz32(uint32_t x);
 
-double random_uniform_01(void);
+double gen_random_uniform_01(void);
 
 double gen_normal_variate(void);
 
