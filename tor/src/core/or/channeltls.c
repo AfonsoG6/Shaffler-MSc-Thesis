@@ -2699,7 +2699,7 @@ clz32(uint32_t x)
  * probability 2^-54, which is small but nonnegligible.
  */
 double
-random_uniform_01(void)
+gen_random_uniform_01(void)
 {
   uint32_t z, x, hi, lo;
   double s;
@@ -2738,8 +2738,8 @@ double
 gen_normal_variate(void)
 {
   /* the Box-Muller method */
-  double u = random_uniform_01();
-  double v = random_uniform_01();
+  double u = gen_random_uniform_01();
+  double v = gen_random_uniform_01();
 
   /* this gives us 2 normally-distributed values, x and y */
   double two = (double)2;
@@ -2768,7 +2768,7 @@ gen_lognormal_value(double location, double scale)
 void
 update_circ_delay_state(circuit_t *circ)
 {
-  double r = random_uniform_01();
+  double r = gen_random_uniform_01();
   if (circ->delay_state == 0 || circ->delay_state == 7) {
     if (r <= 0.48422233533746367) {
       circ->delay_state = 4;
@@ -2995,7 +2995,7 @@ update_circ_delay_state(circuit_t *circ)
 double
 generate_delay(short delay_state)
 {
-  double r = random_uniform_01();
+  double r = gen_random_uniform_01();
   if (delay_state == 1) {
     if (r <= 0.0034835458860367633) {
       return +gen_lognormal_value(0.051847852837667484, 0.4313753227110513);
