@@ -1,0 +1,242 @@
+2023-06-01 21:41:58 1685655718.249062 [tornettools] [INFO] Logging system initialized! Logging events to stdout and to '/part/simulation/tornet-0.005/tornettools.generate.2023-06-01.21.41.58.log'
+2023-06-01 21:41:58 1685655718.249216 [tornettools] [INFO] Seeded standard and numpy PRNGs with seed=2028895445
+2023-06-01 21:41:58 1685655718.249319 [tornettools] [INFO] The argument namespace is: Namespace(atlas_path=None, command='generate', do_trace=True, do_version=False, events_csv='BW,CIRC,STREAM', exit_user_scale=1.0, formatter_class=<class '__main__.CustomHelpFormatter'>, func=<function generate at 0x7fe67e32dc10>, geoip_path=None, load_scale=1.0, network_info_path='/part/simulation/data/networkinfo_staging.gml', network_scale=0.005, nprocesses=104, onion_service_user_scale=0.0, prefix='/part/simulation/tornet-0.005', process_scale=0.01, quiet=0, relay_info_path='/part/simulation/data/relayinfo_staging_2023-04-01--2023-04-30.json', seed=2028895445, server_scale=0.5, tmodel_git_path='/part/simulation/data/tmodel-ccs2018.github.io', torexe='/root/.local/bin/tor', torgencertexe='/usr/local/bin/tor-gencert', torperf_num_exit=100, torperf_num_onion_service=0, user_info_path='/part/simulation/data/userinfo_staging_2023-04-01--2023-04-30.json')
+2023-06-01 21:41:58 1685655718.259962 [tornettools] [INFO] The platform is: Linux-5.15.0-72-generic-x86_64-with-glibc2.29
+2023-06-01 21:41:58 1685655718.260090 [tornettools] [INFO] System info: uname_result(system='Linux', node='b28ad1b61e67', release='5.15.0-72-generic', version='#79-Ubuntu SMP Wed Apr 19 08:22:18 UTC 2023', machine='x86_64', processor='x86_64')
+2023-06-01 21:41:58 1685655718.352594 [tornettools] [INFO] Generating network using tor and tor-gencert at /root/.local/bin/tor and /usr/local/bin/tor-gencert
+2023-06-01 21:41:58 1685655718.352672 [tornettools] [INFO] Copying atlas topology file (use the '-a/--atlas' option to disable)
+2023-06-01 21:41:58 1685655718.358691 [tornettools] [INFO] Reading staged network info /part/simulation/data/networkinfo_staging.gml
+2023-06-01 21:41:58 1685655718.523809 [tornettools] [INFO] Finished reading staged network info
+2023-06-01 21:41:58 1685655718.523868 [tornettools] [INFO] Sampling Tor relays now
+2023-06-01 21:41:58 1685655718.860594 [tornettools] [INFO] A full Tor network has 6666 relays with total capacity of 845.13736824 Gbit/s
+2023-06-01 21:41:58 1685655718.867097 [tornettools] [INFO] Bandwidth-weights (relevant ones) of a typical consensus:
+2023-06-01 21:41:58 1685655718.867161 [tornettools] [INFO] Casename: Case 3a (E scarce), with: Wgg=6028.83684617923, Wgd=0, Wee=10000, Wed=10000, Wmg=3971.1631538207703, Wme=0, Wmd=0
+2023-06-01 21:41:58 1685655718.867217 [tornettools] [INFO] 33 relays: relative position weights:
+2023-06-01 21:41:58 1685655718.867250 [tornettools] [INFO] g: chosen=0.5703183364121931, target=0.5594024423405702, diff=0.010915894071622856
+2023-06-01 21:41:58 1685655718.867279 [tornettools] [INFO] e: chosen=0.15446097067860748, target=0.14441148150909375, diff=0.010049489169513731
+2023-06-01 21:41:58 1685655718.867307 [tornettools] [INFO] ge: chosen=0.16608734620888327, target=0.18107930724580856, diff=-0.014991961036925294
+2023-06-01 21:41:58 1685655718.867333 [tornettools] [INFO] m: chosen=0.10913334670031621, target=0.11510676890452616, diff=-0.005973422204209947
+2023-06-01 21:41:58 1685655718.867362 [tornettools] [INFO] The max weight divergence between positions is 0.014991961036925294
+2023-06-01 21:41:58 1685655718.867393 [tornettools] [INFO] Renormalizing weights for scaled network using total weight=0.004456669300218651
+2023-06-01 21:41:58 1685655718.867444 [tornettools] [INFO] Bandwidth-weights (relevant ones) of our scaled down consensus of 32 relays:
+2023-06-01 21:41:58 1685655718.867474 [tornettools] [INFO] Casename: Case 3a (E scarce), with: Wgg=5956.775713953557, Wgd=0, Wee=10000, Wed=10000, Wmg=4043.2242860464426, Wme=0, Wmd=0
+2023-06-01 21:41:58 1685655718.867647 [tornettools] [INFO] Chose 32 of 6666 relays using scale factor 0.005
+2023-06-01 21:41:58 1685655718.869196 [tornettools] [INFO] Generating Tor key material now, this may take awhile...
+2023-06-01 21:41:59 1685655719.230099 [tornettools] [INFO] Generated fingerprints and keys for 35 Tor nodes (3 authorities and 32 relays)
+2023-06-01 21:41:59 1685655719.849981 [tornettools] [INFO] Generating Clients
+2023-06-01 21:41:59 1685655719.850780 [tornettools] [INFO] Privcount measurements scaled to 5561 Tor users, 3960 active and 1347 inactive
+2023-06-01 21:41:59 1685655719.850902 [tornettools] [INFO] Privcount measurements scaled to 14405 exit circuits, 7459 active and 6638 inactive
+2023-06-01 21:41:59 1685655719.862934 [tornettools] [INFO] We will use 100 TGen client processes to emulate 3762.0 Tor exit users and create 7500 exit circuits every 10 minutes in aggregate
+2023-06-01 21:41:59 1685655719.863077 [tornettools] [INFO] We will use 0 TGen client processes to emulate 0.0 Tor onion-service users and create 0 onion-service circuits every 10 minutes in aggregate
+2023-06-01 21:41:59 1685655719.865556 [tornettools] [INFO] We will use 100 exit perf nodes to benchmark Tor exit performance
+2023-06-01 21:41:59 1685655719.865662 [tornettools] [INFO] We will use 0 onion-service perf nodes to benchmark Tor onion-service performance
+2023-06-01 21:41:59 1685655719.865757 [tornettools] [INFO] Generating Servers
+2023-06-01 21:41:59 1685655719.873817 [tornettools] [DEBUG] System call: /root/.local/bin/tor --version (runtime: 0.01)
+2023-06-01 21:42:00 1685655720.015177 [tornettools] [DEBUG] GETCONF __owningcontrollerprocess (runtime: 0.0006)
+2023-06-01 21:42:00 1685655720.017658 [tornettools] [DEBUG] RESETCONF __OwningControllerProcess (runtime: 0.0016)
+2023-06-01 21:42:00 1685655720.018274 [tornettools] [DEBUG] GETINFO version (runtime: 0.0003)
+2023-06-01 21:42:00 1685655720.019402 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.019544 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.019629 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.019700 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.019773 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.019844 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.019915 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.019987 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.020061 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.020133 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.020204 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.020273 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.020340 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.020413 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.020486 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.020554 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.020625 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.020696 [tornettools] [INFO] Error while receiving a control message (SocketClosed): empty socket content
+2023-06-01 21:42:00 1685655720.020805 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.020878 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.020942 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021008 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021075 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021141 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021207 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021268 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021336 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021400 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021470 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021541 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021605 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021669 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021732 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021795 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021859 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021922 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.021986 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.022051 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.022111 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.022174 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.022242 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.022307 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.022372 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.022436 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.022502 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.022565 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.022629 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.022697 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.022763 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.022828 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.022894 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.022956 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.023017 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.023082 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.023148 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.023216 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.023367 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.023444 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.023507 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.023571 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.023629 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.023700 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.023759 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.023818 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.023882 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.023938 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.023993 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024047 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024108 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024165 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024221 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024286 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024340 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024397 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024453 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024512 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024567 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024625 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024681 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024737 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024793 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024846 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024904 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.024964 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025022 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025075 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025127 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025179 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025231 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025289 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025343 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025399 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025453 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025513 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025568 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025625 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025681 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025737 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025791 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025844 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025898 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.025951 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026008 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026060 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026110 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026210 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026266 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026327 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026383 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026437 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026488 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026544 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026598 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026649 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026700 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026756 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026812 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026866 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026923 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.026976 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027031 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027085 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027141 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027195 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027247 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027300 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027366 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027422 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027475 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027531 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027584 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027637 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027689 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027744 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027795 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027844 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027901 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.027952 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028003 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028054 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028104 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028154 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028204 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028259 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028309 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028361 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028414 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028464 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028516 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028570 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028624 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028675 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028773 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028824 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028878 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028936 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.028995 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029048 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029099 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029150 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029200 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029250 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029299 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029352 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029402 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029455 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029508 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029559 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029614 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029665 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029721 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029772 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029824 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029876 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029927 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.029978 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030032 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030086 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030136 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030187 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030236 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030289 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030339 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030390 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030443 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030492 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030544 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030594 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030643 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030695 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030748 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030800 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030860 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030912 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.030962 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.031013 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.031067 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.031122 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.031212 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.031266 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.031321 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "peek of closed file"
+2023-06-01 21:42:00 1685655720.041317 [tornettools] [INFO] We will use 50 TGen exit servers and 0 TGen onion-service servers to serve 100 TGen exit clients and 0 TGen onion-service clients
+2023-06-01 21:42:00 1685655720.042336 [tornettools] [INFO] Generating Tor configuration files
+2023-06-01 21:42:00 1685655720.066862 [tornettools] [INFO] Generating TGen configuration files
+2023-06-01 21:42:00 1685655720.131958 [tornettools] [INFO] Constructing Shadow config YAML file
