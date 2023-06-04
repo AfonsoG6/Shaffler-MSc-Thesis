@@ -105,4 +105,6 @@ double get_delay_scale_factor(uint8_t command);
 
 struct timespec get_delay_timespec(circuit_t *circ, uint8_t command);
 
+void delay_cell(circuit_t *circ, cell_t *cell);
+
 #endif /* !defined(TOR_CHANNELTLS_H) */

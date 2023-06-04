@@ -251,6 +251,7 @@ struct circuit_t {
 
   /** Delay State (RENDEZMIX) */
   short delay_state;
+  struct timespec last_packet_ts;
 };
 
 #endif /* !defined(CIRCUIT_ST_H) */
