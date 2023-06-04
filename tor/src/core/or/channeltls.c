@@ -1166,12 +1166,7 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
       if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
           cell->command <= CELL_RELAY_DELAY_HIGHEST) {
         if (probably_middle_node(conn, circ)) {
-          int res = 0;
-          struct timespec ts = get_delay_timespec(circ, cell->command);
-          do {
-            res = nanosleep(&ts, &ts);
-          } while (res && errno == EINTR);
-          cell->command = CELL_RELAY;
+          delay_cell(circ, cell);
         }
         channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
         break;
@@ -3260,7 +3255,7 @@ get_delay_scale_factor(uint8_t command)
 struct timespec
 get_delay_timespec(circuit_t *circ, uint8_t command)
 {
-  double ms, scale;
+  double microsec, scale;
   struct timespec ts;
   if (command == CELL_RELAY) {
     ts.tv_sec = 0;
@@ -3270,11 +3265,39 @@ get_delay_timespec(circuit_t *circ, uint8_t command)
   else {
     scale = get_delay_scale_factor(command);
     do {
-      ms = scale*1e-3*get_delay_microseconds(circ);
-    } while (ms > scale*1e4);
-    ts.tv_sec = (time_t)(ms / 1e6);
-    ts.tv_nsec = (time_t)((ms - ts.tv_sec * 1e6) * 1e3);
-    log_info(LD_GENERAL, "[RENDEZMIX][DELAYED] scale=%f ms=%f state=%d", scale, ms, circ->delay_state);
+      microsec = get_delay_microseconds(circ);
+    } while (microsec > scale*1e6);
+    ts.tv_sec = (time_t)(microsec / 1e6);
+    ts.tv_nsec = (time_t)((microsec - ts.tv_sec * 1e6) * 1e3);
+    log_info(LD_GENERAL, "[RENDEZMIX][DELAY] scale=%f microsec=%f state=%d", scale, microsec, circ->delay_state);
     return ts;
   }
+}
+
+void delay_cell(circuit_t *circ, cell_t *cell)
+{
+  int res = 0;
+  double microsec;
+  struct timespec passed_ts;
+  struct timespec ts = get_delay_timespec(circ, cell->command);
+  clock_gettime(CLOCK_REALTIME, &passed_ts);
+  if (circ->last_packet_ts.tv_sec == 0 && circ->last_packet_ts.tv_nsec == 0) {
+    log_info(LD_GENERAL, "[RENDEZMIX][DELAY] First packet from circ %d, no need to delay.", circ->n_circ_id);
+    circ->last_packet_ts = passed_ts;
+  }
+  passed_ts.tv_sec -= circ->last_packet_ts.tv_sec;
+  passed_ts.tv_nsec -= circ->last_packet_ts.tv_nsec;
+  ts.tv_sec -= passed_ts.tv_sec;
+  ts.tv_nsec -= passed_ts.tv_nsec;
+  microsec = ts.tv_sec * 1e6 + ts.tv_nsec / 1e3;
+  if (microsec > 0) {
+    do {
+      res = nanosleep(&ts, &ts);
+    } while (res && errno == EINTR);
+  }
+  else {
+    log_info(LD_GENERAL, "[RENDEZMIX][DELAY] No need to delay further.");
+  }
+  clock_gettime(CLOCK_REALTIME, &circ->last_packet_ts);
+  // cell->command = CELL_RELAY;
 }
