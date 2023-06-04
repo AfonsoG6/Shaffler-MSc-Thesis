@@ -3271,7 +3271,7 @@ get_delay_timespec(circuit_t *circ, uint8_t command)
     scale = get_delay_scale_factor(command);
     do {
       ms = get_delay_microseconds(circ);
-    } while (ms > scale*5*1e6);
+    } while (ms > scale*2*1e6);
     ts.tv_sec = (time_t)(ms / 1e6);
     ts.tv_nsec = (time_t)((ms - ts.tv_sec * 1e6) * 1e3);
     log_info(LD_GENERAL, "[RENDEZMIX][DELAYED] scale=%f ms=%f state=%d", scale, ms, circ->delay_state);
