@@ -627,11 +627,7 @@ relay_send_command_from_edge_,(streamid_t stream_id, circuit_t *circ,
   memset(&cell, 0, sizeof(cell_t));
   cell.command = CELL_RELAY;
   if (ALL_SENDERS_DECIDE_DELAYS || cpath_layer != NULL) {
-    cell.command = crypto_rand_int_range(CELL_RELAY_DELAY_LOWEST, CELL_RELAY_DELAY_HIGHEST);
-    log_info(LD_GENERAL, "[RENDEZMIX,SEND,DELAY] (cmd=%d) {{%s}}", cell.command, payload);
-  }
-  else {
-    log_info(LD_GENERAL, "[RENDEZMIX,SEND,NORMAL] (cmd=%d) {{%s}}", cell.command, payload);
+    cell.command = CELL_RELAY_DELAY_HIGHEST;
   }
   if (CIRCUIT_IS_ORIGIN(circ)) {
     tor_assert(cpath_layer);
