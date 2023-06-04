@@ -2765,231 +2765,316 @@ gen_lognormal_value(double location, double scale)
   return exp(x);
 }
 
-void
-update_circ_delay_state(circuit_t *circ)
-{
-  double r = gen_random_uniform_01();
-  if (circ->delay_state == 0 || circ->delay_state == 7) {
-    if (r <= 0.48422233533746367) {
-      circ->delay_state = 4;
-    } else if (r <= 0.00011210882712886669) {
-      circ->delay_state = 2;
-    } else if (r <= 0.048311895120149606) {
-      circ->delay_state = 18;
-    } else if (r <= 0.0817713232861395) {
-      circ->delay_state = 11;
-    } else if (r <= 0.01222658175971136) {
-      circ->delay_state = 14;
-    } else if (r <= 0.027659992815981683) {
-      circ->delay_state = 25;
-    } else {
-      circ->delay_state = 22;
-    }
-  } else if (circ->delay_state == 1) {
-    if (r <= 0.7657245908846061) {
-      circ->delay_state = 1;
-    } else if (r <= 0.0011770205409058262) {
-      circ->delay_state = 4;
-    } else if (r <= 0.08119769763560547) {
-      circ->delay_state = 2;
-    } else if (r <= 0.14994551344913976) {
-      circ->delay_state = 5;
-    } else {
-      circ->delay_state = 3;
-    }
-  } else if (circ->delay_state == 2) {
-    if (r <= 0.0009415666434313743) {
-      circ->delay_state = 1;
-    } else if (r <= 0.07436311421424684) {
-      circ->delay_state = 8;
-    } else {
-      circ->delay_state = 7;
-    }
-  } else if (circ->delay_state == 3) {
-    if (r <= 0.001585360932443046) {
-      circ->delay_state = 1;
-    } else if (r <= 0.003970548989495985) {
-      circ->delay_state = 4;
-    } else {
-      circ->delay_state = 3;
-    }
-  } else if (circ->delay_state == 4) {
-    if (r <= 0.32738529471081923) {
-      circ->delay_state = 4;
-    } else if (r <= 0.09252584225830883) {
-      circ->delay_state = 2;
-    } else if (r <= 0.007050092494961132) {
-      circ->delay_state = 3;
-    } else {
-      circ->delay_state = 8;
-    }
-  } else if (circ->delay_state == 5) {
-    if (r <= 0.8702266273371771) {
-      circ->delay_state = 9;
-    } else {
-      circ->delay_state = 8;
-    }
-  } else if (circ->delay_state == 6) {
-    if (r <= 0.5952267052723844) {
-      circ->delay_state = 4;
-    } else {
-      circ->delay_state = 5;
-    }
-  } else if (circ->delay_state == 7) {
-    circ->delay_state = 0;
-  } else if (circ->delay_state == 8) {
-    if (r <= 0.21435897031255202) {
-      circ->delay_state = 1;
-    } else if (r <= 0.4807142333457296) {
-      circ->delay_state = 4;
-    } else if (r <= 0.013549434512710555) {
-      circ->delay_state = 6;
-    } else if (r <= 0.1426685407583068) {
-      circ->delay_state = 2;
-    } else if (r <= 0.06683102030358856) {
-      circ->delay_state = 5;
-    } else {
-      circ->delay_state = 8;
-    }
-  } else if (circ->delay_state == 9) {
-    if (r <= 0.03304505046631963) {
-      circ->delay_state = 6;
-    } else if (r <= 0.013588716676204121) {
-      circ->delay_state = 2;
-    } else {
-      circ->delay_state = 8;
-    }
-  } else if (circ->delay_state == 10) {
-    circ->delay_state = 0;
-  } else if (circ->delay_state == 11) {
-    if (r <= 0.5261725990531061) {
-      circ->delay_state = 15;
-    } else {
-      circ->delay_state = 14;
-    }
-  } else if (circ->delay_state == 12) {
-    if (r <= 0.8060557678125009) {
-      circ->delay_state = 11;
-    } else if (r <= 0.11109758853142893) {
-      circ->delay_state = 15;
-    } else {
-      circ->delay_state = 14;
-    }
-  } else if (circ->delay_state == 13) {
-    if (r <= 0.057059288829301016) {
-      circ->delay_state = 17;
-    } else if (r <= 0.5490386361530137) {
-      circ->delay_state = 13;
-    } else if (r <= 0.39313164844934456) {
-      circ->delay_state = 14;
-    } else {
-      circ->delay_state = 10;
-    }
-  } else if (circ->delay_state == 14) {
-    if (r <= 0.005151548429997901) {
-      circ->delay_state = 12;
-    } else {
-      circ->delay_state = 15;
-    }
-  } else if (circ->delay_state == 15) {
-    if (r <= 0.007760355201749844) {
-      circ->delay_state = 18;
-    } else if (r <= 0.12095994736437347) {
-      circ->delay_state = 17;
-    } else if (r <= 0.013777469646465985) {
-      circ->delay_state = 11;
-    } else if (r <= 0.8401025383828099) {
-      circ->delay_state = 13;
-    } else {
-      circ->delay_state = 10;
-    }
-  } else if (circ->delay_state == 16) {
-    circ->delay_state = 0;
-  } else if (circ->delay_state == 17) {
-    if (r <= 0.06803328536405931) {
-      circ->delay_state = 18;
-    } else if (r <= 0.062411530976212354) {
-      circ->delay_state = 17;
-    } else if (r <= 0.4852512651253924) {
-      circ->delay_state = 11;
-    } else if (r <= 0.0966806759416866) {
-      circ->delay_state = 13;
-    } else if (r <= 0.13168700950067863) {
-      circ->delay_state = 15;
-    } else {
-      circ->delay_state = 14;
-    }
-  } else if (circ->delay_state == 18) {
-    if (r <= 0.023960634001724497) {
-      circ->delay_state = 18;
-    } else if (r <= 0.2529383611043248) {
-      circ->delay_state = 12;
-    } else {
-      circ->delay_state = 10;
-    }
-  } else if (circ->delay_state == 19) {
-    if (r <= 0.9545002826362771) {
-      circ->delay_state = 19;
-    } else {
-      circ->delay_state = 25;
-    }
-  } else if (circ->delay_state == 20) {
-    if (r <= 0.27740003506150723) {
-      circ->delay_state = 26;
-    } else if (r <= 0.0002634363920387579) {
-      circ->delay_state = 27;
-    } else if (r <= 0.7186997805973834) {
-      circ->delay_state = 22;
-    } else {
-      circ->delay_state = 24;
-    }
-  } else if (circ->delay_state == 21) {
-    circ->delay_state = 24;
-  } else if (circ->delay_state == 22) {
-    if (r <= 0.6337722299058604) {
-      circ->delay_state = 19;
-    } else if (r <= 0.12264197906739213) {
-      circ->delay_state = 20;
-    } else if (r <= 0.1866481366464418) {
-      circ->delay_state = 23;
-    } else if (r <= 0.03759228535857586) {
-      circ->delay_state = 22;
-    } else {
-      circ->delay_state = 24;
-    }
-  } else if (circ->delay_state == 23) {
-    if (r <= 0.2237970022370368) {
-      circ->delay_state = 27;
-    } else if (r <= 0.16473415535521918) {
-      circ->delay_state = 25;
-    } else if (r <= 0.5450910422025015) {
-      circ->delay_state = 22;
-    } else {
-      circ->delay_state = 24;
-    }
-  } else if (circ->delay_state == 24) {
-    circ->delay_state = 0;
-  } else if (circ->delay_state == 25) {
-    circ->delay_state = 22;
-  } else if (circ->delay_state == 26) {
-    if (r <= 0.8432124122369418) {
-      circ->delay_state = 20;
-    } else if (r <= 0.15672878839143337) {
-      circ->delay_state = 23;
-    } else {
-      circ->delay_state = 21;
-    }
-  } else if (circ->delay_state == 27) {
-    if (r <= 0.00022080773970710712) {
-      circ->delay_state = 19;
-    } else if (r <= 0.6966674856141924) {
-      circ->delay_state = 27;
-    } else {
-      circ->delay_state = 22;
-    }
-  } else {
-    circ->delay_state = 0;
-  }
+void update_circ_delay_state(circuit_t *circ) {
+	double r = gen_random_uniform_01();
+	if (circ->delay_state == 0) {
+		if (r <= 0.48422233533746367) {
+			circ->delay_state = 4;
+		}
+		else if (r <= 0.48433444416459254) {
+			circ->delay_state = 2;
+		}
+		else if (r <= 0.5326463392847421) {
+			circ->delay_state = 18;
+		}
+		else if (r <= 0.6144176625708816) {
+			circ->delay_state = 11;
+		}
+		else if (r <= 0.626644244330593) {
+			circ->delay_state = 14;
+		}
+		else if (r <= 0.6543042371465746) {
+			circ->delay_state = 25;
+		}
+		else {
+			circ->delay_state = 22;
+		}
+	}
+	else if (circ->delay_state == 1) {
+		if (r <= 0.7657245908846061) {
+			circ->delay_state = 1;
+		}
+		else if (r <= 0.7669016114255119) {
+			circ->delay_state = 4;
+		}
+		else if (r <= 0.8480993090611174) {
+			circ->delay_state = 2;
+		}
+		else if (r <= 0.9980448225102572) {
+			circ->delay_state = 5;
+		}
+		else {
+			circ->delay_state = 3;
+		}
+	}
+	else if (circ->delay_state == 2) {
+		if (r <= 0.0009415666434313743) {
+			circ->delay_state = 1;
+		}
+		else if (r <= 0.0753046808576782) {
+			circ->delay_state = 8;
+		}
+		else {
+			circ->delay_state = 7;
+		}
+	}
+	else if (circ->delay_state == 3) {
+		if (r <= 0.001585360932443046) {
+			circ->delay_state = 1;
+		}
+		else if (r <= 0.0055559099219390316) {
+			circ->delay_state = 4;
+		}
+		else {
+			circ->delay_state = 3;
+		}
+	}
+	else if (circ->delay_state == 4) {
+		if (r <= 0.32738529471081923) {
+			circ->delay_state = 4;
+		}
+		else if (r <= 0.4199111369691281) {
+			circ->delay_state = 2;
+		}
+		else if (r <= 0.4269612294640892) {
+			circ->delay_state = 3;
+		}
+		else {
+			circ->delay_state = 8;
+		}
+	}
+	else if (circ->delay_state == 5) {
+		if (r <= 0.8702266273371771) {
+			circ->delay_state = 9;
+		}
+		else {
+			circ->delay_state = 8;
+		}
+	}
+	else if (circ->delay_state == 6) {
+		if (r <= 0.5952267052723844) {
+			circ->delay_state = 4;
+		}
+		else {
+			circ->delay_state = 5;
+		}
+	}
+	else if (circ->delay_state == 7) {
+		circ->delay_state = 0;
+	}
+	else if (circ->delay_state == 8) {
+		if (r <= 0.21435897031255202) {
+			circ->delay_state = 1;
+		}
+		else if (r <= 0.6950732036582816) {
+			circ->delay_state = 4;
+		}
+		else if (r <= 0.7086226381709921) {
+			circ->delay_state = 6;
+		}
+		else if (r <= 0.851291178929299) {
+			circ->delay_state = 2;
+		}
+		else if (r <= 0.9181221992328875) {
+			circ->delay_state = 5;
+		}
+		else {
+			circ->delay_state = 8;
+		}
+	}
+	else if (circ->delay_state == 9) {
+		if (r <= 0.03304505046631963) {
+			circ->delay_state = 6;
+		}
+		else if (r <= 0.04663376714252375) {
+			circ->delay_state = 2;
+		}
+		else {
+			circ->delay_state = 8;
+		}
+	}
+	else if (circ->delay_state == 10) {
+		circ->delay_state = 0;
+	}
+	else if (circ->delay_state == 11) {
+		if (r <= 0.5261725990531061) {
+			circ->delay_state = 15;
+		}
+		else {
+			circ->delay_state = 14;
+		}
+	}
+	else if (circ->delay_state == 12) {
+		if (r <= 0.8060557678125009) {
+			circ->delay_state = 11;
+		}
+		else if (r <= 0.9171533563439298) {
+			circ->delay_state = 15;
+		}
+		else {
+			circ->delay_state = 14;
+		}
+	}
+	else if (circ->delay_state == 13) {
+		if (r <= 0.057059288829301016) {
+			circ->delay_state = 17;
+		}
+		else if (r <= 0.6060979249823147) {
+			circ->delay_state = 13;
+		}
+		else if (r <= 0.9992295734316593) {
+			circ->delay_state = 14;
+		}
+		else {
+			circ->delay_state = 10;
+		}
+	}
+	else if (circ->delay_state == 14) {
+		if (r <= 0.005151548429997901) {
+			circ->delay_state = 12;
+		}
+		else {
+			circ->delay_state = 15;
+		}
+	}
+	else if (circ->delay_state == 15) {
+		if (r <= 0.007760355201749844) {
+			circ->delay_state = 18;
+		}
+		else if (r <= 0.12872030256612332) {
+			circ->delay_state = 17;
+		}
+		else if (r <= 0.1424977722125893) {
+			circ->delay_state = 11;
+		}
+		else if (r <= 0.9826003105953992) {
+			circ->delay_state = 13;
+		}
+		else {
+			circ->delay_state = 10;
+		}
+	}
+	else if (circ->delay_state == 16) {
+		circ->delay_state = 0;
+	}
+	else if (circ->delay_state == 17) {
+		if (r <= 0.06803328536405931) {
+			circ->delay_state = 18;
+		}
+		else if (r <= 0.13044481634027166) {
+			circ->delay_state = 17;
+		}
+		else if (r <= 0.615696081465664) {
+			circ->delay_state = 11;
+		}
+		else if (r <= 0.7123767574073506) {
+			circ->delay_state = 13;
+		}
+		else if (r <= 0.8440637669080293) {
+			circ->delay_state = 15;
+		}
+		else {
+			circ->delay_state = 14;
+		}
+	}
+	else if (circ->delay_state == 18) {
+		if (r <= 0.023960634001724497) {
+			circ->delay_state = 18;
+		}
+		else if (r <= 0.2768989951060493) {
+			circ->delay_state = 12;
+		}
+		else {
+			circ->delay_state = 10;
+		}
+	}
+	else if (circ->delay_state == 19) {
+		if (r <= 0.9545002826362771) {
+			circ->delay_state = 19;
+		}
+		else {
+			circ->delay_state = 25;
+		}
+	}
+	else if (circ->delay_state == 20) {
+		if (r <= 0.27740003506150723) {
+			circ->delay_state = 26;
+		}
+		else if (r <= 0.277663471453546) {
+			circ->delay_state = 27;
+		}
+		else if (r <= 0.9963632520509293) {
+			circ->delay_state = 22;
+		}
+		else {
+			circ->delay_state = 24;
+		}
+	}
+	else if (circ->delay_state == 21) {
+		circ->delay_state = 24;
+	}
+	else if (circ->delay_state == 22) {
+		if (r <= 0.6337722299058604) {
+			circ->delay_state = 19;
+		}
+		else if (r <= 0.7564142089732525) {
+			circ->delay_state = 20;
+		}
+		else if (r <= 0.9430623456196943) {
+			circ->delay_state = 23;
+		}
+		else if (r <= 0.9806546309782701) {
+			circ->delay_state = 22;
+		}
+		else {
+			circ->delay_state = 24;
+		}
+	}
+	else if (circ->delay_state == 23) {
+		if (r <= 0.2237970022370368) {
+			circ->delay_state = 27;
+		}
+		else if (r <= 0.388531157592256) {
+			circ->delay_state = 25;
+		}
+		else if (r <= 0.9336221997947575) {
+			circ->delay_state = 22;
+		}
+		else {
+			circ->delay_state = 24;
+		}
+	}
+	else if (circ->delay_state == 24) {
+		circ->delay_state = 0;
+	}
+	else if (circ->delay_state == 25) {
+		circ->delay_state = 22;
+	}
+	else if (circ->delay_state == 26) {
+		if (r <= 0.8432124122369418) {
+			circ->delay_state = 20;
+		}
+		else if (r <= 0.9999412006283751) {
+			circ->delay_state = 23;
+		}
+		else {
+			circ->delay_state = 21;
+		}
+	}
+	else if (circ->delay_state == 27) {
+		if (r <= 0.00022080773970710712) {
+			circ->delay_state = 19;
+		}
+		else if (r <= 0.6968882933538996) {
+			circ->delay_state = 27;
+		}
+		else {
+			circ->delay_state = 22;
+		}
+	}
+	else {
+		circ->delay_state = 0;
+	}
 }
 
 double
