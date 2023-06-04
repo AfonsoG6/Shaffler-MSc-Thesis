@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="node" attr.name="markovmodelseed" attr.type="string" />
+  <key id="d10" for="node" attr.name="packetmodelmode" attr.type="string" />
+  <key id="d9" for="node" attr.name="packetmodelpath" attr.type="string" />
+  <key id="d8" for="node" attr.name="streammodelpath" attr.type="string" />
+  <key id="d7" for="node" attr.name="flowmodelpath" attr.type="string" />
+  <key id="d6" for="node" attr.name="socksauthseed" attr.type="string" />
+  <key id="d5" for="node" attr.name="timeout" attr.type="string" />
+  <key id="d4" for="node" attr.name="stallout" attr.type="string" />
+  <key id="d3" for="node" attr.name="peers" attr.type="string" />
+  <key id="d2" for="node" attr.name="socksproxy" attr.type="string" />
+  <key id="d1" for="node" attr.name="time" attr.type="string" />
+  <key id="d0" for="node" attr.name="loglevel" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="start">
+      <data key="d0">message</data>
+      <data key="d1">16</data>
+      <data key="d2">localhost:9050</data>
+      <data key="d3">server1exit:80,server2exit:80,server3exit:80,server4exit:80,server5exit:80,server6exit:80,server7exit:80,server8exit:80,server9exit:80,server10exit:80,server11exit:80,server12exit:80,server13exit:80,server14exit:80,server15exit:80,server16exit:80,server17exit:80,server18exit:80,server19exit:80,server20exit:80,server21exit:80,server22exit:80,server23exit:80,server24exit:80,server25exit:80,server26exit:80,server27exit:80,server28exit:80,server29exit:80,server30exit:80,server31exit:80,server32exit:80,server33exit:80,server34exit:80,server35exit:80,server36exit:80,server37exit:80,server38exit:80,server39exit:80,server40exit:80,server41exit:80,server42exit:80,server43exit:80,server44exit:80,server45exit:80,server46exit:80,server47exit:80,server48exit:80,server49exit:80,server50exit:80</data>
+      <data key="d4">5 minutes</data>
+      <data key="d5">10 minutes</data>
+    </node>
+    <node id="traffic">
+      <data key="d6">676783223</data>
+      <data key="d7">../../../conf/tgen.tor-flowmodel-8000000usec.graphml</data>
+      <data key="d8">../../../conf/tgen.tor-streammodel-ccs2018.graphml</data>
+      <data key="d9">../../../conf/tgen.tor-packetmodel-ccs2018.graphml</data>
+      <data key="d10">path</data>
+      <data key="d11">572997277</data>
+    </node>
+    <edge source="start" target="traffic" />
+    <edge source="traffic" target="traffic" />
+  </graph>
+</graphml>

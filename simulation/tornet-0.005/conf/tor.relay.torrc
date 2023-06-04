@@ -1,0 +1,7 @@
+#Log info stdout
+# for tor v0.4.4.x or earlier
+#ORPort 9001
+# for tor v0.4.5.x or later
+ORPort 9001 IPv4Only
+DirPort 8080
+SocksPort 0
