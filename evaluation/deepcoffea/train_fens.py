@@ -40,7 +40,7 @@ def get_params():
     parser.add_argument("--gpu", "-g", required=False, type=int, default=0)
     parser.add_argument("--target_loss", "-l", required=False, type=int, default=0.002)
     parser.add_argument("--max_duration", "-md", required=False, type=float, default=24) # In hours
-    parser.add_argument("--max_epochs", "-me", required=False, type=int, default=1000)
+    parser.add_argument("--max_epochs", "-me", required=False, type=int, default=500)
     args = parser.parse_args()
     return args
 
