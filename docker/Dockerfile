@@ -71,10 +71,10 @@ WORKDIR /root/rendezmix
 
 RUN chmod 777 -R .
 
-#WORKDIR /root/rendezmix/tor
-#RUN ./autogen.sh
-#RUN ./configure --disable-asciidoc
-#RUN make
+WORKDIR /root/rendezmix/tor
+RUN ./autogen.sh
+RUN ./configure --disable-asciidoc
+RUN make
 #RUN make install
 
 WORKDIR /root/simulation
@@ -95,7 +95,7 @@ RUN chmod 777 -R .
 RUN ./autogen.sh
 RUN ./configure --disable-asciidoc
 RUN make
-RUN make install
+#RUN make install
 
 RUN ln -s $(which tor) ~/.local/bin/tor
 
