@@ -627,7 +627,7 @@ relay_send_command_from_edge_,(streamid_t stream_id, circuit_t *circ,
   memset(&cell, 0, sizeof(cell_t));
   cell.command = CELL_RELAY;
   if (ALL_SENDERS_DECIDE_DELAYS || cpath_layer != NULL) {
-    cell.command = 13; // Delay scale factor [13, 127] (RENDEZMIX)
+    cell.command = CELL_RELAY_DELAY_LOWEST + (CELL_RELAY_DELAY_HIGHEST-CELL_RELAY_DELAY_LOWEST)/10; // Delay scale factor [13, 127] (RENDEZMIX)
   }
   if (CIRCUIT_IS_ORIGIN(circ)) {
     tor_assert(cpath_layer);
