@@ -1,0 +1,32 @@
+# stage
+cd /part/simulation/data; tornettools stage consensuses-2023-04 server-descriptors-2023-04 userstats-relay-country.csv tmodel-ccs2018.github.io --onionperf_data_path onionperf-2023-04 --bandwidth_data_path bandwidth-2023-04.csv --geoip_path ~/tor/src/config/geoip
+
+# generate
+cd /part/simulation; tornettools generate data/relayinfo_staging_2023-04-01--2023-04-30.json data/userinfo_staging_2023-04-01--2023-04-30.json data/networkinfo_staging.gml data/tmodel-ccs2018.github.io -r -e BW,CIRC,STREAM --server_scale 0.5 --network_scale 0.005 --prefix tornet-0.005
+python3 patch.py -s tornet-0.005 -c 300 -d 4
+
+# simulate
+cd /part/simulation; tornettools simulate tornet-0.005
+
+# parse
+cd /part/simulation; tornettools parse tornet-0.005
+
+# plot
+cd /part/simulation; tornettools plot tornet-0.005 --tor_metrics_path data/tor_metrics_2023-04-01--2023-04-30.json --prefix pdfs
+
+#Archive
+cd /part/simulation; tornettools archive tornet-0.005
+
+# Docker Create
+docker-compose up
+
+# Docker Start
+docker-compose run rendezmix
+
+# Docker Attach
+docker attach $(docker container list | grep "rendezmix.*Up" | awk '{print $1}')
+
+# Docker Detach: CTRL + P->Q(base)
+
+# Docker Copy:
+docker cp $(docker container list | grep "rendezmix.*Up" | awk '{print $1}'):/root/shadowM .

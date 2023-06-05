@@ -3248,6 +3248,7 @@ get_delay_microseconds(circuit_t *circ)
 double
 get_delay_scale_factor(uint8_t command)
 {
+  if (command == CELL_RELAY) return 1.0;
   return (double)(command - CELL_RELAY_DELAY_LOWEST) /
          (CELL_RELAY_DELAY_HIGHEST - CELL_RELAY_DELAY_LOWEST);
 }
@@ -3257,21 +3258,14 @@ get_delay_timespec(circuit_t *circ, uint8_t command)
 {
   double microsec, scale;
   struct timespec ts;
-  if (command == CELL_RELAY) {
-    ts.tv_sec = 0;
-    ts.tv_nsec = 0;
-    return ts;
-  }
-  else {
-    scale = get_delay_scale_factor(command);
-    do {
-      microsec = scale*1e-1*get_delay_microseconds(circ);
-    } while (microsec > scale*1e5);
-    ts.tv_sec = (time_t)(microsec / 1e6);
-    ts.tv_nsec = (time_t)((microsec - ts.tv_sec * 1e6) * 1e3);
-    log_info(LD_GENERAL, "[RENDEZMIX][DELAY] scale=%f microsec=%f state=%d", scale, microsec, circ->delay_state);
-    return ts;
-  }
+  scale = get_delay_scale_factor(command);
+  do {
+    microsec = scale*1e-1*get_delay_microseconds(circ);
+  } while (microsec > scale*1e5);
+  ts.tv_sec = (time_t)(microsec / 1e6);
+  ts.tv_nsec = (time_t)((microsec - ts.tv_sec * 1e6) * 1e3);
+  log_info(LD_GENERAL, "[RENDEZMIX][DELAY] scale=%f microsec=%f state=%d", scale, microsec, circ->delay_state);
+  return ts;
 }
 
 void delay_cell(circuit_t *circ, cell_t *cell)
