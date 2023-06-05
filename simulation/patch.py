@@ -33,7 +33,7 @@ def netnodeid_ok(hosts: dict, netnodeid: int):
     return True
 
 def create_client(hosts: dict, idx: int, netnodeid: int = -1):
-    global hosts_path, tgen_server_path, tgen_server_dir_path
+    global hosts_path, tgen_server_path, tgen_server_dir_path, duration
     
     newhostname: str = f"customclient{idx}"
     port: int = 10000 + idx
@@ -44,19 +44,14 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
     os.makedirs(client_path, exist_ok=True)
     for file in os.listdir(dir_path):
         with open(os.path.join(dir_path, file), "r") as f:
+            data = f.read()
+            if file == "torrc":
+                pick: dict = pick_nodes()
+                print(f"Picked {pick} for {newhostname}")
+                data = data.replace("{entry}", pick["entry"])
+                data = data.replace("{middle}", pick["middle"])
+                data = data.replace("{exit}", pick["exit"])
             with open(os.path.join(client_path, file), "w") as g:
-                data = f.read()
-                if file == "tgenrc.graphml":
-                    data = data.replace("{port}", str(port))
-                    data = data.replace("{time}", str(random.randint(1, 60)))
-                    data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
-                    data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
-                elif file == "torrc":
-                    pick: dict = pick_nodes()
-                    print(f"Picked {pick} for {newhostname}")
-                    data = data.replace("{entry}", pick["entry"])
-                    data = data.replace("{middle}", pick["middle"])
-                    data = data.replace("{exit}", pick["exit"])
                 g.write(data)
     print(f"Created {newhostname} directory")
     config_path = os.path.join(templates_path, "customclient.yaml")
@@ -66,6 +61,23 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
         while not netnodeid_ok(hosts, netnodeid):
             netnodeid = random.randint(0, 2520)
     new_host["network_node_id"] = netnodeid
+    tgen_proc_template = new_host["processes"][3]
+    new_host["processes"] = new_host["processes"][:3]
+    for flow_start in range(300 + random.randint(0, 120), duration, 130):
+        if flow_start + 125 > duration:
+            break
+        with open(os.path.join(templates_path, "tgenrc.graphml"), "r") as f:
+            data = f.read()
+            data = data.replace("{port}", str(port))
+            data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
+            data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
+            with open(os.path.join(client_path, f"t{flow_start}.tgenrc.graphml"), "w") as g:
+                g.write(data)
+        tgen_proc = tgen_proc_template.copy()
+        tgen_proc["args"] = f"t{flow_start}.tgenrc.graphml"
+        tgen_proc["start_time"] = flow_start
+        tgen_proc["shutdown_time"] = flow_start + 125
+        new_host["processes"].append(tgen_proc)
     hosts[newhostname] = new_host
     print(f"Added {newhostname} to shadow.config.yaml")
     patch_server_tgenrc(port, tgen_server_path, os.path.join(tgen_server_dir_path, f"{port}.tgenrc.graphml"))
@@ -122,7 +134,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     simulation: str = args.simulation
     num_clients: int = args.num_clients
-    duration: float = args.duration
+    duration: float = args.duration * 3600
     global_netnodeid: bool = args.global_netnodeid
     
     
@@ -136,7 +148,7 @@ if __name__ == "__main__":
     
     nodes: dict = load_nodes()
     config = yaml.load(open(config_path, "r"), Loader=yaml.FullLoader)
-    config["general"]["stop_time"] = int(duration * 3600)
+    config["general"]["stop_time"] = int(duration)
     
     netnodeid: int = -1
     if global_netnodeid:
