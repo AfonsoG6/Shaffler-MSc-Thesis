@@ -24,7 +24,7 @@ def find_clients(hosts_path: str) -> list:
     return clients
 
 
-def parse_oniontrace(hostname: str, hosts_path: str, flow_interval: float) -> None:
+def parse_oniontrace(hostname: str, hosts_path: str) -> None:
     global info_clients, info_servers, site_counter
 
     stream_new_pattern = re.compile(r"STREAM \d+ NEW")
@@ -51,7 +51,7 @@ def parse_oniontrace(hostname: str, hosts_path: str, flow_interval: float) -> No
                 if "$" in site:
                     continue
                 timestamp: float = round(float(line.split(" ")[2]) + CLOCK_SYNC, 6)
-                if timestamp < last_start_ts + flow_interval:
+                if timestamp < last_start_ts + 130:
                     # Still the same flow
                     continue
                 last_start_ts = timestamp
@@ -59,13 +59,13 @@ def parse_oniontrace(hostname: str, hosts_path: str, flow_interval: float) -> No
                 site_counter += 1
                 info_clients[hostname].append({
                     "timestamp": timestamp,
-                    "duration": flow_interval-0.00001,
+                    "duration": 120,
                     "circuit_idx": circuit_idx,
                     "site_idx": site_idx
                 })
                 info_servers.append({
                     "timestamp": timestamp,
-                    "duration": flow_interval-0.00001,
+                    "duration": 120,
                     "port": port,
                     "circuit_idx": circuit_idx,
                     "site_idx": site_idx
@@ -75,12 +75,10 @@ def parse_oniontrace(hostname: str, hosts_path: str, flow_interval: float) -> No
 def main():
     parser = ArgumentParser()
     parser.add_argument("-s", "--simulation", type=str, required=True)
-    parser.add_argument("-f", "--flow_interval", type=float, default=150)
     args = parser.parse_args()
 
     # Parse arguments
     simulation: str = args.simulation
-    flow_interval: float = args.flow_interval
     
     hosts_path: str = os.path.join(simulation, "shadow.data", "hosts")
     
@@ -91,7 +89,7 @@ def main():
 
     clients: list = find_clients(hosts_path)
     for client in clients:
-        parse_oniontrace(client, hosts_path, flow_interval)
+        parse_oniontrace(client, hosts_path)
 
     with open(os.path.join("stage", f"info_clients.pickle"), "wb") as file:
         pickle.dump(info_clients, file)
