@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from math import ceil
+from copy import deepcopy
 import random
 import yaml
 import re
@@ -64,7 +65,7 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
     tgen_proc_template = new_host["processes"][3]
     new_host["processes"] = new_host["processes"][:3]
     for flow_start in range(300 + random.randint(0, 120), duration, 130):
-        if flow_start + 125 > duration:
+        if flow_start + 125 >= duration:
             break
         with open(os.path.join(templates_path, "tgenrc.graphml"), "r") as f:
             data = f.read()
@@ -73,7 +74,7 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
             data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
             with open(os.path.join(client_path, f"t{flow_start}.tgenrc.graphml"), "w") as g:
                 g.write(data)
-        tgen_proc = tgen_proc_template.copy()
+        tgen_proc = deepcopy(tgen_proc_template)
         tgen_proc["args"] = f"t{flow_start}.tgenrc.graphml"
         tgen_proc["start_time"] = flow_start
         tgen_proc["shutdown_time"] = flow_start + 125
