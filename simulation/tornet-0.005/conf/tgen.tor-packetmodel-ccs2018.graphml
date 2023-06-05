@@ -1,4 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
+<!-- Documentation: https://github.com/shadow/tgen/blob/main/doc/TGen-Markov-Models.md -->
 <graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
   <key id="d8" for="edge" attr.name="param_high" attr.type="double" />
   <key id="d7" for="edge" attr.name="param_low" attr.type="double" />

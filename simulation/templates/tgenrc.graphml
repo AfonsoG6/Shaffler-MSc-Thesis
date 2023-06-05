@@ -15,7 +15,7 @@
   <graph edgedefault="directed">
     <node id="start">
       <data key="d0">info</data>
-      <data key="d1">{time}</data>
+      <data key="d1">0</data>
       <data key="d2">localhost:9050</data>
       <data key="d3">server1exit:{port},server2exit:{port},server3exit:{port},server4exit:{port},server5exit:{port},server6exit:{port},server7exit:{port},server8exit:{port},server9exit:{port},server10exit:{port}</data>
       <data key="d4">5 minutes</data>

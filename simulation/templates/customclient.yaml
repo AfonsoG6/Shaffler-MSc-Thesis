@@ -2,6 +2,9 @@ network_node_id: 0
 bandwidth_up: 1000000 kilobit
 bandwidth_down: 1000000 kilobit
 processes:
+- path: hostname
+  args: -I
+  start_time: 60
 - path: ~/.local/bin/tor
   args: --defaults-torrc torrc-defaults -f torrc
   environment:
@@ -15,10 +18,9 @@ processes:
 - path: ~/.local/bin/tgen
   args: tgenrc.graphml
   start_time: 300
-  expected_final_state: running
-- path: hostname
-  args: -I
-  start_time: 60
+  shutdown_time: 125
+  shutdown_signal: SIGKILL
+  expected_final_state: {signaled: SIGKILL}
 host_options:
   pcap_enabled: true
   pcap_capture_size: 24 B
