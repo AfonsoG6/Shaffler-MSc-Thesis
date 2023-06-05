@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-import xml.etree.ElementTree as ET
+from math import ceil
 import random
 import yaml
 import re
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     simulation: str = args.simulation
     num_clients: int = args.num_clients
-    duration: float = args.duration * 3600
+    duration: int = ceil(args.duration * 3600)
     global_netnodeid: bool = args.global_netnodeid
     
     
