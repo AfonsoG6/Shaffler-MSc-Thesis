@@ -250,6 +250,7 @@ struct circuit_t {
   struct congestion_control_t *ccontrol;
 
   /** Delay State (RENDEZMIX) */
+  uint8_t delay_command;
   short delay_state;
   struct timespec last_packet_ts;
 };

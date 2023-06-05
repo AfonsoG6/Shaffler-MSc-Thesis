@@ -1166,7 +1166,7 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
       if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
           cell->command <= CELL_RELAY_DELAY_HIGHEST) {
         if (probably_middle_node(conn, circ)) {
-          delay_cell(circ, cell);
+          delay_cell(circ, chan, cell); // RENDEZMIX
         }
         channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
         break;
@@ -3254,29 +3254,55 @@ get_delay_scale_factor(uint8_t command)
 }
 
 struct timespec
-get_delay_timespec(circuit_t *circ, uint8_t command)
+get_delay_timespec(circuit_t *circ)
 {
   double microsec, scale;
   struct timespec ts;
-  scale = get_delay_scale_factor(command);
+  scale = get_delay_scale_factor(circ->delay_command);
   do {
     microsec = scale*1e-1*get_delay_microseconds(circ);
   } while (microsec > scale*1e5);
   ts.tv_sec = (time_t)(microsec / 1e6);
   ts.tv_nsec = (time_t)((microsec - ts.tv_sec * 1e6) * 1e3);
-  log_info(LD_GENERAL, "[RENDEZMIX][DELAY] scale=%f microsec=%f state=%d", scale, microsec, circ->delay_state);
   return ts;
 }
 
-void delay_cell(circuit_t *circ, cell_t *cell)
+const char * get_direction_str(int direction) {
+  switch (direction) {
+    case CELL_DIRECTION_IN:
+      return "IN";
+    case CELL_DIRECTION_OUT:
+      return "OUT";
+    default:
+      return "UNKNOWN";
+  }
+}
+
+int get_direction(circuit_t *circ, channel_tls_t *chan, cell_t *cell) {
+  if (!TO_OR_CIRCUIT(circ) || !cell) {
+    return -1;
+  }
+  if (!CIRCUIT_IS_ORIGIN(circ) && &(chan->base_) == TO_OR_CIRCUIT(circ)->p_chan && cell->circ_id == TO_OR_CIRCUIT(circ)->p_circ_id) {
+    return CELL_DIRECTION_OUT;
+  }
+  else {
+    return CELL_DIRECTION_IN;
+  }
+}
+
+void delay_cell(circuit_t *circ, channel_tls_t *chan, cell_t *cell)
 {
   int res = 0;
   double microsec;
   struct timespec passed_ts;
-  struct timespec ts = get_delay_timespec(circ, cell->command);
+  if (cell->command == CELL_RELAY && !circ->delay_command) return;
+  // After receiving a delay command once, we mark the circuit as using delays
+  circ->delay_command = cell->command == CELL_RELAY ? CELL_RELAY_DELAY_HIGHEST : cell->command;
+  int direction = get_direction(circ, chan, cell);
+  struct timespec ts = get_delay_timespec(circ);
   clock_gettime(CLOCK_REALTIME, &passed_ts);
   if (circ->last_packet_ts.tv_sec == 0 && circ->last_packet_ts.tv_nsec == 0) {
-    log_info(LD_GENERAL, "[RENDEZMIX][DELAY] First packet from circ %u, no need to delay.", circ->n_circ_id);
+    log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] First packet from circ %u, no need to delay.", get_direction_str(direction), cell->circ_id);
     circ->last_packet_ts = passed_ts;
   }
   passed_ts.tv_sec -= circ->last_packet_ts.tv_sec;
@@ -3285,13 +3311,13 @@ void delay_cell(circuit_t *circ, cell_t *cell)
   ts.tv_nsec -= passed_ts.tv_nsec;
   microsec = ts.tv_sec * 1e6 + ts.tv_nsec / 1e3;
   if (microsec > 0) {
+    log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] microsec=%f state=%d", get_direction_str(direction), microsec, circ->delay_state);
     do {
       res = nanosleep(&ts, &ts);
     } while (res && errno == EINTR);
   }
   else {
-    log_info(LD_GENERAL, "[RENDEZMIX][DELAY] No need to delay further.");
+    log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] No need to delay further.", get_direction_str(direction));
   }
   clock_gettime(CLOCK_REALTIME, &circ->last_packet_ts);
-  // cell->command = CELL_RELAY;
 }

@@ -103,8 +103,12 @@ double get_delay_microseconds(circuit_t *circ);
 
 double get_delay_scale_factor(uint8_t command);
 
-struct timespec get_delay_timespec(circuit_t *circ, uint8_t command);
+const char * get_direction_str(int direction);
 
-void delay_cell(circuit_t *circ, cell_t *cell);
+int get_direction(circuit_t *circ, channel_tls_t *chan, cell_t *cell);
+
+struct timespec get_delay_timespec(circuit_t *circ);
+
+void delay_cell(circuit_t *circ, channel_tls_t *chan, cell_t *cell);
 
 #endif /* !defined(TOR_CHANNELTLS_H) */

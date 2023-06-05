@@ -10,8 +10,8 @@ ServerDNSAllowBrokenConfig 1
 ServerDNSDetectHijacking 0
 AssumeReachable 1
 NumCPUs 1
-#Log notice stdout
-#Log info stdout
+Log notice stdout
+Log info stdout
 SafeLogging 0
 LogTimeGranularity 1
 HeartbeatPeriod 1
