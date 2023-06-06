@@ -17,16 +17,13 @@ parser = argparse.ArgumentParser()
 
 
 def parse_args():
-    parser.add_argument("--test", default="./data/DeepCCA_model/shadowM_overlap_new2021")
+    parser.add_argument("--dataset", "-d", required=False, default="shadowV")
     parser.add_argument("--flow", "-f", type=int, default=2094)
     parser.add_argument("--tor_len", "-tl", type=int, default=500)
     parser.add_argument("--exit_len", "-el", type=int, default=800)
     parser.add_argument("--win_interval", "-i", type=int, required=False, default=5)
     parser.add_argument("--num_windows", "-w", type=int, required=False, default=11)
     parser.add_argument("--addnum", "-a", type=int, required=False, default=2)
-    parser.add_argument("--model1", default="./data/DeepCCA_model/shadowM_overlap_new2021")
-    parser.add_argument("--model2", default="./data/DeepCCA_model/shadowM_overlap_new2021")
-    parser.add_argument("--output", default="./data/shadowM_dcf0.002")
     parser.add_argument("--gpu", "-g", required=False, type=int, default=0)
     args = parser.parse_args()
     return args
@@ -254,11 +251,10 @@ if __name__ == "__main__":
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
     start_time = time.time()
-    model1_path = args.model1 + f"_{args.num_windows}_interval{args.win_interval}_addn{args.addnum}_model1_w_superpkt"
-    model2_path = args.model2 + f"_{args.num_windows}_interval{args.win_interval}_addn{args.addnum}_model2_w_superpkt"
-    test_path = args.test + f"_interval{args.win_interval}_test{args.num_windows}addn{args.addnum}_w_superpkt.npz"
-
-    output_path = args.output + f"_{args.num_windows}_0.02_interval{args.win_interval}_addn{args.addnum}_{args.tor_len}_{args.exit_len}.csv"
+    model1_path = f"./data/DeepCCA_model/{args.dataset}_overlap_new2021_{args.num_windows}_interval{args.win_interval}_addn{args.addnum}_model1_w_superpkt"
+    model2_path = f"./data/DeepCCA_model/{args.dataset}_overlap_new2021_{args.num_windows}_interval{args.win_interval}_addn{args.addnum}_model2_w_superpkt"
+    test_path = f"./data/DeepCCA_model/{args.dataset}_overlap_new2021_interval{args.win_interval}_test{args.num_windows}addn{args.addnum}_w_superpkt.npz"
+    output_path = f"./data/{args.dataset}_dcf0.002_{args.num_windows}_0.02_interval{args.win_interval}_addn{args.addnum}_{args.tor_len}_{args.exit_len}.csv"
     # For time complexity analysis, use only one threshold (e.g., [60])
     rank_thr_list = [60, 50, 47, 43, 40, 37, 33, 28, 24, 20, 16.667, 14, 12.5, 11, 10, 9, 8.333, 7, 6.25, 5, 4.545, 3.846, 2.941, 1.667, 1.6, 1.5, 1.4, 1.3, 1.2, 1.1, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2]
     # rank_thr_list = [i for i in range(4, 1255, 30)]

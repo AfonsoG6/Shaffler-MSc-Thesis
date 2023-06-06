@@ -1,6 +1,6 @@
 ENV_NAME="tf"
 
-while getopts t:i:w:a:g:r:m: flag
+while getopts t:i:w:a:g:d:m: flag
 do
     case "${flag}" in
         t) threshold=${OPTARG};;
@@ -8,7 +8,7 @@ do
         w) windows=${OPTARG};;
         a) addnum=${OPTARG};;
         g) gpu=${OPTARG};;
-        r) redirect=${OPTARG};;
+        d) dataset=${OPTARG};;
         m) mode=${OPTARG};;
     esac
 done
@@ -18,19 +18,14 @@ then
     gpu=0
 fi
 
-if [ -z "$redirect" ];
-then
-    redirect=0
-fi
-
 if [ -z "$mode" ];
 then
     mode=0
 fi
 
-echo "mode: $mode | threshold: $threshold | interval: $interval | windows: $windows | addnum: $addnum | use gpu: $gpu | redirect: $redirect"
+echo "mode: $mode | threshold: $threshold | interval: $interval | windows: $windows | addnum: $addnum | use gpu: $gpu | dataset: $dataset"
 
-if [ -z "$interval" ] || [ -z "$windows" ] || [ -z "$addnum" ];
+if [ -z "$interval" ] || [ -z "$windows" ] || [ -z "$addnum" ] || [ -z "$dataset" ];
 then
     echo "Please enter all the arguments"
     exit 1
@@ -52,40 +47,20 @@ conda activate $ENV_NAME
 
 if [ $mode -lt 1 ];
 then
-    if [ $redirect -gt 0 ];
-    then
-        python3 filter.py -t $threshold -i $interval -w $windows -a $addnum &> filter.txt
-    else
-        python3 filter.py -t $threshold -i $interval -w $windows -a $addnum
-    fi
+    python3 filter.py -t $threshold -i $interval -w $windows -a $addnum -d $dataset
 fi
 
 if [ $mode -lt 2 ];
 then
-    if [ $redirect -gt 0 ];
-    then
-        python3 new_dcf_parse.py -i $interval -w $windows -a $addnum &> parse.txt
-    else
-        python3 new_dcf_parse.py -i $interval -w $windows -a $addnum
-    fi
+    python3 new_dcf_parse.py -i $interval -w $windows -a $addnum -d $dataset
 fi
 
 if [ $mode -lt 3 ];
 then
-    if [ $redirect -gt 0 ];
-    then
-        python3 train_fens.py -i $interval -w $windows -a $addnum -g $gpu &> train.txt
-    else
-        python3 train_fens.py -i $interval -w $windows -a $addnum -g $gpu
-    fi
+    python3 train_fens.py -i $interval -w $windows -a $addnum -g $gpu -d $dataset
 fi
 
 if [ $mode -lt 4 ];
 then
-    if [ $redirect -gt 0 ];
-    then
-        python3 eval_dcf.py -i $interval -w $windows -a $addnum -g $gpu &> eval.txt
-    else
-        python3 eval_dcf.py -i $interval -w $windows -a $addnum -g $gpu
-    fi
+    python3 eval_dcf.py -i $interval -w $windows -a $addnum -g $gpu -d $dataset
 fi
