@@ -1159,6 +1159,12 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
        * These are all transport independent and we pass them up through the
        * channel_t mechanism.  They are ultimately handled in command.c.
        */
+      if (cell->command == CELL_RELAY) {
+        circ = circuit_get_by_circid_channel(cell->circ_id, &(chan->base_));
+        if (probably_middle_node(conn, circ)) {
+          delay_cell(circ, chan, cell); // RENDEZMIX
+        }
+      }
       channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
       break;
     default:
