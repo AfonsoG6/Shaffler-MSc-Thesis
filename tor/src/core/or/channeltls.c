@@ -3301,8 +3301,7 @@ void delay_cell(circuit_t *circ, channel_tls_t *chan, cell_t *cell)
   int res = 0;
   double microsec;
   struct timespec passed_ts;
-  if (TO_OR_CIRCUIT(circ)) log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] circ %u-%u cmd=%d", get_direction_str(get_direction(circ, chan, cell)), TO_OR_CIRCUIT(circ)->p_circ_id, circ->n_circ_id, circ->delay_command);
-  if (cell->command == CELL_RELAY && !circ->delay_command) return;
+  if (!circ || (cell->command == CELL_RELAY && !circ->delay_command)) return;
   // After receiving a delay command once, we mark the circuit as using delays
   circ->delay_command = cell->command == CELL_RELAY ? CELL_RELAY_DELAY_HIGHEST : cell->command;
   int direction = get_direction(circ, chan, cell);
