@@ -3325,7 +3325,7 @@ void delay_cell(circuit_t *circ, channel_tls_t *chan, cell_t *cell)
   ts.tv_nsec -= passed_ts.tv_nsec;
   microsec = ts.tv_sec * 1e6 + ts.tv_nsec / 1e3;
   if (microsec > 0) {
-    log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] microsec=%f state=%d", get_direction_str(direction), microsec, circ->delay_state);
+    log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] microsec=%f states=%d<-->%d", get_direction_str(direction), microsec, circ->delay_state_in, circ->delay_state_out);
     do {
       res = nanosleep(&ts, &ts);
     } while (res && errno == EINTR);
