@@ -95,11 +95,12 @@ double gen_normal_value(double location, double scale);
 
 double gen_lognormal_value(double location, double scale);
 
-void update_circ_delay_state(circuit_t *circ);
+short update_circ_delay_state(short state);
 
 double generate_delay(short delay_state);
 
-double get_delay_microseconds(circuit_t *circ);
+double get_delay_microseconds_in(circuit_t *circ);
+double get_delay_microseconds_out(circuit_t *circ);
 
 double get_delay_scale_factor(uint8_t command);
 
@@ -107,7 +108,7 @@ const char * get_direction_str(int direction);
 
 int get_direction(circuit_t *circ, channel_tls_t *chan, cell_t *cell);
 
-struct timespec get_delay_timespec(circuit_t *circ);
+struct timespec get_delay_timespec(circuit_t *circ, int direction);
 
 void delay_cell(circuit_t *circ, channel_tls_t *chan, cell_t *cell);
 
