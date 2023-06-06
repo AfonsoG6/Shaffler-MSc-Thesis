@@ -34,13 +34,11 @@ def get_params():
     parser.add_argument("--num_windows", "-w", required=False, default=11)
     parser.add_argument("--addnum", "-a", required=False, default=2)
     parser.add_argument("--alpha", required=False, default=0.1)
-    parser.add_argument("--input", required=False, default="./datasets/new_dcf_data/shadowM_new_overlap_interval")
-    parser.add_argument("--test", required=False, default="./data/DeepCCA_model/shadowM_overlap_new2021_interval")
-    parser.add_argument("--model", required=False, default="./data/DeepCCA_model/shadowM_overlap_new2021_")
+    parser.add_argument("--dataset", "-d", required=False, default="shadowV")
     parser.add_argument("--gpu", "-g", required=False, type=int, default=0)
     parser.add_argument("--target_loss", "-l", required=False, type=int, default=0.002)
     parser.add_argument("--max_duration", "-md", required=False, type=float, default=24) # In hours
-    parser.add_argument("--max_epochs", "-me", required=False, type=int, default=500)
+    parser.add_argument("--max_epochs", "-me", required=False, type=int, default=250)
     args = parser.parse_args()
     return args
 
@@ -143,6 +141,10 @@ if __name__ == "__main__":
     num_windows = int(args.num_windows)  # 11#21#5
     window_index_list = np.arange(num_windows)
     addn = int(args.addnum)
+    
+    model_path = f"./data/DeepCCA_model/{args.dataset}_overlap_new2021_"
+    test_path = f"./data/DeepCCA_model/{args.dataset}_overlap_new2021_interval"
+    input_path = f"./datasets/new_dcf_data/{args.dataset}_new_overlap_interval"
 
     pad_t = t_flow_size * 2
     pad_e = e_flow_size * 2
@@ -160,7 +162,7 @@ if __name__ == "__main__":
     valid_labels = []
 
     for window_index in window_index_list:
-        pickle_path = args.input + str(interval) + "_win" + str(window_index) + "_addn" + str(addn) + "_w_superpkt.pickle"
+        pickle_path = input_path + str(interval) + "_win" + str(window_index) + "_addn" + str(addn) + "_w_superpkt.pickle"
 
         with open(pickle_path, "rb") as handle:
             traces = pickle.load(handle)
@@ -247,7 +249,7 @@ if __name__ == "__main__":
         test_windows2.append(np.array(temp_test2))
 
     np.savez_compressed(
-        args.test + str(interval) + "_test" + str(num_windows) + "addn" + str(addn) + "_w_superpkt.npz",
+        test_path + str(interval) + "_test" + str(num_windows) + "addn" + str(addn) + "_w_superpkt.npz",
         tor=np.array(test_windows1),
         exit=np.array(test_windows2),
     )
@@ -433,8 +435,8 @@ if __name__ == "__main__":
             print("\nloss is improved from {} to {}. save the model".format(str(best_loss), str(loss)))
 
             best_loss = loss
-            shared_model1.save_weights(args.model + str(num_windows) + "_interval" + str(interval) + "_addn" + str(addn) + "_model1_w_superpkt.h5")
-            shared_model2.save_weights(args.model + str(num_windows) + "_interval" + str(interval) + "_addn" + str(addn) + "_model2_w_superpkt.h5")
+            shared_model1.save_weights(model_path + str(num_windows) + "_interval" + str(interval) + "_addn" + str(addn) + "_model1_w_superpkt.h5")
+            shared_model2.save_weights(model_path + str(num_windows) + "_interval" + str(interval) + "_addn" + str(addn) + "_model2_w_superpkt.h5")
         else:
             print("loss is not improved from {}.".format(str(best_loss)))
 

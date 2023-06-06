@@ -5,12 +5,7 @@ import argparse
 
 def get_params():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data', '-d', type=str,
-                        default='./datasets/shadowM_Proc/')
-    parser.add_argument('--list', '-l', type=str,
-                        default='./data/shadowM_Proc_files.txt')
-    parser.add_argument('--prefix', '-p', type=str,
-                        default='./datasets/new_dcf_data/shadowM_new_overlap_interval')
+    parser.add_argument("--dataset", "-d", required=False, default="shadowV")
     parser.add_argument('--interval', '-i', type=int, default=5)
     parser.add_argument('--windows', '-w', type=int, default=11)
     parser.add_argument('--addnum', '-a', type=int, default=2)
@@ -155,9 +150,9 @@ def create_overlap_window_csv(csv_path, file_list, prefix_pickle_output, interva
 
 if __name__ == '__main__':
     args = get_params()
-    data_path = args.data
-    file_list_path = args.list
-    prefix_pickle_output = args.prefix
+    data_path = f'./datasets/{args.dataset}_Proc/'
+    file_list_path = f'./data/{args.dataset}_Proc_files.txt'
+    prefix_pickle_output = f'./datasets/new_dcf_data/{args.dataset}_new_overlap_interval'
     interval = args.interval  # window size in seconds
     windows = args.windows  # number of windows
     addnum = args.addnum  # number of seconds to add to the window each time
