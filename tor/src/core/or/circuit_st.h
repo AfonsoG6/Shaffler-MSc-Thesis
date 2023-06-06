@@ -251,8 +251,10 @@ struct circuit_t {
 
   /** Delay State (RENDEZMIX) */
   uint8_t delay_command;
-  short delay_state;
-  struct timespec last_packet_ts;
+  short delay_state_in;
+  short delay_state_out;
+  struct timespec last_packet_ts_in;
+  struct timespec last_packet_ts_out;
 };
 
 #endif /* !defined(CIRCUIT_ST_H) */
