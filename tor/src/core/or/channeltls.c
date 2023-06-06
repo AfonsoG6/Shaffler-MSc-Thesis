@@ -1161,7 +1161,7 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
        */
       if (cell->command == CELL_RELAY) {
         circ = circuit_get_by_circid_channel(cell->circ_id, &(chan->base_));
-        if (probably_middle_node(conn, circ)) {
+        if (circ && circ->delay_command && probably_middle_node(conn, circ)) {
           delay_cell(circ, chan, cell); // RENDEZMIX
         }
       }
