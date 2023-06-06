@@ -3081,7 +3081,7 @@ short update_circ_delay_state(short state) {
 double
 generate_delay(short delay_state)
 {
-  double r = 0 //gen_random_uniform_01();
+  double r = 0; //gen_random_uniform_01();
   if (delay_state == 1) {
     if (r <= 0.0034835458860367633) {
       return +gen_lognormal_value(0.051847852837667484, 0.4313753227110513);
