@@ -3266,7 +3266,7 @@ get_delay_timespec(circuit_t *circ)
   struct timespec ts;
   scale = get_delay_scale_factor(circ->delay_command);
   do {
-    microsec = scale*1e-1*get_delay_microseconds(circ);
+    microsec = scale*get_delay_microseconds(circ);
   } while (microsec > scale*1e5);
   ts.tv_sec = (time_t)(microsec / 1e6);
   ts.tv_nsec = (time_t)((microsec - ts.tv_sec * 1e6) * 1e3);
