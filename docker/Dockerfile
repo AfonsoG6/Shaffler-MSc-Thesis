@@ -6,7 +6,7 @@ ENV BUILDTYPE release
 
 RUN apt update -y
 RUN apt upgrade -y
-RUN apt install -y dos2unix git vim
+RUN apt install -y dos2unix git vim screen
 
 # Install Shadow
 WORKDIR /root
@@ -75,10 +75,10 @@ WORKDIR /root/rendezmix/tor
 RUN ./autogen.sh
 RUN ./configure --disable-asciidoc
 RUN make
-#RUN make install
+RUN make install
 
-WORKDIR /root/simulation
-RUN find . -type f -exec dos2unix {} \;
+WORKDIR /root/rendezmix/simulation/datasets
+RUN pip install -r requirements.txt
 
 WORKDIR /root/rendezmix/loop
 RUN apt install -y python3
