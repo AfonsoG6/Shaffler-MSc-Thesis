@@ -145,6 +145,7 @@ if __name__ == "__main__":
     model_path = f"./data/DeepCCA_model/{args.dataset}_overlap_new2021_"
     test_path = f"./data/DeepCCA_model/{args.dataset}_overlap_new2021_interval"
     input_path = f"./datasets/new_dcf_data/{args.dataset}_new_overlap_interval"
+    flow_length_path = f"./data/sum_test_{args.dataset}.txt"
 
     pad_t = t_flow_size * 2
     pad_e = e_flow_size * 2
@@ -198,7 +199,7 @@ if __name__ == "__main__":
                         test_c.append(key)
                         sum_ins += circuit[key]
                         if sum_ins >= sum_test:
-                            with open("sum_test.txt", "w") as f:
+                            with open(flow_length_path, "w") as f:
                                 f.write(str(sum_ins))
                     else:
                         train_c.append(key)

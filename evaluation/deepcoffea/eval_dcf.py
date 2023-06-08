@@ -18,7 +18,6 @@ parser = argparse.ArgumentParser()
 
 def parse_args():
     parser.add_argument("--dataset", "-d", required=False, default="shadowV")
-    parser.add_argument("--flow", "-f", type=int, default=2094)
     parser.add_argument("--tor_len", "-tl", type=int, default=500)
     parser.add_argument("--exit_len", "-el", type=int, default=800)
     parser.add_argument("--win_interval", "-i", type=int, required=False, default=5)
@@ -261,10 +260,9 @@ if __name__ == "__main__":
     
     num_of_thr = len(rank_thr_list)
 
-    flow_length = args.flow
-    if os.path.exists("sum_test.txt"):
-        with open("sum_test.txt", "r") as f:
-            flow_length = int(f.read().strip())
+    flow_length_path = f"./data/sum_test_{args.dataset}.txt"
+    with open(flow_length_path, "r") as f:
+        flow_length = int(f.read().strip())
 
     minimum_windows_positive = 1 + args.num_windows // 2
     if args.num_windows == 7:
@@ -285,7 +283,7 @@ if __name__ == "__main__":
     use_new_data = 0
 
     for thr in rank_thr_list:
-        eval_model(flow_length, minimum_windows_positive, use_new_data, model1_path, model2_path, test_path, thr, use_global, rank_multi_output[epoch_index], args.flow, args.tor_len, args.exit_len, args.win_interval, args.num_windows)
+        eval_model(flow_length, minimum_windows_positive, use_new_data, model1_path, model2_path, test_path, thr, use_global, rank_multi_output[epoch_index], flow_length, args.tor_len, args.exit_len, args.win_interval, args.num_windows)
         epoch_index = epoch_index + 1
     end_time = time.time()
     with open(output_path, "w", newline="") as rank_f:
