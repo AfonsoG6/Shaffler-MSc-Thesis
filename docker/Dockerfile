@@ -6,7 +6,7 @@ ENV BUILDTYPE release
 
 RUN apt update -y
 RUN apt upgrade -y
-RUN apt install -y dos2unix git vim screen
+RUN apt install -y dos2unix git vim
 
 # Install Shadow
 WORKDIR /root
