@@ -197,7 +197,7 @@ if __name__ == "__main__":
     clients_at_once: int = load_circuits(num_clients)
     
     config = yaml.load(open(config_path, "r"), Loader=yaml.FullLoader)
-    config["general"]["stop_time"] = int(duration*num_clients)
+    config["general"]["stop_time"] = int(duration*ceil(num_clients/clients_at_once))
     
     netnodeid: int = -1
     if global_netnodeid:
