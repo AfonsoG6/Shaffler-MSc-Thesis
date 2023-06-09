@@ -218,17 +218,21 @@ if __name__ == "__main__":
 
     yaml.dump(config, open(config_path, "w"), default_flow_style=False, sort_keys=False)
     
-    with open(os.path.join("stage", f"info_clients.pickle"), "wb") as file:
+    os.makedirs("datasets", exist_ok=True)
+    stage_path = os.path.join("datasets", "stage")
+    os.makedirs(stage_path, exist_ok=True)
+    
+    with open(os.path.join(stage_path, f"info_clients.pickle"), "wb") as file:
         pickle.dump(info_clients, file)
-    with open(os.path.join("stage", f"info_clients.json"), "w") as file:
+    with open(os.path.join(stage_path, f"info_clients.json"), "w") as file:
         json.dump(info_clients, file, indent=4)
     
     # Sort info_servers by timestamp
     info_servers.sort(key=lambda x: x["timestamp"])
 
-    with open(os.path.join("stage", f"info_servers.pickle"), "wb") as file:
+    with open(os.path.join(stage_path, f"info_servers.pickle"), "wb") as file:
         pickle.dump(info_servers, file)
-    with open(os.path.join("stage", f"info_servers.json"), "w") as file:
+    with open(os.path.join(stage_path, f"info_servers.json"), "w") as file:
         json.dump(info_servers, file, indent=4)
 
     print("Done!")
