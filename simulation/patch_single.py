@@ -82,6 +82,8 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
         new_host["processes"].append(tgen_proc)
     for process in new_host["processes"]:
         process["start_time"] += duration*idx
+        if "shutdown_time" in process.keys():
+            process["shutdown_time"] += duration*idx
     hosts[newhostname] = new_host
     print(f"Added {newhostname} to shadow.config.yaml")
     #patch_server_tgenrc(port, tgen_server_path, os.path.join(tgen_server_dir_path, f"{port}.tgenrc.graphml"))
