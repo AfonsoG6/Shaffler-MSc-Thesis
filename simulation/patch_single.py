@@ -160,7 +160,8 @@ if __name__ == "__main__":
         while not netnodeid_ok(config["hosts"], netnodeid):
             netnodeid = random.randint(0, 2520)
 
-    for host_key in config["hosts"].keys():
+    keys: list = list(config["hosts"].keys())
+    for host_key in keys:
         if host_key.startswith("markov"):
             del config["hosts"][host_key]
 
