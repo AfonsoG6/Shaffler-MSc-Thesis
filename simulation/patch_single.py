@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from math import ceil
 from copy import deepcopy
+import shutil
 import random
 import yaml
 import re
@@ -34,7 +35,7 @@ def netnodeid_ok(hosts: dict, netnodeid: int):
     return True
 
 def create_client(hosts: dict, idx: int, netnodeid: int = -1):
-    global hosts_path, tgen_server_path, tgen_server_dir_path, duration
+    global hosts_path, duration
     
     newhostname: str = f"customclient{idx}"
     port: int = 10000 + idx
@@ -145,9 +146,9 @@ if __name__ == "__main__":
     conf_path = os.path.join(simulation, "conf")
     hosts_path = os.path.join(simulation, "shadow.data.template", "hosts")
     
-    tgen_server_path = os.path.join(conf_path, "tgen-server.tgenrc.graphml")
-    tgen_server_dir_path = os.path.join(conf_path, "tgen-server")
-    os.makedirs(tgen_server_dir_path, exist_ok=True)
+    for host_template in os.listdir(hosts_path):
+        if host_template.startswith("markov"):
+            shutil.rmtree(os.path.join(hosts_path, host_template))
     
     nodes: dict = load_nodes()
     config = yaml.load(open(config_path, "r"), Loader=yaml.FullLoader)
@@ -158,6 +159,10 @@ if __name__ == "__main__":
         netnodeid: int = random.randint(0, 2520)
         while not netnodeid_ok(config["hosts"], netnodeid):
             netnodeid = random.randint(0, 2520)
+
+    for host_key in config["hosts"].keys():
+        if host_key.startswith("markov"):
+            del config["hosts"][host_key]
 
     ports: set = set()
     for idx in range(num_clients):
