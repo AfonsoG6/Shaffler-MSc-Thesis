@@ -1,11 +1,18 @@
 from argparse import ArgumentParser
 from math import ceil
 from copy import deepcopy
+import pickle
+import json
 import shutil
 import random
 import yaml
 import re
 import os
+
+info_clients: dict = {} # {client_name: [{timestamp, circuit_idx, site_idx}]}
+info_servers: list = [] # [{timestamp, port, circuit_idx, site_idx}]
+site_counter: int = 0
+circuits: list = []
 
 def patch_servers(hosts: dict, ports: set):
     pattern = re.compile(r"server\d+exit")
@@ -34,11 +41,30 @@ def netnodeid_ok(hosts: dict, netnodeid: int):
             return False
     return True
 
-def create_client(hosts: dict, idx: int, netnodeid: int = -1):
-    global hosts_path, duration
+def add_info_client(timestamp: int, client_name: str, circuit_idx: int, site_idx: int):
+    global info_clients
+    info_clients[client_name].append({
+        "timestamp": timestamp,
+        "duration": 120,
+        "circuit_idx": circuit_idx,
+        "site_idx": site_idx
+    })
+
+def add_info_server(timestamp: int, port: int, circuit_idx: int, site_idx: int):
+    global info_servers
+    info_servers.append({
+        "timestamp": timestamp,
+        "duration": 120,
+        "port": port,
+        "circuit_idx": circuit_idx,
+        "site_idx": site_idx
+    })
+
+def create_client(hosts: dict, client_idx: int, clients_at_once: int, netnodeid: int = -1) -> int:
+    global hosts_path, tgen_server_path, tgen_server_dir_path, duration
     
-    newhostname: str = f"customclient{idx}"
-    port: int = 10000 + idx
+    newhostname: str = f"customclient{client_idx}"
+    port: int = 10000 + client_idx%clients_at_once
     # Copy customclient directory to hosts_path
     templates_path = "templates"
     dir_path = os.path.join(templates_path, "customclient")
@@ -48,7 +74,7 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
         with open(os.path.join(dir_path, file), "r") as f:
             data = f.read()
             if file == "torrc":
-                pick: dict = pick_nodes()
+                pick: dict = circuits.pop()
                 print(f"Picked {pick} for {newhostname}")
                 data = data.replace("{entry}", pick["entry"])
                 data = data.replace("{middle}", pick["middle"])
@@ -56,6 +82,7 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
             with open(os.path.join(client_path, file), "w") as g:
                 g.write(data)
     print(f"Created {newhostname} directory")
+    
     config_path = os.path.join(templates_path, "customclient.yaml")
     new_host = yaml.load(open(config_path, "r"), Loader=yaml.FullLoader)
     if netnodeid == -1:
@@ -70,7 +97,7 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
             break
         with open(os.path.join(templates_path, "tgenrc.graphml"), "r") as f:
             data = f.read()
-            data = data.replace("{port}", str(80))
+            data = data.replace("{port}", str(port))
             data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
             data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
             with open(os.path.join(client_path, f"t{flow_start}.tgenrc.graphml"), "w") as g:
@@ -80,14 +107,19 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
         tgen_proc["start_time"] = flow_start
         tgen_proc["shutdown_time"] = flow_start + 125
         new_host["processes"].append(tgen_proc)
+        # Add to dictionaries that keep track of flows to capture
+        add_info_client(flow_start, newhostname, client_idx, site_counter)
+        add_info_server(flow_start, port, client_idx, site_counter)
+        site_counter += 1
     for process in new_host["processes"]:
-        process["start_time"] += duration*idx
+        process["start_time"] += duration*(client_idx//clients_at_once)
         if "shutdown_time" in process.keys():
-            process["shutdown_time"] += duration*idx
+            process["shutdown_time"] += duration*(client_idx//clients_at_once)
     hosts[newhostname] = new_host
     print(f"Added {newhostname} to shadow.config.yaml")
-    #patch_server_tgenrc(port, tgen_server_path, os.path.join(tgen_server_dir_path, f"{port}.tgenrc.graphml"))
-    #print(f"Created duplicate tgenrc for {newhostname} with port {port}")
+    patch_server_tgenrc(port, tgen_server_path, os.path.join(tgen_server_dir_path, f"{port}.tgenrc.graphml"))
+    print(f"Created duplicate tgenrc for {newhostname} with port {port}")
+    return port
 
 def patch_server_tgenrc(new_port: int, original_path: str, target_path: str = ""):
     if target_path == "":
@@ -99,9 +131,9 @@ def patch_server_tgenrc(new_port: int, original_path: str, target_path: str = ""
     with open(target_path, "w") as f:
         f.write(newtgenrc)
 
-def load_nodes():
-    global hosts_path
-    nodes: dict = {"entry": [], "middle": [], "exit": []}
+def load_circuits(num_clients: int) -> int:
+    global hosts_path, circuits
+    nodes: dict = {"entry": set(), "middle": set(), "exit": set()}
     fingerprints_path = os.path.join(hosts_path, "bwauthority", "v3bw")
     with open(fingerprints_path, "r") as f:
         for line in f.readlines():
@@ -109,13 +141,23 @@ def load_nodes():
                 continue
             fp: str = line.split("\t")[0].split("=")[1]
             nick: str = line.split("\t")[2].split("=")[1]
-            if "guard" in nick:
-                nodes["entry"].append(fp)
             if "exit" in nick:
-                nodes["exit"].append(fp)
-            if "relay" in nick:
-                nodes["middle"].append(fp)
-    return nodes
+                nodes["exit"].add(fp)
+            elif "guard" in nick:
+                nodes["entry"].add(fp)
+            elif "relay" in nick:
+                nodes["middle"].add(fp)
+    clients_at_once: int = min(len(nodes["entry"]), len(nodes["middle"]), len(nodes["exit"]))
+    for _ in range(ceil(num_clients/clients_at_once)):
+        nodes_not_picked = deepcopy(nodes)
+        for _ in range(clients_at_once):
+            circuit: dict = {}
+            for cat in ["entry", "middle", "exit"]:
+                choice: str = random.choice(list(nodes_not_picked[cat]))
+                circuit[cat] = choice
+                nodes_not_picked[cat].remove(choice)
+            circuits.append(circuit)
+    return clients_at_once
 
 def pick_nodes():
     global nodes
@@ -152,7 +194,8 @@ if __name__ == "__main__":
         if host_template.startswith("markov"):
             shutil.rmtree(os.path.join(hosts_path, host_template))
     
-    nodes: dict = load_nodes()
+    clients_at_once: int = load_circuits(num_clients)
+    
     config = yaml.load(open(config_path, "r"), Loader=yaml.FullLoader)
     config["general"]["stop_time"] = int(duration*num_clients)
     
@@ -169,10 +212,23 @@ if __name__ == "__main__":
 
     ports: set = set()
     for idx in range(num_clients):
-        create_client(config["hosts"], idx, netnodeid)
-        #ports.add(10000 + idx)
+        port: int = create_client(config["hosts"], idx, clients_at_once, netnodeid)
+        ports.add(port)
     patch_servers(config["hosts"], ports)
 
     yaml.dump(config, open(config_path, "w"), default_flow_style=False, sort_keys=False)
+    
+    with open(os.path.join("stage", f"info_clients.pickle"), "wb") as file:
+        pickle.dump(info_clients, file)
+    with open(os.path.join("stage", f"info_clients.json"), "w") as file:
+        json.dump(info_clients, file, indent=4)
+    
+    # Sort info_servers by timestamp
+    info_servers.sort(key=lambda x: x["timestamp"])
+
+    with open(os.path.join("stage", f"info_servers.pickle"), "wb") as file:
+        pickle.dump(info_servers, file)
+    with open(os.path.join("stage", f"info_servers.json"), "w") as file:
+        json.dump(info_servers, file, indent=4)
 
     print("Done!")
