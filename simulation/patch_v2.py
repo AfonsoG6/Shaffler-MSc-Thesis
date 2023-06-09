@@ -192,6 +192,10 @@ if __name__ == "__main__":
     conf_path = os.path.join(simulation, "conf")
     hosts_path = os.path.join(simulation, "shadow.data.template", "hosts")
     
+    tgen_server_path = os.path.join(conf_path, "tgen-server.tgenrc.graphml")
+    tgen_server_dir_path = os.path.join(conf_path, "tgen-server")
+    os.makedirs(tgen_server_dir_path, exist_ok=True)
+    
     for host_template in os.listdir(hosts_path):
         if host_template.startswith("markov"):
             shutil.rmtree(os.path.join(hosts_path, host_template))
