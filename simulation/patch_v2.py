@@ -43,6 +43,8 @@ def netnodeid_ok(hosts: dict, netnodeid: int):
 
 def add_info_client(timestamp: int, client_name: str, circuit_idx: int, site_idx: int):
     global info_clients
+    if client_name not in info_clients.keys():
+        info_clients[client_name] = []
     info_clients[client_name].append({
         "timestamp": timestamp,
         "duration": 120,
