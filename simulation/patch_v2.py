@@ -236,3 +236,6 @@ if __name__ == "__main__":
         json.dump(info_servers, file, indent=4)
 
     print("Done!")
+    print(f"Total clients: {num_clients}")
+    print(f"Clients running at a time: {clients_at_once}")
+    print(f"Total duration: {int(duration*ceil(num_clients/clients_at_once))/3600} hours")
