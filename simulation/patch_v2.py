@@ -61,7 +61,7 @@ def add_info_server(timestamp: int, port: int, circuit_idx: int, site_idx: int):
     })
 
 def create_client(hosts: dict, client_idx: int, clients_at_once: int, netnodeid: int = -1) -> int:
-    global hosts_path, tgen_server_path, tgen_server_dir_path, duration
+    global hosts_path, tgen_server_path, tgen_server_dir_path, duration, site_counter, circuits
     
     newhostname: str = f"customclient{client_idx}"
     port: int = 10000 + client_idx%clients_at_once
