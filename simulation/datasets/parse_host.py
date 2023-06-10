@@ -43,9 +43,9 @@ def get_orientation_server(ip: IP, own_address: str) -> int:
 
 def get_port(ip: IP, own_address: str) -> int:
     if inet_to_str(ip.src) == own_address:
-        return int.from_bytes(ip.data[0:2], "big")
+        return ip.src_port
     elif inet_to_str(ip.dst) == own_address:
-        return int.from_bytes(ip.data[2:4], "big")
+        return ip.dst_port
     else:
         raise Exception("Packet is not related to the server")
 
@@ -90,7 +90,6 @@ def parse_pcap_inflow(info_client: list, hostname: str, hosts_path: str, output_
     os.makedirs(inflow_path, exist_ok=True)
 
     pcap_path: str = os.path.join(hosts_path, hostname, "eth0.pcap")
-    print(f"[{hostname} process] Parsing {pcap_path}...")
     own_address: str = get_address(os.path.join(hosts_path, hostname))
     with open(pcap_path, "rb") as file:
         reader: Reader = Reader(file)
@@ -142,7 +141,6 @@ def main():
         raise Exception(f"Info_Servers path is not valid: {os.path.abspath(info_servers_path)}")
     os.makedirs(output_path, exist_ok=True)
 
-    print(f"[{hostname}] Loading data...")
     with open(info_clients_path, "rb") as file:
         info_clients = pickle.load(file)
     with open(info_servers_path, "rb") as file:
