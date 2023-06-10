@@ -29,4 +29,12 @@ docker attach $(docker container list | grep "rendezmix.*Up" | awk '{print $1}')
 # Docker Detach: CTRL + P->Q(base)
 
 # Docker Copy:
-docker cp $(docker container list | grep "rendezmix.*Up" | awk '{print $1}'):/root/shadowM .
+docker cp $(docker container list | grep "rendezmix.*Up" | awk '{print $1}'):/part/simulation/tornet-0.005.zip ~/nas
+
+# Misc.:
+
+cd /root/tor && make && make install
+ln -s $(which tor) ~/.local/bin/tor
+cd /root/rendezmix/ && git reset --hard HEAD && git pull && rm -rf /part/simulation && cp -r /root/rendezmix/simulation /part && cd /part/simulation
+
+cd /part/simulation && tornettools simulate tornet-0.005 && cd datasets/ && python3 stage.py -s ../tornet-0.005 && python3 parse.py -s ../tornet-0.005 -o /root/shadowM1e-1 && python3 cleanup.py -d /root/shadowM1e-1
