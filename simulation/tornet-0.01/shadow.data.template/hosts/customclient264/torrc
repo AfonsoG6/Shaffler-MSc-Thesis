@@ -1,0 +1,6 @@
+# Enter any host-specific tor config options here.
+# Note that any option specified here may override a default from torrc-defaults.
+UseEntryGuards 1
+EntryNodes $756BFB4827CC86DF923DB2EF020082C6919BCE63
+MiddleNodes $D12BDADDF222E428F55741564156892E949A39FA
+ExitNodes $4E6B91CD65AD6DF8A749F00631877A1F40B07E3E

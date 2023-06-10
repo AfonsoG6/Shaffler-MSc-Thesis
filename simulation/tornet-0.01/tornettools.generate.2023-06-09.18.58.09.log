@@ -1,0 +1,42 @@
+2023-06-09 18:58:09 1686337089.819668 [tornettools] [INFO] Logging system initialized! Logging events to stdout and to '/part/simulation/tornet-0.01/tornettools.generate.2023-06-09.18.58.09.log'
+2023-06-09 18:58:09 1686337089.819826 [tornettools] [INFO] Seeded standard and numpy PRNGs with seed=1153054082
+2023-06-09 18:58:09 1686337089.819929 [tornettools] [INFO] The argument namespace is: Namespace(atlas_path=None, command='generate', do_trace=True, do_version=False, events_csv='BW,CIRC,STREAM', exit_user_scale=1.0, formatter_class=<class '__main__.CustomHelpFormatter'>, func=<function generate at 0x7f4ad5ae0c10>, geoip_path=None, load_scale=1.0, network_info_path='/part/simulation/data/networkinfo_staging.gml', network_scale=0.01, nprocesses=104, onion_service_user_scale=0.0, prefix='/part/simulation/tornet-0.01', process_scale=0.01, quiet=0, relay_info_path='/part/simulation/data/relayinfo_staging_2023-04-01--2023-04-30.json', seed=1153054082, server_scale=0.1, tmodel_git_path='/part/simulation/data/tmodel-ccs2018.github.io', torexe='/root/.local/bin/tor', torgencertexe='/usr/local/bin/tor-gencert', torperf_num_exit=0, torperf_num_onion_service=0, user_info_path='/part/simulation/data/userinfo_staging_2023-04-01--2023-04-30.json')
+2023-06-09 18:58:09 1686337089.830982 [tornettools] [INFO] The platform is: Linux-5.15.0-73-generic-x86_64-with-glibc2.29
+2023-06-09 18:58:09 1686337089.831110 [tornettools] [INFO] System info: uname_result(system='Linux', node='48a3cb59841e', release='5.15.0-73-generic', version='#80-Ubuntu SMP Mon May 15 15:18:26 UTC 2023', machine='x86_64', processor='x86_64')
+2023-06-09 18:58:09 1686337089.925146 [tornettools] [INFO] Generating network using tor and tor-gencert at /root/.local/bin/tor and /usr/local/bin/tor-gencert
+2023-06-09 18:58:09 1686337089.925222 [tornettools] [INFO] Copying atlas topology file (use the '-a/--atlas' option to disable)
+2023-06-09 18:58:09 1686337089.932879 [tornettools] [INFO] Reading staged network info /part/simulation/data/networkinfo_staging.gml
+2023-06-09 18:58:10 1686337090.101715 [tornettools] [INFO] Finished reading staged network info
+2023-06-09 18:58:10 1686337090.101775 [tornettools] [INFO] Sampling Tor relays now
+2023-06-09 18:58:10 1686337090.467684 [tornettools] [INFO] A full Tor network has 6666 relays with total capacity of 837.7560374239999 Gbit/s
+2023-06-09 18:58:10 1686337090.474353 [tornettools] [INFO] Bandwidth-weights (relevant ones) of a typical consensus:
+2023-06-09 18:58:10 1686337090.474415 [tornettools] [INFO] Casename: Case 3a (E scarce), with: Wgg=6002.475124579277, Wgd=0, Wee=10000, Wed=10000, Wmg=3997.524875420723, Wme=0, Wmd=0
+2023-06-09 18:58:10 1686337090.474486 [tornettools] [INFO] 67 relays: relative position weights:
+2023-06-09 18:58:10 1686337090.474518 [tornettools] [INFO] g: chosen=0.5739740714092583, target=0.5651115982727397, diff=0.008862473136518556
+2023-06-09 18:58:10 1686337090.474547 [tornettools] [INFO] e: chosen=0.13454768613614643, target=0.13905500768405338, diff=-0.004507321547906951
+2023-06-09 18:58:10 1686337090.474574 [tornettools] [INFO] ge: chosen=0.18209965095356345, target=0.18253133006727618, diff=-0.00043167911371272405
+2023-06-09 18:58:10 1686337090.474601 [tornettools] [INFO] m: chosen=0.10937859150103185, target=0.11330206397593176, diff=-0.003923472474899908
+2023-06-09 18:58:10 1686337090.474625 [tornettools] [INFO] The max weight divergence between positions is 0.008862473136518556
+2023-06-09 18:58:10 1686337090.474660 [tornettools] [INFO] Renormalizing weights for scaled network using total weight=0.00938694823200058
+2023-06-09 18:58:10 1686337090.474724 [tornettools] [INFO] Bandwidth-weights (relevant ones) of our scaled down consensus of 66 relays:
+2023-06-09 18:58:10 1686337090.474754 [tornettools] [INFO] Casename: Case 3a (E scarce), with: Wgg=5952.818227768359, Wgd=0, Wee=10000, Wed=10000, Wmg=4047.181772231641, Wme=0, Wmd=0
+2023-06-09 18:58:10 1686337090.474940 [tornettools] [INFO] Chose 66 of 6666 relays using scale factor 0.01
+2023-06-09 18:58:10 1686337090.476447 [tornettools] [INFO] Generating Tor key material now, this may take awhile...
+2023-06-09 18:58:10 1686337090.960816 [tornettools] [INFO] Generated fingerprints and keys for 69 Tor nodes (3 authorities and 66 relays)
+2023-06-09 18:58:11 1686337091.571823 [tornettools] [INFO] Generating Clients
+2023-06-09 18:58:11 1686337091.572992 [tornettools] [INFO] Privcount measurements scaled to 11121 Tor users, 7919 active and 2695 inactive
+2023-06-09 18:58:11 1686337091.573168 [tornettools] [INFO] Privcount measurements scaled to 28809 exit circuits, 14919 active and 13275 inactive
+2023-06-09 18:58:11 1686337091.591608 [tornettools] [INFO] We will use 100 TGen client processes to emulate 7523.05 Tor exit users and create 14900 exit circuits every 10 minutes in aggregate
+2023-06-09 18:58:11 1686337091.591822 [tornettools] [INFO] We will use 0 TGen client processes to emulate 0.0 Tor onion-service users and create 0 onion-service circuits every 10 minutes in aggregate
+2023-06-09 18:58:11 1686337091.591963 [tornettools] [INFO] We will use 0 exit perf nodes to benchmark Tor exit performance
+2023-06-09 18:58:11 1686337091.592077 [tornettools] [INFO] We will use 0 onion-service perf nodes to benchmark Tor onion-service performance
+2023-06-09 18:58:11 1686337091.592208 [tornettools] [INFO] Generating Servers
+2023-06-09 18:58:11 1686337091.602110 [tornettools] [DEBUG] System call: /root/.local/bin/tor --version (runtime: 0.01)
+2023-06-09 18:58:11 1686337091.789581 [tornettools] [DEBUG] GETCONF __owningcontrollerprocess (runtime: 0.0004)
+2023-06-09 18:58:11 1686337091.792412 [tornettools] [DEBUG] RESETCONF __OwningControllerProcess (runtime: 0.0022)
+2023-06-09 18:58:11 1686337091.793583 [tornettools] [DEBUG] GETINFO version (runtime: 0.0008)
+2023-06-09 18:58:11 1686337091.795272 [tornettools] [INFO] Error while receiving a control message (SocketClosed): received exception "read of closed file"
+2023-06-09 18:58:11 1686337091.800433 [tornettools] [INFO] We will use 10 TGen exit servers and 0 TGen onion-service servers to serve 100 TGen exit clients and 0 TGen onion-service clients
+2023-06-09 18:58:11 1686337091.801978 [tornettools] [INFO] Generating Tor configuration files
+2023-06-09 18:58:11 1686337091.820421 [tornettools] [INFO] Generating TGen configuration files
+2023-06-09 18:58:11 1686337091.894529 [tornettools] [INFO] Constructing Shadow config YAML file
