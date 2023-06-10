@@ -1162,7 +1162,7 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
       if (cell->command == CELL_RELAY) {
         circ = circuit_get_by_circid_channel(cell->circ_id, &(chan->base_));
         if (circ && circ->delay_command && probably_middle_node(conn, circ)) {
-          delay_cell(circ, chan, cell); // RENDEZMIX
+          delay_cell_independent(circ, chan, cell); // RENDEZMIX
         }
       }
       channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
@@ -1172,7 +1172,7 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
       if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
           cell->command <= CELL_RELAY_DELAY_HIGHEST) {
         if (probably_middle_node(conn, circ)) {
-          delay_cell(circ, chan, cell); // RENDEZMIX
+          delay_cell_independent(circ, chan, cell); // RENDEZMIX
         }
         channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
         break;
@@ -3336,4 +3336,23 @@ void delay_cell(circuit_t *circ, channel_tls_t *chan, cell_t *cell)
   clock_gettime(CLOCK_REALTIME, &last_packet_ts);
   if (direction == CELL_DIRECTION_IN) circ->last_packet_ts_in = last_packet_ts;
   else circ->last_packet_ts_out = last_packet_ts;
+}
+
+void delay_cell_independent(circuit_t *circ, channel_tls_t *chan, cell_t *cell)
+{
+  struct timespec ts;
+  int direction, res = 0;
+  double microsec;
+
+  if (!circ || (cell->command == CELL_RELAY && !circ->delay_command)) return;
+  // After receiving a delay command once, we mark the circuit as using delays
+  circ->delay_command = cell->command == CELL_RELAY ? CELL_RELAY_DELAY_HIGHEST : cell->command;
+
+  direction = get_direction(circ, chan, cell);
+  ts = get_delay_timespec(circ, direction);
+
+  log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] microsec=%f states=%d<-->%d", get_direction_str(direction), microsec, circ->delay_state_in, circ->delay_state_out);
+  do {
+    res = nanosleep(&ts, &ts);
+  } while (res && errno == EINTR);
 }
