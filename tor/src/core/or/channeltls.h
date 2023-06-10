@@ -112,4 +112,6 @@ struct timespec get_delay_timespec(circuit_t *circ, int direction);
 
 void delay_cell(circuit_t *circ, channel_tls_t *chan, cell_t *cell);
 
+void delay_cell_independent(circuit_t *circ, channel_tls_t *chan, cell_t *cell);
+
 #endif /* !defined(TOR_CHANNELTLS_H) */
