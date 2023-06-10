@@ -3351,6 +3351,7 @@ void delay_cell_independent(circuit_t *circ, channel_tls_t *chan, cell_t *cell)
   direction = get_direction(circ, chan, cell);
   ts = get_delay_timespec(circ, direction);
 
+  microsec = ts.tv_sec * 1e6 + ts.tv_nsec / 1e3;
   log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] microsec=%f states=%d<-->%d", get_direction_str(direction), microsec, circ->delay_state_in, circ->delay_state_out);
   do {
     res = nanosleep(&ts, &ts);
