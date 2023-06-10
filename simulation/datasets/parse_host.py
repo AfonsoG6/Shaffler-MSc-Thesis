@@ -1,11 +1,22 @@
 from argparse import ArgumentParser
 from dpkt.pcap import Reader
-from dpkt.ip import IP, inet_to_str
+from dpkt.ip import inet_to_str
 import pickle
 import os
 
 info_clients: dict = {} # {client_name: [{timestamp, circuit_idx, site_idx}]}
 info_servers: list = [] # [{timestamp, port, circuit_idx, site_idx}]
+
+class IP:
+    def __init__(self, packet: bytes) -> None:
+        self.src = packet[12:16]
+        self.dst = packet[16:20]
+        self.len = int.from_bytes(packet[2:4], "big")
+        self.src_port = int.from_bytes(packet[20:22], "big")
+        self.dst_port = int.from_bytes(packet[22:24], "big")
+    
+    def __str__(self) -> str:
+        return f"Source: {inet_to_str(self.src)}:{self.src_port}\nDestination: {inet_to_str(self.dst)}:{self.dst_port}\nLength: {self.len}"
 
 def get_address(host_path: str) -> str:
     file_path: str = os.path.join(host_path, "hostname.1000.stdout")
@@ -52,11 +63,7 @@ def parse_pcap_outflow(info_servers: list, hostname: str, hosts_path: str, outpu
         reader: Reader = Reader(file)
         completed_idx: int = 0
         for timestamp, packet in reader:
-            try:
-                ip: IP = IP(packet)
-            except:
-                print(f"Invalid IP packet: {packet}")
-                continue
+            ip: IP = IP(packet)
             for idx in range(completed_idx, len(info_servers)):
                 if timestamp < info_servers[idx]["timestamp"]:
                     break
@@ -89,11 +96,7 @@ def parse_pcap_inflow(info_client: list, hostname: str, hosts_path: str, output_
         reader: Reader = Reader(file)
         completed_idx: int = 0
         for timestamp, packet in reader:
-            try:
-                ip: IP = IP(packet)
-            except:
-                print(f"Invalid IP packet: {packet}")
-                continue
+            ip: IP = IP(packet)
             for idx in range(completed_idx, len(info_client)):
                 if timestamp < info_client[idx]["timestamp"]:
                     break
@@ -101,7 +104,7 @@ def parse_pcap_inflow(info_client: list, hostname: str, hosts_path: str, output_
                     completed_idx = max(completed_idx, idx+1)
                     continue
                 try:
-                    orientation = get_orientation_client(IP(packet), own_address)
+                    orientation = get_orientation_client(ip, own_address)
                 except:
                     continue
                 file_path: str = os.path.join(inflow_path, f"{info_client[idx]['circuit_idx']}_{info_client[idx]['site_idx']}")
