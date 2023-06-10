@@ -110,8 +110,8 @@ def create_client(hosts: dict, client_idx: int, clients_at_once: int, netnodeid:
         tgen_proc["shutdown_time"] = flow_start + 125
         new_host["processes"].append(tgen_proc)
         # Add to dictionaries that keep track of flows to capture
-        add_info_client(flow_start, newhostname, client_idx, site_counter)
-        add_info_server(flow_start, port, client_idx, site_counter)
+        add_info_client(flow_start + duration*(client_idx//clients_at_once), newhostname, client_idx, site_counter)
+        add_info_server(flow_start + duration*(client_idx//clients_at_once), port, client_idx, site_counter)
         site_counter += 1
     for process in new_host["processes"]:
         process["start_time"] += duration*(client_idx//clients_at_once)
