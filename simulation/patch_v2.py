@@ -47,7 +47,7 @@ def add_info_client(timestamp: int, client_name: str, circuit_idx: int, site_idx
         info_clients[client_name] = []
     info_clients[client_name].append({
         "timestamp": timestamp,
-        "duration": 120,
+        "duration": 30,
         "circuit_idx": circuit_idx,
         "site_idx": site_idx
     })
@@ -56,7 +56,7 @@ def add_info_server(timestamp: int, port: int, circuit_idx: int, site_idx: int):
     global info_servers
     info_servers.append({
         "timestamp": timestamp,
-        "duration": 120,
+        "duration": 30,
         "port": port,
         "circuit_idx": circuit_idx,
         "site_idx": site_idx
@@ -94,8 +94,8 @@ def create_client(hosts: dict, client_idx: int, clients_at_once: int, netnodeid:
     new_host["network_node_id"] = netnodeid
     tgen_proc_template = new_host["processes"][3]
     new_host["processes"] = new_host["processes"][:3]
-    for flow_start in range(300 + random.randint(0, 120), duration, 130):
-        if flow_start + 125 >= duration:
+    for flow_start in range(300, duration, 35):
+        if flow_start + 30 >= duration:
             break
         with open(os.path.join(templates_path, "tgenrc.graphml"), "r") as f:
             data = f.read()
@@ -107,7 +107,7 @@ def create_client(hosts: dict, client_idx: int, clients_at_once: int, netnodeid:
         tgen_proc = deepcopy(tgen_proc_template)
         tgen_proc["args"] = f"t{flow_start}.tgenrc.graphml"
         tgen_proc["start_time"] = flow_start
-        tgen_proc["shutdown_time"] = flow_start + 125
+        tgen_proc["shutdown_time"] = flow_start + 30
         new_host["processes"].append(tgen_proc)
         # Add to dictionaries that keep track of flows to capture
         add_info_client(flow_start + duration*(client_idx//clients_at_once), newhostname, client_idx, site_counter)
