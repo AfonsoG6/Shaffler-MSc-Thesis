@@ -51,7 +51,7 @@ def parse_oniontrace(hostname: str, hosts_path: str) -> None:
                 if "$" in site:
                     continue
                 timestamp: float = round(float(line.split(" ")[2]) + CLOCK_SYNC, 6)
-                if timestamp < last_start_ts + 130:
+                if timestamp < last_start_ts + 35:
                     # Still the same flow
                     continue
                 last_start_ts = timestamp
@@ -59,13 +59,13 @@ def parse_oniontrace(hostname: str, hosts_path: str) -> None:
                 site_counter += 1
                 info_clients[hostname].append({
                     "timestamp": timestamp,
-                    "duration": 120,
+                    "duration": 30,
                     "circuit_idx": circuit_idx,
                     "site_idx": site_idx
                 })
                 info_servers.append({
                     "timestamp": timestamp,
-                    "duration": 120,
+                    "duration": 30,
                     "port": port,
                     "circuit_idx": circuit_idx,
                     "site_idx": site_idx
