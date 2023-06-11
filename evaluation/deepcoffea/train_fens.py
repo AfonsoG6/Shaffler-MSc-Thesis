@@ -315,7 +315,7 @@ if __name__ == "__main__":
 
     model_triplet.compile(loss=identity_loss, optimizer=opt)
 
-    batch_size = 256  # batch_size_value
+    batch_size = 128  # batch_size_value
 
     def intersect(a, b):
         return list(set(a) & set(b))
