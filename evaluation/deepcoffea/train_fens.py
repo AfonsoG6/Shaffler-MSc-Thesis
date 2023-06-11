@@ -36,7 +36,7 @@ def get_params():
     parser.add_argument("--alpha", required=False, default=0.1)
     parser.add_argument("--dataset", "-d", required=False, default="shadowV")
     parser.add_argument("--gpu", "-g", required=False, type=int, default=0)
-    parser.add_argument("--target_loss", "-l", required=False, type=int, default=0.002)
+    parser.add_argument("--target_loss", "-l", required=False, type=int, default=0.03)
     parser.add_argument("--max_duration", "-md", required=False, type=float, default=24) # In hours
     parser.add_argument("--max_epochs", "-me", required=False, type=int, default=250)
     args = parser.parse_args()
@@ -146,6 +146,7 @@ if __name__ == "__main__":
     test_path = f"./data/DeepCCA_model/{args.dataset}_overlap_new2021_interval"
     input_path = f"./datasets/new_dcf_data/{args.dataset}_new_overlap_interval"
     flow_length_path = f"./data/sum_test_{args.dataset}.txt"
+    log_path = f"./data/{args.dataset}_epochs.log"
 
     pad_t = t_flow_size * 2
     pad_e = e_flow_size * 2
@@ -314,7 +315,7 @@ if __name__ == "__main__":
 
     model_triplet.compile(loss=identity_loss, optimizer=opt)
 
-    batch_size = 128  # batch_size_value
+    batch_size = 256  # batch_size_value
 
     def intersect(a, b):
         return list(set(a) & set(b))
@@ -441,6 +442,9 @@ if __name__ == "__main__":
         else:
             print("loss is not improved from {}.".format(str(best_loss)))
 
+    with open(log_path, "w") as f:
+        f.write("Epoch,Loss\n")
+    
     for epoch in range(nb_epochs):
         time_passed = datetime.now() - start_time
         if best_loss < args.target_loss or time_passed.seconds > args.max_duration*3600 or epoch > args.max_epochs:
@@ -498,3 +502,6 @@ if __name__ == "__main__":
             shared_model1,
             shared_model2,
         )
+        
+        with open(log_path, "a") as f:
+            f.write(f"{epoch},{best_loss}\n")
