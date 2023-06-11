@@ -1162,7 +1162,7 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
       if (cell->command == CELL_RELAY) {
         circ = circuit_get_by_circid_channel(cell->circ_id, &(chan->base_));
         if (circ && circ->delay_command && probably_middle_node(conn, circ)) {
-          delay_cell_independent(circ, chan, cell); // RENDEZMIX
+          delay_cell(circ, chan, cell); // RENDEZMIX
         }
       }
       channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
@@ -1172,7 +1172,7 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
       if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
           cell->command <= CELL_RELAY_DELAY_HIGHEST) {
         if (probably_middle_node(conn, circ)) {
-          delay_cell_independent(circ, chan, cell); // RENDEZMIX
+          delay_cell(circ, chan, cell); // RENDEZMIX
         }
         channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
         break;
@@ -2766,6 +2766,13 @@ gen_lognormal_value(double location, double scale)
   return exp(x);
 }
 
+double
+gen_uniform_value(double low, double high) {
+  /* inverse transform sampling, scale is x_m, shape is alpha */
+  double uniform = gen_random_uniform_01();
+  return low + ((high - low) * uniform);
+}
+
 short update_circ_delay_state(short state) {
 	double r = gen_random_uniform_01();
 	if (state == 0) {
@@ -3252,6 +3259,12 @@ get_delay_microseconds_out(circuit_t *circ)
 }
 
 double
+get_delay_microseconds_uniform(void)
+{
+  return gen_uniform_value(0, 1e6);
+}
+
+double
 get_delay_scale_factor(uint8_t command)
 {
   if (command == CELL_RELAY) return 1.0;
@@ -3268,7 +3281,7 @@ get_delay_timespec(circuit_t *circ, int direction)
   do {
     if (direction == CELL_DIRECTION_IN) microsec = scale*get_delay_microseconds_in(circ);
     else microsec = scale*get_delay_microseconds_out(circ);
-  } while (microsec > scale*1e5);
+  } while (microsec > scale*2e6);
   ts.tv_sec = (time_t)(microsec / 1e6);
   ts.tv_nsec = (time_t)((microsec - ts.tv_sec * 1e6) * 1e3);
   return ts;
