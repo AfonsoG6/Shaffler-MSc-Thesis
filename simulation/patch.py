@@ -64,7 +64,7 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
     new_host["network_node_id"] = netnodeid
     tgen_proc_template = new_host["processes"][3]
     new_host["processes"] = new_host["processes"][:3]
-    for flow_start in range(300, duration, 35):
+    for flow_start in range(300 + random.randint(0, 60), duration, 60):
         if flow_start + 30 >= duration:
             break
         with open(os.path.join(templates_path, "tgenrc.graphml"), "r") as f:
@@ -163,14 +163,15 @@ if __name__ == "__main__":
         ports.add(10000 + idx)
     patch_servers(config["hosts"], ports)
 
-    for host in config["hosts"].keys():
+    
+    """ for host in config["hosts"].keys():
         for process in config["hosts"][host]["processes"]:
             if host.startswith("customclient"):
                 if process["path"].endswith("oniontrace") and process["args"].startswith("Mode=record"):
                     config["hosts"][host]["processes"].remove(process)
             else:
                 if process["path"].endswith("oniontrace"):
-                    config["hosts"][host]["processes"].remove(process)
+                    config["hosts"][host]["processes"].remove(process) """
 
     yaml.dump(config, open(config_path, "w"), default_flow_style=False, sort_keys=False)
 
