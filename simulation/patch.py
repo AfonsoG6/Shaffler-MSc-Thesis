@@ -33,6 +33,15 @@ def netnodeid_ok(hosts: dict, netnodeid: int):
             return False
     return True
 
+def get_servers_string(hosts: dict, port: int):
+    pattern = re.compile(r"server\d+exit")
+    
+    servers: list = []
+    for host in hosts.keys():
+        if pattern.match(host):
+            servers.append(f"{host}:{port}")
+    return ",".join(servers)
+
 def create_client(hosts: dict, idx: int, netnodeid: int = -1):
     global hosts_path, tgen_server_path, tgen_server_dir_path, duration
     
@@ -69,7 +78,7 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
             break
         with open(os.path.join(templates_path, "tgenrc.graphml"), "r") as f:
             data = f.read()
-            data = data.replace("{port}", str(port))
+            data = data.replace("{servers}", get_servers_string(port))
             data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
             data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
             with open(os.path.join(client_path, f"t{flow_start}.tgenrc.graphml"), "w") as g:
