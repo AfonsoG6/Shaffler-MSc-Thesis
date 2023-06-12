@@ -51,7 +51,7 @@ def parse_oniontrace(hostname: str, hosts_path: str) -> None:
                 if "$" in site:
                     continue
                 timestamp: float = round(float(line.split(" ")[2]) + CLOCK_SYNC, 6)
-                if timestamp < last_start_ts + 35:
+                if timestamp < last_start_ts + 60:
                     # Still the same flow
                     continue
                 last_start_ts = timestamp
