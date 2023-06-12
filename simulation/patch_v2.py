@@ -94,7 +94,7 @@ def create_client(hosts: dict, client_idx: int, clients_at_once: int, netnodeid:
     new_host["network_node_id"] = netnodeid
     tgen_proc_template = new_host["processes"][3]
     new_host["processes"] = new_host["processes"][:3]
-    for flow_start in range(300, duration, 35):
+    for flow_start in range(300, duration, 60):
         if flow_start + 30 >= duration:
             break
         with open(os.path.join(templates_path, "tgenrc.graphml"), "r") as f:
