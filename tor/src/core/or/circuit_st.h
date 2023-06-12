@@ -227,6 +227,13 @@ struct circuit_t {
    *  Each element of this array corresponds to a different padding machine,
    *  and we can have up to CIRCPAD_MAX_MACHINES such machines. */
   struct circpad_machine_runtime_t *padding_info[CIRCPAD_MAX_MACHINES];
+
+  /** Delay State (RENDEZMIX) */
+  uint8_t delay_command;
+  short delay_state_in;
+  short delay_state_out;
+  struct timespec last_packet_ts_in;
+  struct timespec last_packet_ts_out;
 };
 
 #endif /* !defined(CIRCUIT_ST_H) */

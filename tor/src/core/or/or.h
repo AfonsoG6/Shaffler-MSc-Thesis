@@ -538,6 +538,11 @@ typedef enum {
 #define CELL_CREATED2 11
 #define CELL_PADDING_NEGOTIATE 12
 
+/* RENDEZMIX */
+#define CELL_RELAY_DELAY_LOWEST 13
+#define CELL_RELAY_DELAY_HIGHEST 113
+#define ALL_SENDERS_DECIDE_DELAYS false // Set to true to allow all senders to decide delays (Useful for testing)
+
 #define CELL_VPADDING 128
 #define CELL_CERTS 129
 #define CELL_AUTH_CHALLENGE 130
