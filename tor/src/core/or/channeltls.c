@@ -1085,6 +1085,7 @@ void
 channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
 {
   channel_tls_t *chan;
+  circuit_t *circ;
   int handshaking;
 
   tor_assert(cell);
