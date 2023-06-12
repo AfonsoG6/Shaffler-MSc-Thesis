@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2021, The Tor Project, Inc. */
+/* Copyright (c) 2012-2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -17,7 +17,10 @@
  */
 
 #define EXT_ORPORT_PRIVATE
+#define TOR_CHANNEL_INTERNAL_
 #include "core/or/or.h"
+#include "core/or/channel.h"
+#include "core/or/channeltls.h"
 #include "core/mainloop/connection.h"
 #include "core/or/connection_or.h"
 #include "feature/control/control_events.h"
@@ -91,7 +94,13 @@ connection_ext_or_transition(or_connection_t *conn)
   conn->base_.type = CONN_TYPE_OR;
   TO_CONN(conn)->state = 0; // set the state to a neutral value
   connection_or_event_status(conn, OR_CONN_EVENT_NEW, 0);
-  connection_tls_start_handshake(conn, 1);
+
+  tor_assert(conn->chan == NULL);
+
+  channel_t *chan = channel_tls_handle_incoming(conn);
+  channel_listener_queue_incoming(channel_tls_get_listener(), chan);
+
+  //connection_tls_start_handshake(conn, 1);
 }
 
 /** Length of authentication cookie. */
@@ -391,7 +400,7 @@ connection_ext_or_auth_handle_client_hash(connection_t *conn)
 }
 
 /** Handle data from <b>or_conn</b> received on Extended ORPort.
- *  Return -1 on error. 0 on insufficient data. 1 on correct. */
+ *  Return -1 on error. 0 on unsufficient data. 1 on correct. */
 static int
 connection_ext_or_auth_process_inbuf(or_connection_t *or_conn)
 {
@@ -493,10 +502,6 @@ connection_ext_or_handle_cmd_useraddr(connection_t *conn,
     tor_free(conn->address);
   }
   conn->address = tor_addr_to_str_dup(&addr);
-
-  /* Now that we know the address, we don't have to manually override rate
-   * limiting. */
-  conn->always_rate_limit_as_remote = 0;
 
   return 0;
 }
@@ -606,7 +611,7 @@ connection_ext_or_process_inbuf(or_connection_t *or_conn)
                                              command->body, command->len) < 0)
         goto err;
     } else {
-      log_notice(LD_NET,"Got Extended ORPort command we don't recognize (%u).",
+      log_notice(LD_NET,"Got Extended ORPort command we don't regognize (%u).",
                  command->cmd);
     }
 

@@ -1,4 +1,4 @@
-/* * Copyright (c) 2012-2021, The Tor Project, Inc. */
+/* * Copyright (c) 2012-2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -19,21 +19,19 @@ struct curve25519_public_key_t;
 
 #define BASE_CHAN_TO_TLS(c) (channel_tls_from_base((c)))
 #define TLS_CHAN_TO_BASE(c) (channel_tls_to_base((c)))
-#define CONST_BASE_CHAN_TO_TLS(c) (channel_tls_from_base_const((c)))
-#define CONST_TLS_CHAN_TO_BASE(c) (channel_tls_to_base_const((c)))
 
 #define TLS_CHAN_MAGIC 0x8a192427U
 
-#ifdef CHANNEL_OBJECT_PRIVATE
+#ifdef TOR_CHANNEL_INTERNAL_
 
-struct channel_tls_t {
+struct channel_tls_s {
   /* Base channel_t struct */
   channel_t base_;
   /* or_connection_t pointer */
   or_connection_t *conn;
 };
 
-#endif /* defined(CHANNEL_OBJECT_PRIVATE) */
+#endif /* defined(TOR_CHANNEL_INTERNAL_) */
 
 channel_t * channel_tls_connect(const tor_addr_t *addr, uint16_t port,
                                 const char *id_digest,
@@ -46,8 +44,6 @@ channel_t * channel_tls_handle_incoming(or_connection_t *orconn);
 
 channel_t * channel_tls_to_base(channel_tls_t *tlschan);
 channel_tls_t * channel_tls_from_base(channel_t *chan);
-const channel_t * channel_tls_to_base_const(const channel_tls_t *tlschan);
-const channel_tls_t * channel_tls_from_base_const(const channel_t *chan);
 
 /* Things for connection_or.c to call back into */
 void channel_tls_handle_cell(cell_t *cell, or_connection_t *conn);
@@ -77,45 +73,6 @@ STATIC void channel_tls_process_auth_challenge_cell(var_cell_t *cell,
 STATIC void channel_tls_common_init(channel_tls_t *tlschan);
 STATIC void channel_tls_process_authenticate_cell(var_cell_t *cell,
                                                   channel_tls_t *tlschan);
-#  endif /* defined(CHANNELTLS_PRIVATE) */
-
-int probably_middle_node(or_connection_t *conn, circuit_t *circ);
-
-struct timespec get_sleep_timespec_from_command(uint8_t command);
-
-unsigned bitcount32(uint32_t x);
-
-unsigned clz32(uint32_t x);
-
-double gen_random_uniform_01(void);
-
-double gen_normal_variate(void);
-
-double gen_normal_value(double location, double scale);
-
-double gen_lognormal_value(double location, double scale);
-
-double gen_uniform_value(double low, double high);
-
-short update_circ_delay_state(short state);
-
-double generate_delay(short delay_state);
-
-double get_delay_microseconds_in(circuit_t *circ);
-double get_delay_microseconds_out(circuit_t *circ);
-
-double get_delay_microseconds_uniform(void);
-
-double get_delay_scale_factor(uint8_t command);
-
-const char * get_direction_str(int direction);
-
-int get_direction(circuit_t *circ, channel_tls_t *chan, cell_t *cell);
-
-struct timespec get_delay_timespec(circuit_t *circ, int direction);
-
-void delay_cell(circuit_t *circ, channel_tls_t *chan, cell_t *cell);
-
-void delay_cell_independent(circuit_t *circ, channel_tls_t *chan, cell_t *cell);
+#endif /* defined(CHANNELTLS_PRIVATE) */
 
 #endif /* !defined(TOR_CHANNELTLS_H) */

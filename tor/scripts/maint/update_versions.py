@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 
-# Future imports for Python 2.7, mandatory in 3.0
-from __future__ import division
 from __future__ import print_function
-from __future__ import unicode_literals
 
 import io
 import os
@@ -98,7 +95,7 @@ def update_file(fname,
     replace_on_change(fname, have_changed)
 
 # Find out our version
-with open(P("configure.ac")) as f:
+with open("configure.ac") as f:
     version = find_version(f)
 
 # If we have no version, we can't proceed.
@@ -129,3 +126,8 @@ update_file(P("contrib/win32build/tor-mingw.nsi.in"),
             re.compile(r'!define VERSION .*'),
             u'!define VERSION "{}"'.format(version),
             encoding="iso-8859-1")
+
+# In src/win32/orconfig.h, we replace the definition of VERSION.
+update_file(P("src/win32/orconfig.h"),
+            re.compile(r'#define VERSION .*'),
+            u'#define VERSION "{}"'.format(version))

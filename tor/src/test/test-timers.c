@@ -1,4 +1,4 @@
-/* Copyright 2016-2021, The Tor Project, Inc. */
+/* Copyright 2016-2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "orconfig.h"
@@ -14,6 +14,9 @@
 #include "lib/log/util_bug.h"
 #include "lib/time/compat_time.h"
 #include "lib/wallclock/timeval.h"
+
+#include "lib/subsys/subsys.h"
+#include "lib/evloop/evloop_sys.h"
 
 #define N_TIMERS 1000
 #define MAX_DURATION 30
@@ -59,9 +62,15 @@ main(int argc, char **argv)
 {
   (void)argc;
   (void)argv;
-  tor_libevent_cfg_t cfg;
+
+  if (sys_evloop.initialize()) {
+    printf("Couldn't initialize evloop subsystem; exiting.\n");
+    return 1;
+  }
+
+  tor_libevent_cfg cfg;
   memset(&cfg, 0, sizeof(cfg));
-  tor_libevent_initialize(&cfg);
+  tor_libevent_initialize(&cfg, 0);
   timers_initialize();
   init_logging(1);
 

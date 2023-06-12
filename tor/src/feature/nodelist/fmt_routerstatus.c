@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2021, The Tor Project, Inc. */
+ * Copyright (c) 2007-2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -15,20 +15,21 @@
 #include "feature/nodelist/fmt_routerstatus.h"
 
 #include "core/or/policies.h"
-#include "feature/dirauth/dirvote.h"
-#include "feature/nodelist/routerinfo_st.h"
 #include "feature/nodelist/routerlist.h"
+#include "feature/dirauth/dirvote.h"
+
+#include "feature/nodelist/routerinfo_st.h"
 #include "feature/nodelist/vote_routerstatus_st.h"
-#include "feature/stats/rephist.h"
 
 #include "lib/crypt_ops/crypto_format.h"
 
 /** Helper: write the router-status information in <b>rs</b> into a newly
  * allocated character buffer.  Use the same format as in network-status
  * documents.  If <b>version</b> is non-NULL, add a "v" line for the platform.
- * If <b>declared_publish_time</b> is nonnegative, we declare it as the
- * publication time.  Otherwise we look for a publication time in <b>vrs</b>,
- * and fall back to a default (not useful) publication time.
+ *
+ * consensus_method is the current consensus method when format is
+ * NS_V3_CONSENSUS or NS_V3_CONSENSUS_MICRODESC. It is ignored for other
+ * formats: pass ROUTERSTATUS_FORMAT_NO_CONSENSUS_METHOD.
  *
  * Return 0 on success, -1 on failure.
  *
@@ -41,14 +42,13 @@
  *   NS_V3_VOTE - Output a complete V3 NS vote. If <b>vrs</b> is present,
  *        it contains additional information for the vote.
  *   NS_CONTROL_PORT - Output a NS document for the control port.
- *
  */
 char *
 routerstatus_format_entry(const routerstatus_t *rs, const char *version,
                           const char *protocols,
                           routerstatus_format_type_t format,
-                          const vote_routerstatus_t *vrs,
-                          time_t declared_publish_time)
+                          int consensus_method,
+                          const vote_routerstatus_t *vrs)
 {
   char *summary;
   char *result = NULL;
@@ -58,36 +58,31 @@ routerstatus_format_entry(const routerstatus_t *rs, const char *version,
   char digest64[BASE64_DIGEST_LEN+1];
   smartlist_t *chunks = smartlist_new();
 
-  if (declared_publish_time >= 0) {
-    format_iso_time(published, declared_publish_time);
-  } else if (vrs) {
-    format_iso_time(published, vrs->published_on);
-  } else {
-    strlcpy(published, "2038-01-01 00:00:00", sizeof(published));
-  }
-
-  const char *ip_str = fmt_addr(&rs->ipv4_addr);
-  if (ip_str[0] == '\0')
-    goto err;
-
+  format_iso_time(published, rs->published_on);
   digest_to_base64(identity64, rs->identity_digest);
   digest_to_base64(digest64, rs->descriptor_digest);
 
   smartlist_add_asprintf(chunks,
-                   "r %s %s %s%s%s %s %" PRIu16 " %" PRIu16 "\n",
+                   "r %s %s %s%s%s %s %d %d\n",
                    rs->nickname,
                    identity64,
                    (format==NS_V3_CONSENSUS_MICRODESC)?"":digest64,
                    (format==NS_V3_CONSENSUS_MICRODESC)?"":" ",
                    published,
-                   ip_str,
-                   rs->ipv4_orport,
-                   rs->ipv4_dirport);
+                   fmt_addr32(rs->addr),
+                   (int)rs->or_port,
+                   (int)rs->dir_port);
 
   /* TODO: Maybe we want to pass in what we need to build the rest of
    * this here, instead of in the caller. Then we could use the
    * networkstatus_type_t values, with an additional control port value
    * added -MP */
+
+  /* V3 microdesc consensuses only have "a" lines in later consensus methods
+   */
+  if (format == NS_V3_CONSENSUS_MICRODESC &&
+      consensus_method < MIN_METHOD_FOR_A_LINES_IN_MICRODESC_CONSENSUS)
+    goto done;
 
   /* Possible "a" line. At most one for now. */
   if (!tor_addr_is_null(&rs->ipv6_addr)) {
@@ -99,7 +94,7 @@ routerstatus_format_entry(const routerstatus_t *rs, const char *version,
     goto done;
 
   smartlist_add_asprintf(chunks,
-                   "s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+                   "s%s%s%s%s%s%s%s%s%s%s%s\n",
                   /* These must stay in alphabetical order. */
                    rs->is_authority?" Authority":"",
                    rs->is_bad_exit?" BadExit":"",
@@ -107,11 +102,9 @@ routerstatus_format_entry(const routerstatus_t *rs, const char *version,
                    rs->is_fast?" Fast":"",
                    rs->is_possible_guard?" Guard":"",
                    rs->is_hs_dir?" HSDir":"",
-                   rs->is_middle_only?" MiddleOnly":"",
                    rs->is_flagged_running?" Running":"",
                    rs->is_stable?" Stable":"",
                    rs->is_staledesc?" StaleDesc":"",
-                   rs->is_sybil?" Sybil":"",
                    rs->is_v2_dir?" V2Dir":"",
                    rs->is_valid?" Valid":"");
 
@@ -131,8 +124,6 @@ routerstatus_format_entry(const routerstatus_t *rs, const char *version,
     if (format != NS_CONTROL_PORT) {
       /* Blow up more or less nicely if we didn't get anything or not the
        * thing we expected.
-       * This should be kept in sync with the function
-       * routerstatus_has_visibly_changed and the struct routerstatus_t
        */
       if (!desc) {
         char id[HEX_DIGEST_LEN+1];
@@ -181,20 +172,9 @@ routerstatus_format_entry(const routerstatus_t *rs, const char *version,
     smartlist_add_asprintf(chunks,
                      "w Bandwidth=%d", bw_kb);
 
-    /* Include the bandwidth weight from our external bandwidth
-     * authority, if we have one. */
     if (format == NS_V3_VOTE && vrs && vrs->has_measured_bw) {
-      if (!rs->is_authority) { /* normal case */
-        smartlist_add_asprintf(chunks,
-                         " Measured=%d", vrs->measured_bw_kb);
-      } else {
-       /* dir auth special case: don't give it a Measured line, so we
-        * can reserve its attention for authority-specific activities.
-        * But do include the bwauth's opinion so it can be recorded for
-        * posterity. See #40698 for details. */
-        smartlist_add_asprintf(chunks,
-                         " MeasuredButAuthority=%d", vrs->measured_bw_kb);
-      }
+      smartlist_add_asprintf(chunks,
+                       " Measured=%d", vrs->measured_bw_kb);
     }
     /* Write down guardfraction information if we have it. */
     if (format == NS_V3_VOTE && vrs && vrs->status.has_guardfraction) {
@@ -219,15 +199,6 @@ routerstatus_format_entry(const routerstatus_t *rs, const char *version,
         digest256_to_base64(ed_b64, (const char*)vrs->ed25519_id);
         smartlist_add_asprintf(chunks, "id ed25519 %s\n", ed_b64);
       }
-
-      /* We'll add a series of statistics to the vote per relays so we are
-       * able to assess what each authorities sees and help our health and
-       * performance work. */
-      time_t now = time(NULL);
-      smartlist_add_asprintf(chunks, "stats wfu=%.6f tk=%lu mtbf=%.0f\n",
-        rep_hist_get_weighted_fractional_uptime(rs->identity_digest, now),
-        rep_hist_get_weighted_time_known(rs->identity_digest, now),
-        rep_hist_get_stability(rs->identity_digest, now));
     }
   }
 

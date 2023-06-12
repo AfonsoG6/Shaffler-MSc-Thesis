@@ -1,4 +1,4 @@
-/* * Copyright (c) 2012-2021, The Tor Project, Inc. */
+/* * Copyright (c) 2012-2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -34,16 +34,9 @@
  * Define this so channel.h gives us things only channel_t subclasses
  * should touch.
  */
-#include "core/or/circuitlist.h"
-#include "feature/nodelist/nodelist.h"
-#include "or_circuit_st.h"
-#define CHANNEL_OBJECT_PRIVATE
+#define TOR_CHANNEL_INTERNAL_
 
 #define CHANNELTLS_PRIVATE
-
-#include "lib/crypt_ops/crypto_rand.h"
-#include <math.h>
-#include <src/ext/siphash.h>
 
 #include "core/or/or.h"
 #include "core/or/channel.h"
@@ -52,10 +45,8 @@
 #include "core/or/circuitmux_ewma.h"
 #include "core/or/command.h"
 #include "app/config/config.h"
-#include "app/config/resolve_addr.h"
 #include "core/mainloop/connection.h"
 #include "core/or/connection_or.h"
-#include "feature/relay/relay_handshake.h"
 #include "feature/control/control.h"
 #include "feature/client/entrynodes.h"
 #include "trunnel/link_handshake.h"
@@ -70,17 +61,15 @@
 #include "trunnel/channelpadding_negotiation.h"
 #include "trunnel/netinfo.h"
 #include "core/or/channelpadding.h"
-#include "core/or/extendinfo.h"
-#include "core/or/congestion_control_common.h"
 
 #include "core/or/cell_st.h"
 #include "core/or/cell_queue_st.h"
+#include "core/or/extend_info_st.h"
 #include "core/or/or_connection_st.h"
 #include "core/or/or_handshake_certs_st.h"
 #include "core/or/or_handshake_state_st.h"
 #include "feature/nodelist/routerinfo_st.h"
 #include "core/or/var_cell_st.h"
-#include "feature/relay/relay_find_addr.h"
 
 #include "lib/tls/tortls.h"
 #include "lib/tls/x509.h"
@@ -111,13 +100,14 @@ static void channel_tls_close_method(channel_t *chan);
 static const char * channel_tls_describe_transport_method(channel_t *chan);
 static void channel_tls_free_method(channel_t *chan);
 static double channel_tls_get_overhead_estimate_method(channel_t *chan);
-static int channel_tls_get_remote_addr_method(const channel_t *chan,
-                                              tor_addr_t *addr_out);
+static int
+channel_tls_get_remote_addr_method(channel_t *chan, tor_addr_t *addr_out);
 static int
 channel_tls_get_transport_name_method(channel_t *chan, char **transport_out);
-static const char *channel_tls_describe_peer_method(const channel_t *chan);
+static const char *
+channel_tls_get_remote_descr_method(channel_t *chan, int flags);
 static int channel_tls_has_queued_writes_method(channel_t *chan);
-static int channel_tls_is_canonical_method(channel_t *chan);
+static int channel_tls_is_canonical_method(channel_t *chan, int req);
 static int
 channel_tls_matches_extend_info_method(channel_t *chan,
                                        extend_info_t *extend_info);
@@ -171,7 +161,7 @@ channel_tls_common_init(channel_tls_t *tlschan)
   chan->free_fn = channel_tls_free_method;
   chan->get_overhead_estimate = channel_tls_get_overhead_estimate_method;
   chan->get_remote_addr = channel_tls_get_remote_addr_method;
-  chan->describe_peer = channel_tls_describe_peer_method;
+  chan->get_remote_descr = channel_tls_get_remote_descr_method;
   chan->get_transport_name = channel_tls_get_transport_name_method;
   chan->has_queued_writes = channel_tls_has_queued_writes_method;
   chan->is_canonical = channel_tls_is_canonical_method;
@@ -211,7 +201,7 @@ channel_tls_connect(const tor_addr_t *addr, uint16_t port,
             tlschan,
             (chan->global_identifier));
 
-  if (is_local_to_resolve_addr(addr)) {
+  if (is_local_addr(addr)) {
     log_debug(LD_CHANNEL,
               "Marking new outgoing channel %"PRIu64 " at %p as local",
               (chan->global_identifier), chan);
@@ -348,7 +338,7 @@ channel_tls_handle_incoming(or_connection_t *orconn)
   tlschan->conn = orconn;
   orconn->chan = tlschan;
 
-  if (is_local_to_resolve_addr(&(TO_CONN(orconn)->addr))) {
+  if (is_local_addr(&(TO_CONN(orconn)->addr))) {
     log_debug(LD_CHANNEL,
               "Marking new incoming channel %"PRIu64 " at %p as local",
               (chan->global_identifier), chan);
@@ -366,31 +356,6 @@ channel_tls_handle_incoming(or_connection_t *orconn)
   channel_register(chan);
 
   return chan;
-}
-
-/**
- * Set the `potentially_used_for_bootstrapping` flag on the or_connection_t
- * corresponding to the provided channel.
- *
- * This flag indicates that if the connection fails, it might be interesting
- * to the bootstrapping subsystem.  (The bootstrapping system only cares about
- * channels that we have tried to use for our own circuits.  Other channels
- * may have been launched in response to EXTEND cells from somebody else, and
- * if they fail, it won't necessarily indicate a bootstrapping problem.)
- **/
-void
-channel_mark_as_used_for_origin_circuit(channel_t *chan)
-{
-  if (BUG(!chan))
-    return;
-  if (chan->magic != TLS_CHAN_MAGIC)
-    return;
-  channel_tls_t *tlschan = channel_tls_from_base(chan);
-  if (BUG(!tlschan))
-    return;
-
-  if (tlschan->conn)
-    tlschan->conn->potentially_used_for_bootstrapping = 1;
 }
 
 /*********
@@ -420,25 +385,6 @@ channel_tls_from_base(channel_t *chan)
   tor_assert(chan->magic == TLS_CHAN_MAGIC);
 
   return (channel_tls_t *)(chan);
-}
-
-/**
- * Cast a const channel_tls_t to a const channel_t.
- */
-const channel_t *
-channel_tls_to_base_const(const channel_tls_t *tlschan)
-{
-  return channel_tls_to_base((channel_tls_t*) tlschan);
-}
-
-/**
- * Cast a const channel_t to a const channel_tls_t, with appropriate
- * type-checking asserts.
- */
-const channel_tls_t *
-channel_tls_from_base_const(const channel_t *chan)
-{
-  return channel_tls_from_base((channel_t *)chan);
 }
 
 /********************************************
@@ -562,29 +508,24 @@ channel_tls_get_overhead_estimate_method(channel_t *chan)
  * Get the remote address of a channel_tls_t.
  *
  * This implements the get_remote_addr method for channel_tls_t; copy the
- * remote endpoint of the channel to addr_out and return 1.  (Always
- * succeeds if this channel is attached to an OR connection.)
- *
- * Always returns the real address of the peer, not the canonical address.
+ * remote endpoint of the channel to addr_out and return 1 (always
+ * succeeds for this transport).
  */
 static int
-channel_tls_get_remote_addr_method(const channel_t *chan,
-                                   tor_addr_t *addr_out)
+channel_tls_get_remote_addr_method(channel_t *chan, tor_addr_t *addr_out)
 {
-  const channel_tls_t *tlschan = CONST_BASE_CHAN_TO_TLS(chan);
+  int rv = 0;
+  channel_tls_t *tlschan = BASE_CHAN_TO_TLS(chan);
 
   tor_assert(tlschan);
   tor_assert(addr_out);
 
-  if (tlschan->conn == NULL) {
-    tor_addr_make_unspec(addr_out);
-    return 0;
-  }
+  if (tlschan->conn) {
+    tor_addr_copy(addr_out, &(tlschan->conn->real_addr));
+    rv = 1;
+  } else tor_addr_make_unspec(addr_out);
 
-  /* They want the real address, so give it to them. */
-  tor_addr_copy(addr_out, &TO_CONN(tlschan->conn)->addr);
-
-  return 1;
+  return rv;
 }
 
 /**
@@ -612,22 +553,65 @@ channel_tls_get_transport_name_method(channel_t *chan, char **transport_out)
 }
 
 /**
- * Get a human-readable endpoint description of a channel_tls_t.
+ * Get endpoint description of a channel_tls_t.
  *
- * This format is intended for logging, and may change in the future;
- * nothing should parse or rely on its particular details.
+ * This implements the get_remote_descr method for channel_tls_t; it returns
+ * a text description of the remote endpoint of the channel suitable for use
+ * in log messages. The req parameter is 0 for the canonical address or 1 for
+ * the actual address seen.
  */
 static const char *
-channel_tls_describe_peer_method(const channel_t *chan)
+channel_tls_get_remote_descr_method(channel_t *chan, int flags)
 {
-  const channel_tls_t *tlschan = CONST_BASE_CHAN_TO_TLS(chan);
+#define MAX_DESCR_LEN 32
+
+  static char buf[MAX_DESCR_LEN + 1];
+  channel_tls_t *tlschan = BASE_CHAN_TO_TLS(chan);
+  connection_t *conn;
+  const char *answer = NULL;
+  char *addr_str;
+
   tor_assert(tlschan);
 
   if (tlschan->conn) {
-    return connection_describe_peer(TO_CONN(tlschan->conn));
+    conn = TO_CONN(tlschan->conn);
+    switch (flags) {
+      case 0:
+        /* Canonical address with port*/
+        tor_snprintf(buf, MAX_DESCR_LEN + 1,
+                     "%s:%u", conn->address, conn->port);
+        answer = buf;
+        break;
+      case GRD_FLAG_ORIGINAL:
+        /* Actual address with port */
+        addr_str = tor_addr_to_str_dup(&(tlschan->conn->real_addr));
+        tor_snprintf(buf, MAX_DESCR_LEN + 1,
+                     "%s:%u", addr_str, conn->port);
+        tor_free(addr_str);
+        answer = buf;
+        break;
+      case GRD_FLAG_ADDR_ONLY:
+        /* Canonical address, no port */
+        strlcpy(buf, conn->address, sizeof(buf));
+        answer = buf;
+        break;
+      case GRD_FLAG_ORIGINAL|GRD_FLAG_ADDR_ONLY:
+        /* Actual address, no port */
+        addr_str = tor_addr_to_str_dup(&(tlschan->conn->real_addr));
+        strlcpy(buf, addr_str, sizeof(buf));
+        tor_free(addr_str);
+        answer = buf;
+        break;
+      default:
+        /* Something's broken in channel.c */
+        tor_assert_nonfatal_unreached_once();
+    }
   } else {
-    return "(No connection)";
+    strlcpy(buf, "(No connection)", sizeof(buf));
+    answer = buf;
   }
+
+  return answer;
 }
 
 /**
@@ -648,11 +632,19 @@ channel_tls_has_queued_writes_method(channel_t *chan)
              "something called has_queued_writes on a tlschan "
              "(%p with ID %"PRIu64 " but no conn",
              chan, (chan->global_identifier));
+    return 0;
   }
 
-  outbuf_len = (tlschan->conn != NULL) ?
-    connection_get_outbuf_len(TO_CONN(tlschan->conn)) :
-    0;
+  // TODO: fix this ugly locking
+  connection_t *conn = TO_CONN(tlschan->conn);
+  tor_assert(conn->safe_conn != NULL);
+  tor_mutex_acquire(&(conn->safe_conn->lock));
+  outbuf_len = buf_datalen(conn->safe_conn->outbuf);
+  tor_mutex_release(&(conn->safe_conn->lock));
+
+  //outbuf_len = (tlschan->conn != NULL) ?
+  //  connection_get_outbuf_len(TO_CONN(tlschan->conn)) :
+  //  0;
 
   return (outbuf_len > 0);
 }
@@ -660,11 +652,12 @@ channel_tls_has_queued_writes_method(channel_t *chan)
 /**
  * Tell the upper layer if we're canonical.
  *
- * This implements the is_canonical method for channel_tls_t:
- * it returns whether this is a canonical channel.
+ * This implements the is_canonical method for channel_tls_t; if req is zero,
+ * it returns whether this is a canonical channel, and if it is one it returns
+ * whether that can be relied upon.
  */
 static int
-channel_tls_is_canonical_method(channel_t *chan)
+channel_tls_is_canonical_method(channel_t *chan, int req)
 {
   int answer = 0;
   channel_tls_t *tlschan = BASE_CHAN_TO_TLS(chan);
@@ -672,13 +665,24 @@ channel_tls_is_canonical_method(channel_t *chan)
   tor_assert(tlschan);
 
   if (tlschan->conn) {
-    /* If this bit is set to 0, and link_proto is sufficiently old, then we
-     * can't actually _rely_ on this being a non-canonical channel.
-     * Nonetheless, we're going to believe that this is a non-canonical
-     * channel in this case, since nobody should be using these link protocols
-     * any more. */
-    answer = tlschan->conn->is_canonical;
+    switch (req) {
+      case 0:
+        answer = tlschan->conn->is_canonical;
+        break;
+      case 1:
+        /*
+         * Is the is_canonical bit reliable?  In protocols version 2 and up
+         * we get the canonical address from a NETINFO cell, but in older
+         * versions it might be based on an obsolete descriptor.
+         */
+        answer = (tlschan->conn->link_proto >= 2);
+        break;
+      default:
+        /* This shouldn't happen; channel.c is broken if it does */
+        tor_assert_nonfatal_unreached_once();
+    }
   }
+  /* else return 0 for tlschan->conn == NULL */
 
   return answer;
 }
@@ -688,9 +692,6 @@ channel_tls_is_canonical_method(channel_t *chan)
  *
  * This implements the matches_extend_info method for channel_tls_t; the upper
  * layer wants to know if this channel matches an extend_info_t.
- *
- * NOTE that this function only checks for an address/port match, and should
- * be used only when no identify is available.
  */
 static int
 channel_tls_matches_extend_info_method(channel_t *chan,
@@ -710,19 +711,9 @@ channel_tls_matches_extend_info_method(channel_t *chan,
     return 0;
   }
 
-  const tor_addr_port_t *orport = &tlschan->conn->canonical_orport;
-  // If the canonical address is set, then we'll allow matches based on that.
-  if (! tor_addr_is_unspec(&orport->addr)) {
-    if (extend_info_has_orport(extend_info, &orport->addr, orport->port)) {
-      return 1;
-    }
-  }
-
-  // We also want to match if the true address and port are listed in the
-  // extend info.
-  return extend_info_has_orport(extend_info,
-                                &TO_CONN(tlschan->conn)->addr,
-                                TO_CONN(tlschan->conn)->port);
+  return (tor_addr_eq(&(extend_info->addr),
+                      &(TO_CONN(tlschan->conn)->addr)) &&
+         (extend_info->port == TO_CONN(tlschan->conn)->port));
 }
 
 /**
@@ -750,19 +741,16 @@ channel_tls_matches_target_method(channel_t *chan,
     return 0;
   }
 
-  /* addr is the address this connection came from.
-   * canonical_orport is updated by connection_or_init_conn_from_address()
+  /* real_addr is the address this connection came from.
+   * base_.addr is updated by connection_or_init_conn_from_address()
    * to be the address in the descriptor. It may be tempting to
    * allow either address to be allowed, but if we did so, it would
-   * enable someone who steals a relay's keys to covertly impersonate/MITM it
+   * enable someone who steals a relay's keys to impersonate/MITM it
    * from anywhere on the Internet! (Because they could make long-lived
    * TLS connections from anywhere to all relays, and wait for them to
    * be used for extends).
-   *
-   * An adversary who has stolen a relay's keys could also post a fake relay
-   * descriptor, but that attack is easier to detect.
    */
-  return tor_addr_eq(&TO_CONN(tlschan->conn)->addr, target);
+  return tor_addr_eq(&(tlschan->conn->real_addr), target);
 }
 
 /**
@@ -801,7 +789,7 @@ channel_tls_num_cells_writeable_method(channel_t *chan)
   cell_network_size = get_cell_network_size(tlschan->conn->wide_circ_ids);
   outbuf_len = connection_get_outbuf_len(TO_CONN(tlschan->conn));
   /* Get the number of cells */
-  n = CEIL_DIV(or_conn_highwatermark() - outbuf_len, cell_network_size);
+  n = CEIL_DIV(OR_CONN_HIGHWATER - outbuf_len, cell_network_size);
   if (n < 0) n = 0;
 #if SIZEOF_SIZE_T > SIZEOF_INT
   if (n > INT_MAX) n = INT_MAX;
@@ -838,14 +826,20 @@ channel_tls_write_cell_method(channel_t *chan, cell_t *cell)
   return written;
 }
 
+static void
+void_packed_cell_free(void *void_packed_cell)
+{
+  packed_cell_free_((packed_cell_t *)void_packed_cell);
+}
+
 /**
  * Write a packed cell to a channel_tls_t.
  *
  * This implements the write_packed_cell method for channel_tls_t; given a
  * channel_tls_t and a packed_cell_t, transmit the packed_cell_t.
  *
- * Return 0 on success or negative value on error. The caller must free the
- * packed cell.
+ * Return 0 on success or negative value on error. The caller must not free
+ * the packed cell.
  */
 static int
 channel_tls_write_packed_cell_method(channel_t *chan,
@@ -853,14 +847,23 @@ channel_tls_write_packed_cell_method(channel_t *chan,
 {
   tor_assert(chan);
   channel_tls_t *tlschan = BASE_CHAN_TO_TLS(chan);
-  size_t cell_network_size = get_cell_network_size(chan->wide_circ_ids);
+  //size_t cell_network_size = get_cell_network_size(chan->wide_circ_ids);
 
   tor_assert(tlschan);
   tor_assert(packed_cell);
 
   if (tlschan->conn) {
-    connection_buf_add(packed_cell->body, cell_network_size,
-                            TO_CONN(tlschan->conn));
+    //connection_buf_add(packed_cell->body, cell_network_size,
+    //                        TO_CONN(tlschan->conn));
+    if (connection_may_write_to_buf(TO_CONN(tlschan->conn))) {
+      event_data_t event_data = { .ptr = packed_cell };
+      packed_cell = NULL;
+      event_source_publish(TO_CONN(tlschan->conn)->event_source,
+                           or_conn_outgoing_packed_cell, event_data,
+                           void_packed_cell_free);
+    } else {
+      packed_cell_free(packed_cell);
+    }
   } else {
     log_info(LD_CHANNEL,
              "something called write_packed_cell on a tlschan "
@@ -1075,17 +1078,16 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
 {
   channel_tls_t *chan;
   int handshaking;
-  circuit_t *circ;
 
   tor_assert(cell);
   tor_assert(conn);
 
   chan = conn->chan;
 
-  if (!chan) {
-    log_warn(LD_CHANNEL,
+ if (!chan) {
+   log_warn(LD_CHANNEL,
             "Got a cell_t on an OR connection with no channel");
-    return;
+   return;
   }
 
   handshaking = (TO_CONN(conn)->state != OR_CONN_STATE_OPEN);
@@ -1159,30 +1161,14 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
        * These are all transport independent and we pass them up through the
        * channel_t mechanism.  They are ultimately handled in command.c.
        */
-      if (cell->command == CELL_RELAY) {
-        circ = circuit_get_by_circid_channel(cell->circ_id, &(chan->base_));
-        if (circ && circ->delay_command && probably_middle_node(conn, circ)) {
-          delay_cell(circ, chan, cell); // RENDEZMIX
-        }
-      }
       channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
       break;
     default:
-      circ = circuit_get_by_circid_channel(cell->circ_id, &(chan->base_));
-      if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
-          cell->command <= CELL_RELAY_DELAY_HIGHEST) {
-        if (probably_middle_node(conn, circ)) {
-          delay_cell(circ, chan, cell); // RENDEZMIX
-        }
-        channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
-        break;
-      }
-
       log_fn(LOG_INFO, LD_PROTOCOL,
-            "Cell of unknown type (%d) received in channeltls.c.  "
-            "Dropping.",
-            cell->command);
-      break;
+             "Cell of unknown type (%d) received in channeltls.c.  "
+             "Dropping.",
+             cell->command);
+             break;
   }
 }
 
@@ -1273,7 +1259,8 @@ channel_tls_handle_var_cell(var_cell_t *var_cell, or_connection_t *conn)
        * the v2 and v3 handshakes. */
       /* But that should be happening any longer've disabled bufferevents. */
       tor_assert_nonfatal_unreached_once();
-      FALLTHROUGH_UNLESS_ALL_BUGS_ARE_FATAL;
+
+      /* fall through */
     case OR_CONN_STATE_TLS_SERVER_RENEGOTIATING:
       if (!(command_allowed_before_handshake(var_cell->command))) {
         log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,
@@ -1387,7 +1374,7 @@ channel_tls_update_marks(or_connection_t *conn)
 
   chan = TLS_CHAN_TO_BASE(conn->chan);
 
-  if (is_local_to_resolve_addr(&(TO_CONN(conn)->addr))) {
+  if (is_local_addr(&(TO_CONN(conn)->addr))) {
     if (!channel_is_local(chan)) {
       log_debug(LD_CHANNEL,
                 "Marking channel %"PRIu64 " at %p as local",
@@ -1451,8 +1438,8 @@ enter_v3_handshake_with_cell(var_cell_t *cell, channel_tls_t *chan)
            "Received a cell while TLS-handshaking, not in "
            "OR_HANDSHAKING_V3, on a connection we originated.");
   }
-  connection_or_block_renegotiation(chan->conn);
-  connection_or_change_state(chan->conn, OR_CONN_STATE_OR_HANDSHAKING_V3);
+  //connection_or_block_renegotiation(chan->conn);
+  chan->conn->base_.state = OR_CONN_STATE_OR_HANDSHAKING_V3;
   if (connection_init_or_handshake_state(chan->conn, started_here) < 0) {
     connection_or_close_for_error(chan->conn, 0);
     return -1;
@@ -1551,26 +1538,29 @@ channel_tls_process_versions_cell(var_cell_t *cell, channel_tls_t *chan)
     log_fn(LOG_WARN, LD_OR,
            "Negotiated link with non-2 protocol after doing a v2 TLS "
            "handshake with %s. Closing connection.",
-           connection_describe_peer(TO_CONN(chan->conn)));
+           fmt_addr(&chan->conn->base_.addr));
     connection_or_close_for_error(chan->conn, 0);
     return;
   }
 
   rep_hist_note_negotiated_link_proto(highest_supported_version, started_here);
 
-  chan->conn->link_proto = highest_supported_version;
-  chan->conn->handshake_state->received_versions = 1;
+  uint16_t link_protocol = highest_supported_version;
 
-  if (chan->conn->link_proto == 2) {
-    log_info(LD_OR,
-             "Negotiated version %d on %s; sending NETINFO.",
-             highest_supported_version,
-             connection_describe(TO_CONN(chan->conn)));
+  if (link_protocol == 2) {
+    log_warn(LD_OR, "We don't support a link protocol of 2");
+    connection_or_close_for_error(chan->conn, 0);
+    return;
+    //log_info(LD_OR,
+    //         "Negotiated version %d with %s:%d; sending NETINFO.",
+    //         highest_supported_version,
+    //         safe_str_client(chan->conn->base_.address),
+    //         chan->conn->base_.port);
 
-    if (connection_or_send_netinfo(chan->conn) < 0) {
-      connection_or_close_for_error(chan->conn, 0);
-      return;
-    }
+    //if (connection_or_send_netinfo(chan->conn) < 0) {
+    //  connection_or_close_for_error(chan->conn, 0);
+    //  return;
+    //}
   } else {
     const int send_versions = !started_here;
     /* If we want to authenticate, send a CERTS cell */
@@ -1582,12 +1572,13 @@ channel_tls_process_versions_cell(var_cell_t *cell, channel_tls_t *chan)
     const int send_netinfo = !started_here;
     const int send_any =
       send_versions || send_certs || send_chall || send_netinfo;
-    tor_assert(chan->conn->link_proto >= 3);
+    tor_assert(link_protocol >= 3);
 
     log_info(LD_OR,
-             "Negotiated version %d with on %s; %s%s%s%s%s",
+             "Negotiated version %d with %s:%d; %s%s%s%s%s",
              highest_supported_version,
-             connection_describe(TO_CONN(chan->conn)),
+             safe_str_client(chan->conn->base_.address),
+             chan->conn->base_.port,
              send_any ? "Sending cells:" : "Waiting for CERTS cell",
              send_versions ? " VERSIONS" : "",
              send_certs ? " CERTS" : "",
@@ -1608,6 +1599,13 @@ channel_tls_process_versions_cell(var_cell_t *cell, channel_tls_t *chan)
         return;
       }
     }
+
+    chan->conn->link_proto = link_protocol;
+    chan->conn->handshake_state->received_versions = 1;
+
+    event_data_t event_data = { .u16 = chan->conn->link_proto };
+    event_source_publish(TO_CONN(chan->conn)->event_source,
+                         or_conn_link_protocol_version_ev, event_data, NULL);
 
     /* We set this after sending the versions cell. */
     /*XXXXX symbolic const.*/
@@ -1698,7 +1696,7 @@ tor_addr_from_netinfo_addr(tor_addr_t *tor_addr,
   } else if (type == NETINFO_ADDR_TYPE_IPV6 && len == 16) {
     const uint8_t *ipv6_bytes = netinfo_addr_getconstarray_addr_ipv6(
                                   netinfo_addr);
-    tor_addr_from_ipv6_bytes(tor_addr, ipv6_bytes);
+    tor_addr_from_ipv6_bytes(tor_addr, (const char *)ipv6_bytes);
   } else {
     log_fn(LOG_PROTOCOL_WARN, LD_OR, "Cannot read address from NETINFO "
                                      "- wrong type/length.");
@@ -1718,85 +1716,6 @@ static inline time_t
 time_abs(time_t val)
 {
   return (val < 0) ? -val : val;
-}
-
-/** Return true iff the channel can process a NETINFO cell. For this to return
- * true, these channel conditions apply:
- *
- *    1. Link protocol is version 2 or higher (tor-spec.txt, NETINFO cells
- *       section).
- *
- *    2. Underlying OR connection of the channel is either in v2 or v3
- *       handshaking state.
- */
-static bool
-can_process_netinfo_cell(const channel_tls_t *chan)
-{
-  /* NETINFO cells can only be negotiated on link protocol 2 or higher. */
-  if (chan->conn->link_proto < 2) {
-    log_fn(LOG_PROTOCOL_WARN, LD_OR,
-           "Received a NETINFO cell on %s connection; dropping.",
-           chan->conn->link_proto == 0 ? "non-versioned" : "a v1");
-    return false;
-  }
-
-  /* Can't process a NETINFO cell if the connection is not handshaking. */
-  if (chan->conn->base_.state != OR_CONN_STATE_OR_HANDSHAKING_V2 &&
-      chan->conn->base_.state != OR_CONN_STATE_OR_HANDSHAKING_V3) {
-    log_fn(LOG_PROTOCOL_WARN, LD_OR,
-           "Received a NETINFO cell on non-handshaking connection; dropping.");
-    return false;
-  }
-
-  /* Make sure we do have handshake state. */
-  tor_assert(chan->conn->handshake_state);
-  tor_assert(chan->conn->handshake_state->received_versions);
-
-  return true;
-}
-
-/** Mark the given channel endpoint as a client (which means either a tor
- * client or a tor bridge).
- *
- * This MUST be done on an _unauthenticated_ channel. It is a mistake to mark
- * an authenticated channel as a client.
- *
- * The following is done on the channel:
- *
- *    1. Marked as a client.
- *    2. Type of circuit ID type is set.
- *    3. The underlying OR connection is initialized with the address of the
- *       endpoint.
- */
-static void
-mark_channel_tls_endpoint_as_client(channel_tls_t *chan)
-{
-  /* Ending up here for an authenticated link is a mistake. */
-  if (BUG(chan->conn->handshake_state->authenticated)) {
-    return;
-  }
-
-  tor_assert(tor_digest_is_zero(
-            (const char*)(chan->conn->handshake_state->
-                authenticated_rsa_peer_id)));
-  tor_assert(fast_mem_is_zero(
-            (const char*)(chan->conn->handshake_state->
-                          authenticated_ed25519_peer_id.pubkey), 32));
-  /* If the client never authenticated, it's a tor client or bridge
-   * relay, and we must not use it for EXTEND requests (nor could we, as
-   * there are no authenticated peer IDs) */
-  channel_mark_client(TLS_CHAN_TO_BASE(chan));
-  channel_set_circid_type(TLS_CHAN_TO_BASE(chan), NULL,
-         chan->conn->link_proto < MIN_LINK_PROTO_FOR_WIDE_CIRC_IDS);
-
-  connection_or_init_conn_from_address(chan->conn,
-            &(chan->conn->base_.addr),
-            chan->conn->base_.port,
-            /* zero, checked above */
-            (const char*)(chan->conn->handshake_state->
-                          authenticated_rsa_peer_id),
-            NULL, /* Ed25519 ID: Also checked as zero */
-            0);
 }
 
 /**
@@ -1824,12 +1743,20 @@ channel_tls_process_netinfo_cell(cell_t *cell, channel_tls_t *chan)
   tor_assert(chan);
   tor_assert(chan->conn);
 
-  /* Make sure we can process a NETINFO cell. Link protocol and state
-   * validation is done to make sure of it. */
-  if (!can_process_netinfo_cell(chan)) {
+  if (chan->conn->link_proto < 2) {
+    log_fn(LOG_PROTOCOL_WARN, LD_OR,
+           "Received a NETINFO cell on %s connection; dropping.",
+           chan->conn->link_proto == 0 ? "non-versioned" : "a v1");
     return;
   }
-
+  if (chan->conn->base_.state != OR_CONN_STATE_OR_HANDSHAKING_V2 &&
+      chan->conn->base_.state != OR_CONN_STATE_OR_HANDSHAKING_V3) {
+    log_fn(LOG_PROTOCOL_WARN, LD_OR,
+           "Received a NETINFO cell on non-handshaking connection; dropping.");
+    return;
+  }
+  tor_assert(chan->conn->handshake_state &&
+             chan->conn->handshake_state->received_versions);
   started_here = connection_or_nonopen_was_started_here(chan->conn);
   identity_digest = chan->conn->identity_digest;
 
@@ -1844,13 +1771,30 @@ channel_tls_process_netinfo_cell(cell_t *cell, channel_tls_t *chan)
         return;
       }
     } else {
-      /* We're the server. If the client never authenticated, we have some
-       * housekeeping to do.
-       *
-       * It's a tor client or bridge relay, and we must not use it for EXTEND
-       * requests (nor could we, as there are no authenticated peer IDs) */
+      /* we're the server.  If the client never authenticated, we have
+         some housekeeping to do.*/
       if (!(chan->conn->handshake_state->authenticated)) {
-        mark_channel_tls_endpoint_as_client(chan);
+        tor_assert(tor_digest_is_zero(
+                  (const char*)(chan->conn->handshake_state->
+                      authenticated_rsa_peer_id)));
+        tor_assert(fast_mem_is_zero(
+                  (const char*)(chan->conn->handshake_state->
+                                authenticated_ed25519_peer_id.pubkey), 32));
+        /* If the client never authenticated, it's a tor client or bridge
+         * relay, and we must not use it for EXTEND requests (nor could we, as
+         * there are no authenticated peer IDs) */
+        channel_mark_client(TLS_CHAN_TO_BASE(chan));
+        channel_set_circid_type(TLS_CHAN_TO_BASE(chan), NULL,
+               chan->conn->link_proto < MIN_LINK_PROTO_FOR_WIDE_CIRC_IDS);
+
+        connection_or_init_conn_from_address(chan->conn,
+                  &(chan->conn->base_.addr),
+                  chan->conn->base_.port,
+                  /* zero, checked above */
+                  (const char*)(chan->conn->handshake_state->
+                                authenticated_rsa_peer_id),
+                  NULL, /* Ed25519 ID: Also checked as zero */
+                  0);
       }
     }
   }
@@ -1893,7 +1837,7 @@ channel_tls_process_netinfo_cell(cell_t *cell, channel_tls_t *chan)
 
   if (my_addr_type == NETINFO_ADDR_TYPE_IPV4 && my_addr_len == 4) {
     if (!get_options()->BridgeRelay && me &&
-        tor_addr_eq(&my_apparent_addr, &me->ipv4_addr)) {
+        tor_addr_eq_ipv4h(&my_apparent_addr, me->addr)) {
       TLS_CHAN_TO_BASE(chan)->is_canonical_to_peer = 1;
     }
   } else if (my_addr_type == NETINFO_ADDR_TYPE_IPV6 &&
@@ -1903,13 +1847,6 @@ channel_tls_process_netinfo_cell(cell_t *cell, channel_tls_t *chan)
         tor_addr_eq(&my_apparent_addr, &me->ipv6_addr)) {
       TLS_CHAN_TO_BASE(chan)->is_canonical_to_peer = 1;
     }
-  }
-
-  if (me) {
-    /* We have a descriptor, so we are a relay: record the address that the
-     * other side said we had. */
-    tor_addr_copy(&TLS_CHAN_TO_BASE(chan)->addr_according_to_peer,
-                  &my_apparent_addr);
   }
 
   n_other_addrs = netinfo_cell_get_n_my_addrs(netinfo_cell);
@@ -1934,7 +1871,7 @@ channel_tls_process_netinfo_cell(cell_t *cell, channel_tls_t *chan)
      * might be doing something funny, but nobody else is doing a MITM
      * on the relay's TCP.
      */
-    if (tor_addr_eq(&addr, &TO_CONN(chan->conn)->addr)) {
+    if (tor_addr_eq(&addr, &(chan->conn->real_addr))) {
       connection_or_set_canonical(chan->conn, 1);
       break;
     }
@@ -1944,8 +1881,8 @@ channel_tls_process_netinfo_cell(cell_t *cell, channel_tls_t *chan)
 
   if (me && !TLS_CHAN_TO_BASE(chan)->is_canonical_to_peer &&
       channel_is_canonical(TLS_CHAN_TO_BASE(chan))) {
-    const char *descr = channel_describe_peer(
-                                                    TLS_CHAN_TO_BASE(chan));
+    const char *descr =
+      TLS_CHAN_TO_BASE(chan)->get_remote_descr(TLS_CHAN_TO_BASE(chan), 0);
     log_info(LD_OR,
              "We made a connection to a relay at %s (fp=%s) but we think "
              "they will not consider this connection canonical. They "
@@ -1954,7 +1891,7 @@ channel_tls_process_netinfo_cell(cell_t *cell, channel_tls_t *chan)
              safe_str(hex_str(identity_digest, DIGEST_LEN)),
              safe_str(tor_addr_is_null(&my_apparent_addr) ?
              "<none>" : fmt_and_decorate_addr(&my_apparent_addr)),
-             safe_str(fmt_addr(&me->ipv4_addr)));
+             safe_str(fmt_addr32(me->addr)));
   }
 
   /* Act on apparent skew. */
@@ -1968,12 +1905,8 @@ channel_tls_process_netinfo_cell(cell_t *cell, channel_tls_t *chan)
                        "NETINFO cell", "OR");
   }
 
-  /* Consider our apparent address as a possible suggestion for our address if
-   * we were unable to resolve it previously. The endpoint address is passed
-   * in order to make sure to never consider an address that is the same as
-   * our endpoint. */
-  relay_address_new_suggestion(&my_apparent_addr, &TO_CONN(chan->conn)->addr,
-                               identity_digest);
+  /* XXX maybe act on my_apparent_addr, if the source is sufficiently
+   * trustworthy. */
 
   if (! chan->conn->handshake_state->sent_netinfo) {
     /* If we were prepared to authenticate, but we never got an AUTH_CHALLENGE
@@ -1987,16 +1920,18 @@ channel_tls_process_netinfo_cell(cell_t *cell, channel_tls_t *chan)
 
   if (connection_or_set_state_open(chan->conn) < 0) {
     log_fn(LOG_PROTOCOL_WARN, LD_OR,
-           "Got good NETINFO cell on %s; but "
+           "Got good NETINFO cell from %s:%d; but "
            "was unable to make the OR connection become open.",
-           connection_describe(TO_CONN(chan->conn)));
+           safe_str_client(chan->conn->base_.address),
+           chan->conn->base_.port);
     connection_or_close_for_error(chan->conn, 0);
   } else {
     log_info(LD_OR,
-             "Got good NETINFO cell on %s; OR connection is now "
+             "Got good NETINFO cell from %s:%d; OR connection is now "
              "open, using protocol version %d. Its ID digest is %s. "
              "Our address is apparently %s.",
-             connection_describe(TO_CONN(chan->conn)),
+             safe_str_client(chan->conn->base_.address),
+             chan->conn->base_.port,
              (int)(chan->conn->link_proto),
              hex_str(identity_digest, DIGEST_LEN),
              tor_addr_is_null(&my_apparent_addr) ?
@@ -2081,9 +2016,9 @@ channel_tls_process_certs_cell(var_cell_t *cell, channel_tls_t *chan)
 #define ERR(s)                                                  \
   do {                                                          \
     log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,                      \
-           "Received a bad CERTS cell on %s: %s",               \
-           connection_describe(TO_CONN(chan->conn)),            \
-           (s));                                                \
+           "Received a bad CERTS cell from %s:%d: %s",          \
+           safe_str(chan->conn->base_.address),                 \
+           chan->conn->base_.port, (s));                        \
     connection_or_close_for_error(chan->conn, 0);               \
     goto err;                                                   \
   } while (0)
@@ -2131,8 +2066,9 @@ channel_tls_process_certs_cell(var_cell_t *cell, channel_tls_t *chan)
         tor_x509_cert_t *x509_cert = tor_x509_cert_decode(cert_body, cert_len);
         if (!x509_cert) {
           log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,
-                 "Received undecodable certificate in CERTS cell on %s",
-                 connection_describe(TO_CONN(chan->conn)));
+                 "Received undecodable certificate in CERTS cell from %s:%d",
+                 safe_str(chan->conn->base_.address),
+               chan->conn->base_.port);
         } else {
           if (x509_certs[cert_type]) {
             tor_x509_cert_free(x509_cert);
@@ -2148,8 +2084,9 @@ channel_tls_process_certs_cell(var_cell_t *cell, channel_tls_t *chan)
         if (!ed_cert) {
           log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,
                  "Received undecodable Ed certificate "
-                 "in CERTS cell on %s",
-                 connection_describe(TO_CONN(chan->conn)));
+                 "in CERTS cell from %s:%d",
+                 safe_str(chan->conn->base_.address),
+               chan->conn->base_.port);
         } else {
           if (ed_certs[cert_type]) {
             tor_cert_free(ed_cert);
@@ -2214,7 +2151,8 @@ channel_tls_process_certs_cell(var_cell_t *cell, channel_tls_t *chan)
   const common_digests_t *checked_rsa_id = NULL;
   or_handshake_certs_check_both(severity,
                                 chan->conn->handshake_state->certs,
-                                chan->conn->tls,
+                                //chan->conn->tls,
+                                chan->conn->tls_peer_cert,
                                 time(NULL),
                                 &checked_ed_id,
                                 &checked_rsa_id);
@@ -2259,9 +2197,9 @@ channel_tls_process_certs_cell(var_cell_t *cell, channel_tls_t *chan)
       ERR("Problem setting or checking peer id");
 
     log_info(LD_HANDSHAKE,
-             "Got some good certificates on %s: Authenticated it with "
+             "Got some good certificates from %s:%d: Authenticated it with "
              "RSA%s",
-             connection_describe(TO_CONN(chan->conn)),
+             safe_str(chan->conn->base_.address), chan->conn->base_.port,
              checked_ed_id ? " and Ed25519" : "");
 
     if (!public_server_mode(get_options())) {
@@ -2273,10 +2211,11 @@ channel_tls_process_certs_cell(var_cell_t *cell, channel_tls_t *chan)
   } else {
     /* We can't call it authenticated till we see an AUTHENTICATE cell. */
     log_info(LD_OR,
-             "Got some good RSA%s certificates on %s. "
+             "Got some good RSA%s certificates from %s:%d. "
              "Waiting for AUTHENTICATE.",
              checked_ed_id ? " and Ed25519" : "",
-             connection_describe(TO_CONN(chan->conn)));
+             safe_str(chan->conn->base_.address),
+             chan->conn->base_.port);
     /* XXXX check more stuff? */
   }
 
@@ -2325,9 +2264,9 @@ channel_tls_process_auth_challenge_cell(var_cell_t *cell, channel_tls_t *chan)
 #define ERR(s)                                                  \
   do {                                                          \
     log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,                      \
-           "Received a bad AUTH_CHALLENGE cell on %s: %s",      \
-           connection_describe(TO_CONN(chan->conn)),            \
-           (s));                                                \
+           "Received a bad AUTH_CHALLENGE cell from %s:%d: %s", \
+           safe_str(chan->conn->base_.address),                 \
+           chan->conn->base_.port, (s));                        \
     connection_or_close_for_error(chan->conn, 0);               \
     goto done;                                                  \
   } while (0)
@@ -2372,9 +2311,10 @@ channel_tls_process_auth_challenge_cell(var_cell_t *cell, channel_tls_t *chan)
 
   if (use_type >= 0) {
     log_info(LD_OR,
-             "Got an AUTH_CHALLENGE cell on %s: Sending "
+             "Got an AUTH_CHALLENGE cell from %s:%d: Sending "
              "authentication type %d",
-             connection_describe(TO_CONN(chan->conn)),
+             safe_str(chan->conn->base_.address),
+             chan->conn->base_.port,
              use_type);
 
     if (connection_or_send_authenticate_cell(chan->conn, use_type) < 0) {
@@ -2385,9 +2325,10 @@ channel_tls_process_auth_challenge_cell(var_cell_t *cell, channel_tls_t *chan)
     }
   } else {
     log_info(LD_OR,
-             "Got an AUTH_CHALLENGE cell on %s, but we don't "
+             "Got an AUTH_CHALLENGE cell from %s:%d, but we don't "
              "know any of its authentication types. Not authenticating.",
-             connection_describe(TO_CONN(chan->conn)));
+             safe_str(chan->conn->base_.address),
+             chan->conn->base_.port);
   }
 
   if (connection_or_send_netinfo(chan->conn) < 0) {
@@ -2427,9 +2368,9 @@ channel_tls_process_authenticate_cell(var_cell_t *cell, channel_tls_t *chan)
 #define ERR(s)                                                  \
   do {                                                          \
     log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,                      \
-           "Received a bad AUTHENTICATE cell on %s: %s",        \
-           connection_describe(TO_CONN(chan->conn)),            \
-           (s));                                                \
+           "Received a bad AUTHENTICATE cell from %s:%d: %s",   \
+           safe_str(chan->conn->base_.address),                 \
+           chan->conn->base_.port, (s));                        \
     connection_or_close_for_error(chan->conn, 0);               \
     var_cell_free(expected_cell);                               \
     return;                                                     \
@@ -2590,9 +2531,9 @@ channel_tls_process_authenticate_cell(var_cell_t *cell, channel_tls_t *chan)
     crypto_pk_free(identity_rcvd);
 
     log_debug(LD_HANDSHAKE,
-              "Calling connection_or_init_conn_from_address on %s "
+              "Calling connection_or_init_conn_from_address for %s "
               " from %s, with%s ed25519 id.",
-              connection_describe(TO_CONN(chan->conn)),
+              safe_str(chan->conn->base_.address),
               __func__,
               ed_identity_received ? "" : "out");
 
@@ -2605,768 +2546,13 @@ channel_tls_process_authenticate_cell(var_cell_t *cell, channel_tls_t *chan)
                   0);
 
     log_debug(LD_HANDSHAKE,
-             "Got an AUTHENTICATE cell on %s, type %d: Looks good.",
-              connection_describe(TO_CONN(chan->conn)),
-              authtype);
+             "Got an AUTHENTICATE cell from %s:%d, type %d: Looks good.",
+             safe_str(chan->conn->base_.address),
+             chan->conn->base_.port,
+             authtype);
   }
 
   var_cell_free(expected_cell);
 
 #undef ERR
-}
-
-/** ----------------------------------------------- RENDEZMIX
- * ------------------------------------------------------- */
-
-int
-probably_middle_node(or_connection_t *conn, circuit_t *circ)
-{
-  channel_tls_t *n_chan;
-  connection_t *n_conn;
-  tor_addr_t prev_node_addr, next_node_addr;
-
-  if (!conn || !circ)
-    return false;
-
-  n_chan = BASE_CHAN_TO_TLS(circ->n_chan);
-  if (!n_chan)
-    return false; // Is Exit node
-
-  n_conn = &(n_chan->conn->base_);
-  if (!n_conn)
-    return false; // Is Exit node
-
-  prev_node_addr = conn->base_.addr;
-  next_node_addr = n_conn->addr;
-
-  // We're probably a middle node if the previous and next nodes are in the
-  // nodelist
-  return nodelist_probably_contains_address(&prev_node_addr) &&
-         nodelist_probably_contains_address(&next_node_addr);
-}
-
-struct timespec
-get_sleep_timespec_from_command(uint8_t command)
-{
-  int i = command - CELL_RELAY_DELAY_LOWEST;
-  if (command == CELL_RELAY)
-    return (struct timespec){0, 0};
-  else
-    return (struct timespec){0, i * 100000};
-}
-
-/**
- * Count number of one bits in 32-bit word.
- */
-unsigned
-bitcount32(uint32_t x)
-{
-  /* Count two-bit groups.  */
-  x -= (x >> 1) & UINT32_C(0x55555555);
-
-  /* Count four-bit groups.  */
-  x = ((x >> 2) & UINT32_C(0x33333333)) + (x & UINT32_C(0x33333333));
-
-  /* Count eight-bit groups.  */
-  x = (x + (x >> 4)) & UINT32_C(0x0f0f0f0f);
-
-  /* Sum all eight-bit groups, and extract the sum.  */
-  return (x * UINT32_C(0x01010101)) >> 24;
-}
-
-/**
- * Count leading zeros in 32-bit word.
- */
-unsigned
-clz32(uint32_t x)
-{
-  /* Round up to a power of two.  */
-  x |= x >> 1;
-  x |= x >> 2;
-  x |= x >> 4;
-  x |= x >> 8;
-  x |= x >> 16;
-
-  /* Subtract count of one bits from 32.  */
-  return (32 - bitcount32(x));
-}
-
-/**
- * Draw a floating-point number in [0, 1] with uniform distribution.
- *
- * Note that the probability of returning 0 is less than 2^-1074, so
- * callers need not check for it.  However, callers that cannot handle
- * rounding to 1 must deal with that, because it occurs with
- * probability 2^-54, which is small but nonnegligible.
- */
-double
-gen_random_uniform_01(void)
-{
-  uint32_t z, x, hi, lo;
-  double s;
-
-  /*
-   * Draw an exponent, geometrically distributed, but give up if
-   * we get a run of more than 1088 zeros, which really means the
-   * system is broken.
-   */
-  z = 0;
-  while ((x = crypto_fast_rng_get_u32(get_thread_fast_rng())) == 0) {
-    if (z >= 1088)
-      /* Your bit sampler is broken.  Go home.  */
-      return 0;
-    z += 32;
-  }
-  z += clz32(x);
-
-  /*
-   * Pick 32-bit halves of an odd normalized significand.
-   * Picking it odd breaks ties in the subsequent rounding, which
-   * occur only with measure zero in the uniform distribution on
-   * [0, 1].
-   */
-  hi = crypto_fast_rng_get_u32(get_thread_fast_rng()) | UINT32_C(0x80000000);
-  lo = crypto_fast_rng_get_u32(get_thread_fast_rng()) | UINT32_C(0x00000001);
-
-  /* Round to nearest scaled significand in [2^63, 2^64].  */
-  s = hi * (double)4294967296 + lo;
-
-  /* Rescale into [1/2, 1] and apply exponent in one swell foop.  */
-  return s * ldexp(1, -(64 + z));
-}
-
-double
-gen_normal_variate(void)
-{
-  /* the Box-Muller method */
-  double u = gen_random_uniform_01();
-  double v = gen_random_uniform_01();
-
-  /* this gives us 2 normally-distributed values, x and y */
-  double two = (double)2;
-  double x = sqrt(-two * log(u)) * cos(two * M_PI * v);
-  // double y = sqrt(-two * log(u)) * sin(two * M_PI * v);
-
-  return x;
-}
-
-double
-gen_normal_value(double location, double scale)
-{
-  /* location is mu, scale is sigma */
-  double x = gen_normal_variate();
-  return location + (scale * x);
-}
-
-double
-gen_lognormal_value(double location, double scale)
-{
-  /* location is mu, scale is sigma */
-  double x = gen_normal_value(location, scale);
-  return exp(x);
-}
-
-double
-gen_uniform_value(double low, double high) {
-  /* inverse transform sampling, scale is x_m, shape is alpha */
-  double uniform = gen_random_uniform_01();
-  return low + ((high - low) * uniform);
-}
-
-short update_circ_delay_state(short state) {
-	double r = gen_random_uniform_01();
-	if (state == 0) {
-		if (r <= 0.48422233533746367) {
-			return 4;
-		}
-		else if (r <= 0.48433444416459254) {
-			return 2;
-		}
-		else if (r <= 0.5326463392847421) {
-			return 18;
-		}
-		else if (r <= 0.6144176625708816) {
-			return 11;
-		}
-		else if (r <= 0.626644244330593) {
-			return 14;
-		}
-		else if (r <= 0.6543042371465746) {
-			return 25;
-		}
-		else {
-			return 22;
-		}
-	}
-	else if (state == 1) {
-		if (r <= 0.7657245908846061) {
-			return 1;
-		}
-		else if (r <= 0.7669016114255119) {
-			return 4;
-		}
-		else if (r <= 0.8480993090611174) {
-			return 2;
-		}
-		else if (r <= 0.9980448225102572) {
-			return 5;
-		}
-		else {
-			return 3;
-		}
-	}
-	else if (state == 2) {
-		if (r <= 0.0009415666434313743) {
-			return 1;
-		}
-		else if (r <= 0.0753046808576782) {
-			return 8;
-		}
-		else {
-			return 7;
-		}
-	}
-	else if (state == 3) {
-		if (r <= 0.001585360932443046) {
-			return 1;
-		}
-		else if (r <= 0.0055559099219390316) {
-			return 4;
-		}
-		else {
-			return 3;
-		}
-	}
-	else if (state == 4) {
-		if (r <= 0.32738529471081923) {
-			return 4;
-		}
-		else if (r <= 0.4199111369691281) {
-			return 2;
-		}
-		else if (r <= 0.4269612294640892) {
-			return 3;
-		}
-		else {
-			return 8;
-		}
-	}
-	else if (state == 5) {
-		if (r <= 0.8702266273371771) {
-			return 9;
-		}
-		else {
-			return 8;
-		}
-	}
-	else if (state == 6) {
-		if (r <= 0.5952267052723844) {
-			return 4;
-		}
-		else {
-			return 5;
-		}
-	}
-	else if (state == 7) {
-		return 0;
-	}
-	else if (state == 8) {
-		if (r <= 0.21435897031255202) {
-			return 1;
-		}
-		else if (r <= 0.6950732036582816) {
-			return 4;
-		}
-		else if (r <= 0.7086226381709921) {
-			return 6;
-		}
-		else if (r <= 0.851291178929299) {
-			return 2;
-		}
-		else if (r <= 0.9181221992328875) {
-			return 5;
-		}
-		else {
-			return 8;
-		}
-	}
-	else if (state == 9) {
-		if (r <= 0.03304505046631963) {
-			return 6;
-		}
-		else if (r <= 0.04663376714252375) {
-			return 2;
-		}
-		else {
-			return 8;
-		}
-	}
-	else if (state == 10) {
-		return 0;
-	}
-	else if (state == 11) {
-		if (r <= 0.5261725990531061) {
-			return 15;
-		}
-		else {
-			return 14;
-		}
-	}
-	else if (state == 12) {
-		if (r <= 0.8060557678125009) {
-			return 11;
-		}
-		else if (r <= 0.9171533563439298) {
-			return 15;
-		}
-		else {
-			return 14;
-		}
-	}
-	else if (state == 13) {
-		if (r <= 0.057059288829301016) {
-			return 17;
-		}
-		else if (r <= 0.6060979249823147) {
-			return 13;
-		}
-		else if (r <= 0.9992295734316593) {
-			return 14;
-		}
-		else {
-			return 10;
-		}
-	}
-	else if (state == 14) {
-		if (r <= 0.005151548429997901) {
-			return 12;
-		}
-		else {
-			return 15;
-		}
-	}
-	else if (state == 15) {
-		if (r <= 0.007760355201749844) {
-			return 18;
-		}
-		else if (r <= 0.12872030256612332) {
-			return 17;
-		}
-		else if (r <= 0.1424977722125893) {
-			return 11;
-		}
-		else if (r <= 0.9826003105953992) {
-			return 13;
-		}
-		else {
-			return 10;
-		}
-	}
-	else if (state == 16) {
-		return 0;
-	}
-	else if (state == 17) {
-		if (r <= 0.06803328536405931) {
-			return 18;
-		}
-		else if (r <= 0.13044481634027166) {
-			return 17;
-		}
-		else if (r <= 0.615696081465664) {
-			return 11;
-		}
-		else if (r <= 0.7123767574073506) {
-			return 13;
-		}
-		else if (r <= 0.8440637669080293) {
-			return 15;
-		}
-		else {
-			return 14;
-		}
-	}
-	else if (state == 18) {
-		if (r <= 0.023960634001724497) {
-			return 18;
-		}
-		else if (r <= 0.2768989951060493) {
-			return 12;
-		}
-		else {
-			return 10;
-		}
-	}
-	else if (state == 19) {
-		if (r <= 0.9545002826362771) {
-			return 19;
-		}
-		else {
-			return 25;
-		}
-	}
-	else if (state == 20) {
-		if (r <= 0.27740003506150723) {
-			return 26;
-		}
-		else if (r <= 0.277663471453546) {
-			return 27;
-		}
-		else if (r <= 0.9963632520509293) {
-			return 22;
-		}
-		else {
-			return 24;
-		}
-	}
-	else if (state == 21) {
-		return 24;
-	}
-	else if (state == 22) {
-		if (r <= 0.6337722299058604) {
-			return 19;
-		}
-		else if (r <= 0.7564142089732525) {
-			return 20;
-		}
-		else if (r <= 0.9430623456196943) {
-			return 23;
-		}
-		else if (r <= 0.9806546309782701) {
-			return 22;
-		}
-		else {
-			return 24;
-		}
-	}
-	else if (state == 23) {
-		if (r <= 0.2237970022370368) {
-			return 27;
-		}
-		else if (r <= 0.388531157592256) {
-			return 25;
-		}
-		else if (r <= 0.9336221997947575) {
-			return 22;
-		}
-		else {
-			return 24;
-		}
-	}
-	else if (state == 24) {
-		return 0;
-	}
-	else if (state == 25) {
-		return 22;
-	}
-	else if (state == 26) {
-		if (r <= 0.8432124122369418) {
-			return 20;
-		}
-		else if (r <= 0.9999412006283751) {
-			return 23;
-		}
-		else {
-			return 21;
-		}
-	}
-	else if (state == 27) {
-		if (r <= 0.00022080773970710712) {
-			return 19;
-		}
-		else if (r <= 0.6968882933538996) {
-			return 27;
-		}
-		else {
-			return 22;
-		}
-	}
-	else {
-		return 0;
-	}
-}
-
-double
-generate_delay(short delay_state)
-{
-  double r = 0; //gen_random_uniform_01();
-  if (delay_state == 1) {
-    if (r <= 0.0034835458860367633) {
-      return +gen_lognormal_value(0.051847852837667484, 0.4313753227110513);
-    } else {
-      return -gen_lognormal_value(1.5613079749773369, 1.3236454515429048);
-    }
-  } else if (delay_state == 2) {
-    if (r <= 0.16925032790007336) {
-      return +gen_lognormal_value(9.726173990383355, 4.624292511448072);
-    } else {
-      return -gen_lognormal_value(9.844949788579289, 5.804913922295352);
-    }
-  } else if (delay_state == 3) {
-    if (r <= 0.9947603131346284) {
-      return +gen_lognormal_value(2.5006914284606596, 3.0848590099521074);
-    } else {
-      return -gen_lognormal_value(11.415549412678544, 1.558288488568937);
-    }
-  } else if (delay_state == 4) {
-    if (r <= 0.9974875299536993) {
-      return +gen_lognormal_value(9.601166738519833, 4.288759108489901);
-    } else {
-      return -gen_lognormal_value(0.04194035527539296, 4.3302746900294125);
-    }
-  } else if (delay_state == 5) {
-    if (r <= 0.002511820660442746) {
-      return +gen_lognormal_value(0.006963634471183598, 0.020992917571834923);
-    } else {
-      return -gen_lognormal_value(1.440554681621282, 1.0847993280285542);
-    }
-  } else if (delay_state == 6) {
-    if (r <= 0.5925574933307974) {
-      return +gen_lognormal_value(21.65928359955767, 0.01428295093047503);
-    } else {
-      return -gen_lognormal_value(0.11910343773485123, 1.3467637819826719);
-    }
-  } else if (delay_state == 8) {
-    if (r <= 0.0028086063594126346) {
-      return +gen_lognormal_value(0.5310087909244855, 5.711722902506983);
-    } else {
-      return -gen_lognormal_value(9.300091195226809, 5.179371804079101);
-    }
-  } else if (delay_state == 9) {
-    if (r <= 0.013508467521115758) {
-      return +gen_lognormal_value(3.743768872177823, 0.02181916140293295);
-    } else {
-      return -gen_lognormal_value(1.1524247334603754, 0.2972942063924452);
-    }
-  } else if (delay_state == 11) {
-    if (r <= 0.9932709800054623) {
-      return +gen_lognormal_value(12.054129972967305, 0.2804431061267399);
-    } else {
-      return -gen_lognormal_value(3.865140787336832, 0.11176258873549383);
-    }
-  } else if (delay_state == 12) {
-    if (r <= 0.9840040696145151) {
-      return +gen_lognormal_value(3.745186952556943, 4.936612988220717);
-    } else {
-      return -gen_lognormal_value(2.100404502358204, 0.01);
-    }
-  } else if (delay_state == 13) {
-    if (r <= 0.00017476360453499862) {
-      return +gen_lognormal_value(2.4262618904848825, 0.05438947958009118);
-    } else {
-      return -gen_lognormal_value(1.2690890206828604, 0.4979900289399);
-    }
-  } else if (delay_state == 14) {
-    if (r <= 0.03062143037572028) {
-      return +gen_lognormal_value(1.4243274275874147, 0.15378579158612937);
-    } else {
-      return -gen_lognormal_value(1.26523803512239, 0.5107416300589547);
-    }
-  } else if (delay_state == 15) {
-    if (r <= 0.06218869601343935) {
-      return +gen_lognormal_value(11.732605450463735, 1.390105356891117);
-    } else {
-      return -gen_lognormal_value(7.569386806986627, 3.1651283706941244);
-    }
-  } else if (delay_state == 16) {
-    if (r <= 0.9552675826779253) {
-      return +gen_lognormal_value(1.4995452347044123, 0.6536147966954244);
-    } else {
-      return -gen_lognormal_value(8.769025567710923, 0.012944193612080365);
-    }
-  } else if (delay_state == 17) {
-    if (r <= 0.12264814942867472) {
-      return +gen_lognormal_value(5.831797684940486, 5.210708094182786);
-    } else {
-      return -gen_lognormal_value(12.378285828584897, 2.1310248934264457);
-    }
-  } else if (delay_state == 18) {
-    if (r <= 0.9234001502458875) {
-      return +gen_lognormal_value(12.24319511178232, 3.3245607966604744);
-    } else {
-      return -gen_lognormal_value(11.403899035836785, 1.3183085383927289);
-    }
-  } else if (delay_state == 19) {
-    if (r <= 3.6851389898790605e-05) {
-      return +gen_lognormal_value(1.5989728616077235, 3.100120210657259);
-    } else {
-      return -gen_lognormal_value(1.2178556790559212, 0.7759091510327616);
-    }
-  } else if (delay_state == 20) {
-    if (r <= 2.505444343617205e-05) {
-      return +gen_lognormal_value(4.125224460337367, 0.012944193612080365);
-    } else {
-      return -gen_lognormal_value(1.5351557427800535, 0.49006743555833365);
-    }
-  } else if (delay_state == 21) {
-    if (r <= 0.7249863037899782) {
-      return +gen_lognormal_value(0.10878205915927994, 1.0941713005959057);
-    } else {
-      return -gen_lognormal_value(0.6318416943746638, 0.6814887675180509);
-    }
-  } else if (delay_state == 22) {
-    if (r <= 0.14740090760335917) {
-      return +gen_lognormal_value(10.408463261268366, 2.888582078395884);
-    } else {
-      return -gen_lognormal_value(9.037725133418196, 3.45917497323462);
-    }
-  } else if (delay_state == 23) {
-    if (r <= 0.6335347808952112) {
-      return +gen_lognormal_value(7.244965330902024, 4.7826470761901625);
-    } else {
-      return -gen_lognormal_value(10.81603769216758, 3.731810885861834);
-    }
-  } else if (delay_state == 25) {
-    if (r <= 0.03469883962570794) {
-      return +gen_lognormal_value(11.952508404086355, 0.9337402913190664);
-    } else {
-      return -gen_lognormal_value(1.1486316420277847, 0.40355904225829475);
-    }
-  } else if (delay_state == 26) {
-    if (r <= 0.5010796190354109) {
-      return +gen_lognormal_value(5.684702330114157, 2.0936050600157206);
-    } else {
-      return -gen_lognormal_value(0.5822691699342099, 0.03876095613154783);
-    }
-  } else if (delay_state == 27) {
-    if (r <= 0.9999062368081795) {
-      return +gen_lognormal_value(1.244514804105052, 0.7565704611459563);
-    } else {
-      return -gen_lognormal_value(0.38003967175013964, 0.42604844788034657);
-    }
-  } else {
-    return 0.0;
-  }
-}
-
-double
-get_delay_microseconds_in(circuit_t *circ)
-{
-  do {
-    circ->delay_state_in = update_circ_delay_state(circ->delay_state_in);
-  } while (circ->delay_state_in == 0 || circ->delay_state_in == 7 ||
-            circ->delay_state_in == 10 || circ->delay_state_in == 24);
-  return generate_delay(circ->delay_state_in);
-}
-
-double
-get_delay_microseconds_out(circuit_t *circ)
-{
-  do {
-    circ->delay_state_out = update_circ_delay_state(circ->delay_state_out);
-  } while (circ->delay_state_out == 0 || circ->delay_state_out == 7 ||
-            circ->delay_state_out == 10 || circ->delay_state_out == 24);
-  return generate_delay(circ->delay_state_out);
-}
-
-double
-get_delay_microseconds_uniform(void)
-{
-  return gen_uniform_value(0, 1e6);
-}
-
-double
-get_delay_scale_factor(uint8_t command)
-{
-  if (command == CELL_RELAY) return 1.0;
-  return (double)(command - CELL_RELAY_DELAY_LOWEST) /
-         (CELL_RELAY_DELAY_HIGHEST - CELL_RELAY_DELAY_LOWEST);
-}
-
-struct timespec
-get_delay_timespec(circuit_t *circ, int direction)
-{
-  double microsec, scale;
-  struct timespec ts;
-  scale = get_delay_scale_factor(circ->delay_command);
-  do {
-    if (direction == CELL_DIRECTION_IN) microsec = scale*get_delay_microseconds_in(circ);
-    else microsec = scale*get_delay_microseconds_out(circ);
-  } while (microsec > scale*2e6);
-  ts.tv_sec = (time_t)(microsec / 1e6);
-  ts.tv_nsec = (time_t)((microsec - ts.tv_sec * 1e6) * 1e3);
-  return ts;
-}
-
-const char * get_direction_str(int direction) {
-  switch (direction) {
-    case CELL_DIRECTION_IN:
-      return "IN";
-    case CELL_DIRECTION_OUT:
-      return "OUT";
-    default:
-      return "UNKNOWN";
-  }
-}
-
-int get_direction(circuit_t *circ, channel_tls_t *chan, cell_t *cell) {
-  if (!TO_OR_CIRCUIT(circ) || !cell) {
-    return -1;
-  }
-  if (!CIRCUIT_IS_ORIGIN(circ) && &(chan->base_) == TO_OR_CIRCUIT(circ)->p_chan && cell->circ_id == TO_OR_CIRCUIT(circ)->p_circ_id) {
-    return CELL_DIRECTION_OUT;
-  }
-  else {
-    return CELL_DIRECTION_IN;
-  }
-}
-
-void delay_cell(circuit_t *circ, channel_tls_t *chan, cell_t *cell)
-{
-  int direction, res = 0;
-  double microsec;
-  struct timespec passed_ts, last_packet_ts, ts;
-
-  if (!circ || (cell->command == CELL_RELAY && !circ->delay_command)) return;
-  // After receiving a delay command once, we mark the circuit as using delays
-  circ->delay_command = cell->command == CELL_RELAY ? CELL_RELAY_DELAY_HIGHEST : cell->command;
-
-  direction = get_direction(circ, chan, cell);
-  ts = get_delay_timespec(circ, direction);
-  clock_gettime(CLOCK_REALTIME, &passed_ts);
-
-  if (direction == CELL_DIRECTION_IN) last_packet_ts = circ->last_packet_ts_in;
-  else last_packet_ts = circ->last_packet_ts_out;
-
-  if (last_packet_ts.tv_sec == 0 && last_packet_ts.tv_nsec == 0) {
-    log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] First packet from circ %u, no need to delay.", get_direction_str(direction), cell->circ_id);
-    if (direction == CELL_DIRECTION_IN) circ->last_packet_ts_in = passed_ts;
-    else circ->last_packet_ts_out = passed_ts;
-  }
-  passed_ts.tv_sec -= last_packet_ts.tv_sec;
-  passed_ts.tv_nsec -= last_packet_ts.tv_nsec;
-  ts.tv_sec -= passed_ts.tv_sec;
-  ts.tv_nsec -= passed_ts.tv_nsec;
-  microsec = ts.tv_sec * 1e6 + ts.tv_nsec / 1e3;
-  if (microsec > 0) {
-    log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] microsec=%f states=%d<-->%d", get_direction_str(direction), microsec, circ->delay_state_in, circ->delay_state_out);
-    do {
-      res = nanosleep(&ts, &ts);
-    } while (res && errno == EINTR);
-  }
-  else {
-    log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] No need to delay further.", get_direction_str(direction));
-  }
-  clock_gettime(CLOCK_REALTIME, &last_packet_ts);
-  if (direction == CELL_DIRECTION_IN) circ->last_packet_ts_in = last_packet_ts;
-  else circ->last_packet_ts_out = last_packet_ts;
-}
-
-void delay_cell_independent(circuit_t *circ, channel_tls_t *chan, cell_t *cell)
-{
-  struct timespec ts;
-  int direction, res = 0;
-  double microsec;
-
-  if (!circ || (cell->command == CELL_RELAY && !circ->delay_command)) return;
-  // After receiving a delay command once, we mark the circuit as using delays
-  circ->delay_command = cell->command == CELL_RELAY ? CELL_RELAY_DELAY_HIGHEST : cell->command;
-
-  direction = get_direction(circ, chan, cell);
-  ts = get_delay_timespec(circ, direction);
-
-  microsec = ts.tv_sec * 1e6 + ts.tv_nsec / 1e3;
-  log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] microsec=%f states=%d<-->%d", get_direction_str(direction), microsec, circ->delay_state_in, circ->delay_state_out);
-  do {
-    res = nanosleep(&ts, &ts);
-  } while (res && errno == EINTR);
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2017-2021, The Tor Project, Inc. */
+/* Copyright (c) 2017-2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #define CONSDIFFMGR_PRIVATE
@@ -116,13 +116,14 @@ fake_ns_body_new(consensus_flavor_t flav, time_t valid_after)
 static smartlist_t *fake_cpuworker_queue = NULL;
 typedef struct fake_work_queue_ent_t {
   enum workqueue_reply_t (*fn)(void *, void *);
-  void (*reply_fn)(void *);
+  void (*reply_fn)(void *, workqueue_reply_t);
   void *arg;
+  workqueue_reply_t reply_status;
 } fake_work_queue_ent_t;
-static struct workqueue_entry_t *
+static struct workqueue_entry_s *
 mock_cpuworker_queue_work(workqueue_priority_t prio,
                           enum workqueue_reply_t (*fn)(void *, void *),
-                          void (*reply_fn)(void *),
+                          void (*reply_fn)(void *, workqueue_reply_t),
                           void *arg)
 {
   (void) prio;
@@ -135,7 +136,7 @@ mock_cpuworker_queue_work(workqueue_priority_t prio,
   ent->reply_fn = reply_fn;
   ent->arg = arg;
   smartlist_add(fake_cpuworker_queue, ent);
-  return (struct workqueue_entry_t *)ent;
+  return (struct workqueue_entry_s *)ent;
 }
 static int
 mock_cpuworker_run_work(void)
@@ -144,6 +145,7 @@ mock_cpuworker_run_work(void)
     return 0;
   SMARTLIST_FOREACH(fake_cpuworker_queue, fake_work_queue_ent_t *, ent, {
       enum workqueue_reply_t r = ent->fn(NULL, ent->arg);
+      ent->reply_status = r;
       if (r != WQ_RPL_REPLY)
         return -1;
   });
@@ -155,7 +157,7 @@ mock_cpuworker_handle_replies(void)
   if (! fake_cpuworker_queue)
     return;
   SMARTLIST_FOREACH(fake_cpuworker_queue, fake_work_queue_ent_t *, ent, {
-      ent->reply_fn(ent->arg);
+      ent->reply_fn(ent->arg, ent->reply_status);
       tor_free(ent);
   });
   smartlist_free(fake_cpuworker_queue);
@@ -689,7 +691,7 @@ static void
 test_consdiffmgr_cleanup_bad_valid_after(void *arg)
 {
   /* This will seem cleanable, but isn't, because its valid-after time is
-   * malformed. */
+   * misformed. */
 
   (void)arg;
   config_line_t *labels = NULL;

@@ -34,7 +34,6 @@
 #include "lib/log/util_bug.h"
 #include "lib/net/alertsock.h"
 #include "lib/net/socket.h"
-#include "lib/thread/threads.h"
 
 #include "ext/tor_queue.h"
 #include <event2/event.h>
@@ -44,13 +43,13 @@
 #define WORKQUEUE_PRIORITY_LAST WQ_PRI_LOW
 #define WORKQUEUE_N_PRIORITIES (((int) WORKQUEUE_PRIORITY_LAST)+1)
 
-TOR_TAILQ_HEAD(work_tailq_t, workqueue_entry_t);
+TOR_TAILQ_HEAD(work_tailq_t, workqueue_entry_s);
 typedef struct work_tailq_t work_tailq_t;
 
-struct threadpool_t {
+struct threadpool_s {
   /** An array of pointers to workerthread_t: one for each running worker
    * thread. */
-  struct workerthread_t **threads;
+  struct workerthread_s **threads;
 
   /** Condition variable that we wait on when we have no work, and which
    * gets signaled when our queue becomes nonempty. */
@@ -63,28 +62,30 @@ struct threadpool_t {
    * at an earlier generation needs to run the update function. */
   unsigned generation;
 
+  /** Flag to tell the worker threads to stop. */
+  int shutdown;
+
   /** Function that should be run for updates on each thread. */
   workqueue_reply_t (*update_fn)(void *, void *);
   /** Function to free update arguments if they can't be run. */
   void (*free_update_arg_fn)(void *);
   /** Array of n_threads update arguments. */
   void **update_args;
-  /** Event to notice when another thread has sent a reply. */
-  struct event *reply_event;
-  void (*reply_cb)(threadpool_t *);
+  /** Callback that is run after a reply queue has processed work. */
+  void (*reply_cb)(threadpool_t *, replyqueue_t *);
 
   /** Number of elements in threads. */
   int n_threads;
   /** Mutex to protect all the above fields. */
   tor_mutex_t lock;
 
-  /** A reply queue to use when constructing new threads. */
-  replyqueue_t *reply_queue;
-
   /** Functions used to allocate and free thread state. */
   void *(*new_thread_state_fn)(void*);
   void (*free_thread_state_fn)(void*);
   void *new_thread_state_arg;
+
+  /** Function to start a thread. Should return a negative number on error. */
+  tor_thread_t *(*thread_spawn_fn)(void (*func)(void *), void *data);
 };
 
 /** Used to put a workqueue_priority_t value into a bitfield. */
@@ -92,14 +93,14 @@ struct threadpool_t {
 /** Number of bits needed to hold all legal values of workqueue_priority_t */
 #define WORKQUEUE_PRIORITY_BITS 2
 
-struct workqueue_entry_t {
+struct workqueue_entry_s {
   /** The next workqueue_entry_t that's pending on the same thread or
    * reply queue. */
-  TOR_TAILQ_ENTRY(workqueue_entry_t) next_work;
+  TOR_TAILQ_ENTRY(workqueue_entry_s) next_work;
   /** The threadpool to which this workqueue_entry_t was assigned. This field
    * is set when the workqueue_entry_t is created, and won't be cleared until
    * after it's handled in the main thread. */
-  struct threadpool_t *on_pool;
+  struct threadpool_s *on_pool;
   /** True iff this entry is waiting for a worker to start processing it. */
   uint8_t pending;
   /** Priority of this entry. */
@@ -107,32 +108,41 @@ struct workqueue_entry_t {
   /** Function to run in the worker thread. */
   workqueue_reply_t (*fn)(void *state, void *arg);
   /** Function to run while processing the reply queue. */
-  void (*reply_fn)(void *arg);
+  void (*reply_fn)(void *arg, workqueue_reply_t reply_status);
+  /** Linked reply queue */
+  replyqueue_t *reply_queue;
   /** Argument for the above functions. */
   void *arg;
+  /** Reply status of the worker thread function after it has returned. */
+  workqueue_reply_t reply_status;
 };
 
-struct replyqueue_t {
+struct replyqueue_s {
   /** Mutex to protect the answers field */
   tor_mutex_t lock;
   /** Doubly-linked list of answers that the reply queue needs to handle. */
-  TOR_TAILQ_HEAD(, workqueue_entry_t) answers;
+  TOR_TAILQ_HEAD(, workqueue_entry_s) answers;
 
   /** Mechanism to wake up the main thread when it is receiving answers. */
   alert_sockets_t alert;
+  /** Event to notice when another thread has sent a reply. */
+  struct event *reply_event;
+
+  /** The threadpool that uses this reply queue. */
+  struct threadpool_s *pool;
 };
 
 /** A worker thread represents a single thread in a thread pool. */
-typedef struct workerthread_t {
+typedef struct workerthread_s {
   /** Which thread it this?  In range 0..in_pool->n_threads-1 */
   int index;
+  /** The tor thread object. */
+  tor_thread_t* thread;
   /** The pool this thread is a part of. */
-  struct threadpool_t *in_pool;
+  struct threadpool_s *in_pool;
   /** User-supplied state field that we pass to the worker functions of each
    * work item. */
   void *state;
-  /** Reply queue to which we pass our results. */
-  replyqueue_t *reply_queue;
   /** The current update generation of this thread */
   unsigned generation;
   /** One over the probability of taking work from a lower-priority queue. */
@@ -146,12 +156,14 @@ static void queue_reply(replyqueue_t *queue, workqueue_entry_t *work);
  * thread. See threadpool_queue_work() for full documentation. */
 static workqueue_entry_t *
 workqueue_entry_new(workqueue_reply_t (*fn)(void*, void*),
-                    void (*reply_fn)(void*),
+                    void (*reply_fn)(void*, workqueue_reply_t),
+                    replyqueue_t *reply_queue,
                     void *arg)
 {
   workqueue_entry_t *ent = tor_malloc_zero(sizeof(workqueue_entry_t));
   ent->fn = fn;
   ent->reply_fn = reply_fn;
+  ent->reply_queue = reply_queue;
   ent->arg = arg;
   ent->priority = WQ_PRI_HIGH;
   return ent;
@@ -289,25 +301,41 @@ worker_thread_main(void *thread_)
         continue;
       }
       work = worker_thread_extract_next_work(thread);
-      if (BUG(work == NULL))
+      if (BUG(work == NULL)) {
         break;
-      tor_mutex_release(&pool->lock);
-
-      /* We run the work function without holding the thread lock. This
-       * is the main thread's first opportunity to give us more work. */
-      result = work->fn(thread->state, work->arg);
-
-      /* Queue the reply for the main thread. */
-      queue_reply(thread->reply_queue, work);
-
-      /* We may need to exit the thread. */
-      if (result != WQ_RPL_REPLY) {
-        return;
       }
-      tor_mutex_acquire(&pool->lock);
+      if (pool->shutdown) {
+        /* If the pool wants to shutdown, we still need to reply so
+           that the reply functions have a chance to free memory. */
+        tor_mutex_release(&pool->lock);
+        work->reply_status = WQ_RPL_SHUTDOWN;
+        queue_reply(work->reply_queue, work);
+        tor_mutex_acquire(&pool->lock);
+      } else {
+        tor_mutex_release(&pool->lock);
+
+        /* We run the work function without holding the thread lock. This
+         * is the main thread's first opportunity to give us more work. */
+        result = work->fn(thread->state, work->arg);
+
+        /* Queue the reply for the main thread. */
+        work->reply_status = result;
+        queue_reply(work->reply_queue, work);
+
+        /* We may need to exit the thread. */
+        if (result != WQ_RPL_REPLY) {
+          return;
+        }
+        tor_mutex_acquire(&pool->lock);
+      }
     }
     /* At this point the lock is held, and there is no work in this thread's
      * queue. */
+
+    if (pool->shutdown) {
+      tor_mutex_release(&pool->lock);
+      return;
+    }
 
     /* TODO: support an idle-function */
 
@@ -336,19 +364,19 @@ queue_reply(replyqueue_t *queue, workqueue_entry_t *work)
   }
 }
 
-/** Allocate and start a new worker thread to use state object <b>state</b>,
- * and send responses to <b>replyqueue</b>. */
+/** Allocate and start a new worker thread to use state object <b>state</b>. */
 static workerthread_t *
 workerthread_new(int32_t lower_priority_chance,
-                 void *state, threadpool_t *pool, replyqueue_t *replyqueue)
+                 void *state, threadpool_t *pool)
 {
   workerthread_t *thr = tor_malloc_zero(sizeof(workerthread_t));
   thr->state = state;
-  thr->reply_queue = replyqueue;
   thr->in_pool = pool;
   thr->lower_priority_chance = lower_priority_chance;
 
-  if (spawn_func(worker_thread_main, thr) < 0) {
+  tor_assert(pool->thread_spawn_fn != NULL);
+  tor_thread_t* thread = pool->thread_spawn_fn(worker_thread_main, thr);
+  if (thread == NULL) {
     //LCOV_EXCL_START
     tor_assert_nonfatal_unreached();
     log_err(LD_GENERAL, "Can't launch worker thread.");
@@ -357,7 +385,23 @@ workerthread_new(int32_t lower_priority_chance,
     //LCOV_EXCL_STOP
   }
 
+  thr->thread = thread;
+
   return thr;
+}
+
+static void
+workerthread_join(workerthread_t* thr)
+{
+  if (join_thread(thr->thread) != 0) {
+    log_err(LD_GENERAL, "Could not join workerthread.");
+  }
+}
+
+static void
+workerthread_free(workerthread_t* thr)
+{
+  free_thread(thr->thread);
 }
 
 /**
@@ -372,8 +416,7 @@ workerthread_new(int32_t lower_priority_chance,
  * function's responsibility to free the work object.
  *
  * On success, return a workqueue_entry_t object that can be passed to
- * workqueue_entry_cancel(). On failure, return NULL.  (Failure is not
- * currently possible, but callers should check anyway.)
+ * workqueue_entry_cancel(). On failure, return NULL.
  *
  * Items are executed in a loose priority order -- each thread will usually
  * take from the queued work with the highest prioirity, but will occasionally
@@ -386,18 +429,23 @@ workqueue_entry_t *
 threadpool_queue_work_priority(threadpool_t *pool,
                                workqueue_priority_t prio,
                                workqueue_reply_t (*fn)(void *, void *),
-                               void (*reply_fn)(void *),
+                               void (*reply_fn)(void *, workqueue_reply_t),
+                               replyqueue_t *reply_queue,
                                void *arg)
 {
   tor_assert(((int)prio) >= WORKQUEUE_PRIORITY_FIRST &&
              ((int)prio) <= WORKQUEUE_PRIORITY_LAST);
 
-  workqueue_entry_t *ent = workqueue_entry_new(fn, reply_fn, arg);
+  tor_mutex_acquire(&pool->lock);
+
+  if (pool->shutdown) {
+    return NULL;
+  }
+
+  workqueue_entry_t *ent = workqueue_entry_new(fn, reply_fn, reply_queue, arg);
   ent->on_pool = pool;
   ent->pending = 1;
   ent->priority = prio;
-
-  tor_mutex_acquire(&pool->lock);
 
   TOR_TAILQ_INSERT_TAIL(&pool->work[prio], ent, next_work);
 
@@ -412,10 +460,12 @@ threadpool_queue_work_priority(threadpool_t *pool,
 workqueue_entry_t *
 threadpool_queue_work(threadpool_t *pool,
                       workqueue_reply_t (*fn)(void *, void *),
-                      void (*reply_fn)(void *),
+                      void (*reply_fn)(void *, workqueue_reply_t),
+                      replyqueue_t *reply_queue,
                       void *arg)
 {
-  return threadpool_queue_work_priority(pool, WQ_PRI_HIGH, fn, reply_fn, arg);
+  return threadpool_queue_work_priority(pool, WQ_PRI_HIGH, fn,
+                                        reply_fn, reply_queue, arg);
 }
 
 /**
@@ -446,6 +496,11 @@ threadpool_queue_update(threadpool_t *pool,
   void **new_args;
 
   tor_mutex_acquire(&pool->lock);
+
+  if (pool->shutdown) {
+    return -1;
+  }
+
   n_threads = pool->n_threads;
   old_args = pool->update_args;
   old_args_free_fn = pool->free_update_arg_fn;
@@ -512,7 +567,7 @@ threadpool_start_threads(threadpool_t *pool, int n)
 
     void *state = pool->new_thread_state_fn(pool->new_thread_state_arg);
     workerthread_t *thr = workerthread_new(chance,
-                                           state, pool, pool->reply_queue);
+                                           state, pool);
 
     if (!thr) {
       //LCOV_EXCL_START
@@ -531,18 +586,17 @@ threadpool_start_threads(threadpool_t *pool, int n)
 }
 
 /**
- * Construct a new thread pool with <b>n</b> worker threads, configured to
- * send their output to <b>replyqueue</b>.  The threads' states will be
- * constructed with the <b>new_thread_state_fn</b> call, receiving <b>arg</b>
- * as its argument.  When the threads close, they will call
- * <b>free_thread_state_fn</b> on their states.
+ * Construct a new thread pool with <b>n</b> worker threads. The threads'
+ * states will be constructed with the <b>new_thread_state_fn</b> call,
+ * receiving <b>arg</b> as its argument.  When the threads close, they
+ * will call <b>free_thread_state_fn</b> on their states.
  */
 threadpool_t *
 threadpool_new(int n_threads,
-               replyqueue_t *replyqueue,
                void *(*new_thread_state_fn)(void*),
                void (*free_thread_state_fn)(void*),
-               void *arg)
+               void *arg,
+               tor_thread_t *(*thread_spawn_fn)(void (*func)(void *), void *data))
 {
   threadpool_t *pool;
   pool = tor_malloc_zero(sizeof(threadpool_t));
@@ -556,7 +610,7 @@ threadpool_new(int n_threads,
   pool->new_thread_state_fn = new_thread_state_fn;
   pool->new_thread_state_arg = arg;
   pool->free_thread_state_fn = free_thread_state_fn;
-  pool->reply_queue = replyqueue;
+  pool->thread_spawn_fn = thread_spawn_fn;
 
   if (threadpool_start_threads(pool, n_threads) < 0) {
     //LCOV_EXCL_START
@@ -571,11 +625,34 @@ threadpool_new(int n_threads,
   return pool;
 }
 
-/** Return the reply queue associated with a given thread pool. */
-replyqueue_t *
-threadpool_get_replyqueue(threadpool_t *tp)
+void
+threadpool_shutdown(threadpool_t* pool)
 {
-  return tp->reply_queue;
+  tor_assert(pool != NULL);
+  tor_mutex_acquire(&pool->lock);
+  pool->shutdown = 1;
+  tor_cond_signal_all(&pool->condition);
+
+  for (int i=0; i<pool->n_threads; i++) {
+    workerthread_t *thread = pool->threads[i];
+    tor_mutex_release(&pool->lock);
+    workerthread_join(thread);
+    tor_mutex_acquire(&pool->lock);
+  }
+
+  for (int i=0; i<pool->n_threads; i++) {
+    workerthread_free(pool->threads[i]);
+    pool->free_thread_state_fn(pool->threads[i]->state);
+  }
+
+  tor_mutex_release(&pool->lock);
+}
+
+/** Return the thread pool associated with a given reply queue. */
+threadpool_t *
+replyqueue_get_threadpool(replyqueue_t *rq)
+{
+  return rq->pool;
 }
 
 /** Allocate a new reply queue.  Reply queues are used to pass results from
@@ -583,7 +660,7 @@ threadpool_get_replyqueue(threadpool_t *tp)
  * IO-centric event loop, it needs to get woken up with means other than a
  * condition variable. */
 replyqueue_t *
-replyqueue_new(uint32_t alertsocks_flags)
+replyqueue_new(uint32_t alertsocks_flags, threadpool_t *pool)
 {
   replyqueue_t *rq;
 
@@ -594,6 +671,8 @@ replyqueue_new(uint32_t alertsocks_flags)
     return NULL;
     //LCOV_EXCL_STOP
   }
+
+  rq->pool = pool;
 
   tor_mutex_init(&rq->lock);
   TOR_TAILQ_INIT(&rq->answers);
@@ -606,36 +685,41 @@ replyqueue_new(uint32_t alertsocks_flags)
 static void
 reply_event_cb(evutil_socket_t sock, short events, void *arg)
 {
-  threadpool_t *tp = arg;
+  replyqueue_t *reply_queue = arg;
   (void) sock;
   (void) events;
-  replyqueue_process(tp->reply_queue);
-  if (tp->reply_cb)
-    tp->reply_cb(tp);
+  replyqueue_process(reply_queue);
+  if (reply_queue->pool && reply_queue->pool->reply_cb)
+    reply_queue->pool->reply_cb(reply_queue->pool, reply_queue);
 }
 
-/** Register the threadpool <b>tp</b>'s reply queue with Tor's global
- * libevent mainloop. If <b>cb</b> is provided, it is run after
- * each time there is work to process from the reply queue. Return 0 on
- * success, -1 on failure.
+/** Register the reply queue with the given libevent mainloop. Return 0
+ * on success, -1 on failure.
  */
 int
-threadpool_register_reply_event(threadpool_t *tp,
-                                void (*cb)(threadpool_t *tp))
+replyqueue_register_reply_event(replyqueue_t *reply_queue,
+                                struct event_base *base)
 {
-  struct event_base *base = tor_libevent_get_base();
-
-  if (tp->reply_event) {
-    tor_event_free(tp->reply_event);
+  if (reply_queue->reply_event) {
+    tor_event_free(reply_queue->reply_event);
   }
-  tp->reply_event = tor_event_new(base,
-                                  tp->reply_queue->alert.read_fd,
-                                  EV_READ|EV_PERSIST,
-                                  reply_event_cb,
-                                  tp);
-  tor_assert(tp->reply_event);
+  reply_queue->reply_event = tor_event_new(base,
+                                           reply_queue->alert.read_fd,
+                                           EV_READ|EV_PERSIST,
+                                           reply_event_cb,
+                                           reply_queue);
+  tor_assert(reply_queue->reply_event);
+  return event_add(reply_queue->reply_event, NULL);
+}
+
+/** The given callback is run after each time there is work to process
+ * from a reply queue. Return 0 on success, -1 on failure.
+ */
+void
+threadpool_set_reply_cb(threadpool_t *tp,
+                        void (*cb)(threadpool_t *tp, replyqueue_t *rq))
+{
   tp->reply_cb = cb;
-  return event_add(tp->reply_event, NULL);
 }
 
 /**
@@ -664,7 +748,7 @@ replyqueue_process(replyqueue_t *queue)
     tor_mutex_release(&queue->lock);
     work->on_pool = NULL;
 
-    work->reply_fn(work->arg);
+    work->reply_fn(work->arg, work->reply_status);
     workqueue_entry_free(work);
 
     tor_mutex_acquire(&queue->lock);

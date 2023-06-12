@@ -1,4 +1,4 @@
-/* Copyright (c) 2007-2021, The Tor Project, Inc. */
+/* Copyright (c) 2007-2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -70,18 +70,12 @@ static smartlist_t *geoip_countries = NULL;
  * The index is encoded in the pointer, and 1 is added so that NULL can mean
  * not found. */
 static strmap_t *country_idxplus1_by_lc_code = NULL;
-/** List of all known geoip_ipv4_entry_t sorted
- * by their respective ip_low values. */
-static smartlist_t *geoip_ipv4_entries = NULL;
-/** List of all known geoip_ipv6_entry_t, sorted by their respective
- * ip_low values. */
-static smartlist_t *geoip_ipv6_entries = NULL;
+/** Lists of all known geoip_ipv4_entry_t and geoip_ipv6_entry_t, sorted
+ * by their respective ip_low. */
+static smartlist_t *geoip_ipv4_entries = NULL, *geoip_ipv6_entries = NULL;
 
-/** SHA1 digest of the IPv4 GeoIP file to include in extra-info
- * descriptors. */
+/** SHA1 digest of the GeoIP files to include in extra-info descriptors. */
 static char geoip_digest[DIGEST_LEN];
-/** SHA1 digest of the IPv6 GeoIP file to include in extra-info
- * descriptors. */
 static char geoip6_digest[DIGEST_LEN];
 
 /** Return a list of geoip_country_t for all known countries. */
@@ -387,7 +381,7 @@ geoip_load_file(sa_family_t family, const char *filename, int severity)
  * be less than geoip_get_n_countries().  To decode it, call
  * geoip_get_country_name().
  */
-STATIC int
+int
 geoip_get_country_by_ipv4(uint32_t ipaddr)
 {
   geoip_ipv4_entry_t *ent;
@@ -403,7 +397,7 @@ geoip_get_country_by_ipv4(uint32_t ipaddr)
  * 0 for the 'unknown country'.  The return value will always be less than
  * geoip_get_n_countries().  To decode it, call geoip_get_country_name().
  */
-STATIC int
+int
 geoip_get_country_by_ipv6(const struct in6_addr *addr)
 {
   geoip_ipv6_entry_t *ent;

@@ -1,23 +1,16 @@
-#!/usr/bin/env python
-
-# Future imports for Python 2.7, mandatory in 3.0
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+#!/usr/bin/python
 
 FUZZERS = """
-	address
-	addressPTR
 	consensus
 	descriptor
 	diff
 	diff-apply
 	extrainfo
+	hsdescv2
 	hsdescv3
-    hsdescv3-inner
-    hsdescv3-middle
 	http
 	http-connect
+	iptsv2
 	microdesc
 	socks
 	strops
@@ -33,25 +26,26 @@ FUZZING_CFLAGS = \
 FUZZING_LDFLAG = \
 	@TOR_LDFLAGS_zlib@ $(TOR_LDFLAGS_CRYPTLIB) @TOR_LDFLAGS_libevent@
 FUZZING_LIBS = \
-	src/test/libtor-testing.a \
+	$(TOR_INTERNAL_TESTING_LIBS) \
+	$(rust_ldadd) \
 	@TOR_ZLIB_LIBS@ @TOR_LIB_MATH@ \
 	@TOR_LIBEVENT_LIBS@ $(TOR_LIBS_CRYPTLIB) \
-	@TOR_LIB_WS32@ @TOR_LIB_IPHLPAPI@ @TOR_LIB_SHLWAPI@ @TOR_LIB_GDI@ @TOR_LIB_USERENV@ @CURVE25519_LIBS@ \
+	@TOR_LIB_WS32@ @TOR_LIB_IPHLPAPI@ @TOR_LIB_GDI@ @TOR_LIB_USERENV@ @CURVE25519_LIBS@ \
 	@TOR_SYSTEMD_LIBS@ \
 	@TOR_LZMA_LIBS@ \
-	@TOR_ZSTD_LIBS@ \
-	@TOR_TRACE_LIBS@
+	@TOR_ZSTD_LIBS@
 
 oss-fuzz-prereqs: \
-    src/test/libtor-testing.a
+    $(TOR_INTERNAL_TESTING_LIBS)
 
 noinst_HEADERS += \
 	src/test/fuzz/fuzzing.h
 
+LIBFUZZER = -lFuzzer
 LIBFUZZER_CPPFLAGS = $(FUZZING_CPPFLAGS) -DLLVM_FUZZ
 LIBFUZZER_CFLAGS = $(FUZZING_CFLAGS)
-LIBFUZZER_LDFLAG = $(FUZZING_LDFLAG) -fsanitize=fuzzer
-LIBFUZZER_LIBS = $(FUZZING_LIBS) -lstdc++
+LIBFUZZER_LDFLAG = $(FUZZING_LDFLAG)
+LIBFUZZER_LIBS = $(FUZZING_LIBS) $(LIBFUZZER) -lstdc++
 
 LIBOSS_FUZZ_CPPFLAGS = $(FUZZING_CPPFLAGS) -DLLVM_FUZZ
 LIBOSS_FUZZ_CFLAGS = $(FUZZING_CFLAGS)

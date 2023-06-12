@@ -1,17 +1,20 @@
-/* Copyright (c) 2013-2021, The Tor Project, Inc. */
+/* Copyright (c) 2013-2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "core/or/or.h"
 #include "app/config/config.h"
 
+#include "core/or/scheduler_sys.h"
+
 #include "lib/evloop/compat_libevent.h"
-#define SCHEDULER_PRIVATE
+#define SCHEDULER_PRIVATE_
 #define SCHEDULER_KIST_PRIVATE
 #include "core/or/scheduler.h"
 #include "core/mainloop/mainloop.h"
 #include "lib/buf/buffers.h"
-#define CHANNEL_OBJECT_PRIVATE
+#define TOR_CHANNEL_INTERNAL_
 #include "core/or/channeltls.h"
+#include "lib/evloop/compat_libevent.h"
 
 #include "core/or/or_connection_st.h"
 
@@ -42,7 +45,7 @@
  * circuit scheduler. It was supposed to prioritize circuits across many
  * channels, but wasn't effective. It is preserved in scheduler_vanilla.c.
  *
- * [0]: https://www.robgjansen.com/publications/kist-sec2014.pdf
+ * [0]: http://www.robgjansen.com/publications/kist-sec2014.pdf
  *
  * Then we actually got around to implementing KIST for real. We decided to
  * modularize the scheduler so new ones can be implemented. You can find KIST
@@ -154,7 +157,7 @@
  *****************************************************************************/
 
 /** DOCDOC */
-STATIC const scheduler_t *the_scheduler;
+STATIC const scheduler_t *the_scheduler = NULL;
 
 /**
  * We keep a list of channels that are pending - i.e, have cells to write
@@ -191,7 +194,7 @@ get_scheduler_type_string(scheduler_types_t type)
   case SCHEDULER_KIST_LITE:
     return "KISTLite";
   case SCHEDULER_NONE:
-    FALLTHROUGH;
+    /* fallthrough */
   default:
     tor_assert_unreached();
     return "(N/A)";
@@ -287,7 +290,7 @@ select_scheduler(void)
       scheduler_kist_set_lite_mode();
       goto end;
     case SCHEDULER_NONE:
-      FALLTHROUGH;
+      /* fallthrough */
     default:
       /* Our option validation should have caught this. */
       tor_assert_unreached();
@@ -602,15 +605,26 @@ scheduler_ev_active(void)
 }
 
 /*
- * Initialize everything scheduling-related from config.c. Note this is only
- * called when Tor is starting up, while scheduler_t->init() is called both
- * when Tor is starting up and when we are switching schedulers.
+ * Initialize any global memory needed by the scheduler. In order to use the
+ * scheduler, you must still tell it when the configuration from config.c is
+ * ready with scheduler_conf_changed(), and attach the mainloop event with
+ * scheduler_attach_mainloop(). Note this is only called when Tor is starting
+ * up, while scheduler_t->init() is called when we are switching schedulers.
  */
 void
 scheduler_init(void)
 {
-  log_debug(LD_SCHED, "Initting scheduler");
+  log_debug(LD_SCHED, "Initting scheduler memory");
 
+  channels_pending = smartlist_new();
+}
+
+/*
+ * Create and attach a new mainloop event.
+ */
+void
+scheduler_attach_mainloop(void)
+{
   // Two '!' because we really do want to check if the pointer is non-NULL
   IF_BUG_ONCE(!!run_sched_ev) {
     log_warn(LD_SCHED, "We should not already have a libevent scheduler event."
@@ -619,9 +633,6 @@ scheduler_init(void)
     run_sched_ev = NULL;
   }
   run_sched_ev = mainloop_event_new(scheduler_evt_callback, NULL);
-  channels_pending = smartlist_new();
-
-  set_scheduler();
 }
 
 /*
@@ -713,7 +724,7 @@ scheduler_bug_occurred(const channel_t *chan)
 
   if (chan != NULL) {
     const size_t outbuf_len =
-      buf_datalen(TO_CONN(CONST_BASE_CHAN_TO_TLS(chan)->conn)->outbuf);
+      buf_datalen(TO_CONN(BASE_CHAN_TO_TLS((channel_t *) chan)->conn)->outbuf);
     tor_snprintf(buf, sizeof(buf),
                  "Channel %" PRIu64 " in state %s and scheduler state %s."
                  " Num cells on cmux: %d. Connection outbuf len: %lu.",
@@ -768,3 +779,24 @@ scheduler_touch_channel(channel_t *chan)
 }
 
 #endif /* defined(TOR_UNIT_TESTS) */
+
+static int
+subsys_scheduler_initialize(void)
+{
+  scheduler_init();
+  return 0;
+}
+
+static void
+subsys_scheduler_shutdown(void)
+{
+  scheduler_free_all();
+}
+
+const struct subsys_fns_t sys_scheduler = {
+  .name = "scheduler",
+  .supported = true,
+  .level = 10,
+  .initialize = subsys_scheduler_initialize,
+  .shutdown = subsys_scheduler_shutdown,
+};

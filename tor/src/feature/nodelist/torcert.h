@@ -1,19 +1,13 @@
-/* Copyright (c) 2014-2021, The Tor Project, Inc. */
+/* Copyright (c) 2014-2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
-
-/**
- * @file torcert.h
- * @brief Header for torcert.c
- **/
 
 #ifndef TORCERT_H_INCLUDED
 #define TORCERT_H_INCLUDED
 
 #include "lib/crypt_ops/crypto_ed25519.h"
+#include "lib/tls/x509.h"
 
-#define SIGNED_KEY_TYPE_ED25519        0x01
-#define SIGNED_KEY_TYPE_SHA256_OF_RSA  0x02
-#define SIGNED_KEY_TYPE_SHA256_OF_X509 0x03
+#define SIGNED_KEY_TYPE_ED25519     0x01
 
 #define CERT_TYPE_ID_SIGNING        0x04
 #define CERT_TYPE_SIGNING_LINK      0x05
@@ -58,17 +52,11 @@ typedef struct tor_cert_st {
 
 struct tor_tls_t;
 
-tor_cert_t *tor_cert_create_ed25519(const ed25519_keypair_t *signing_key,
+tor_cert_t *tor_cert_create(const ed25519_keypair_t *signing_key,
                             uint8_t cert_type,
                             const ed25519_public_key_t *signed_key,
                             time_t now, time_t lifetime,
                             uint32_t flags);
-tor_cert_t * tor_cert_create_raw(const ed25519_keypair_t *signing_key,
-                      uint8_t cert_type,
-                      uint8_t signed_key_type,
-                      const uint8_t signed_key_info[32],
-                      time_t now, time_t lifetime,
-                      uint32_t flags);
 
 tor_cert_t *tor_cert_parse(const uint8_t *cert, size_t certlen);
 
@@ -105,15 +93,18 @@ void or_handshake_certs_free_(or_handshake_certs_t *certs);
   FREE_AND_NULL(or_handshake_certs_t, or_handshake_certs_free_, (certs))
 int or_handshake_certs_rsa_ok(int severity,
                               or_handshake_certs_t *certs,
-                              struct tor_tls_t *tls,
+                              //struct tor_tls_t *tls,
+                              tor_x509_cert_t *peer_cert,
                               time_t now);
 int or_handshake_certs_ed25519_ok(int severity,
                                   or_handshake_certs_t *certs,
-                                  struct tor_tls_t *tls,
+                                  //struct tor_tls_t *tls,
+                                  tor_x509_cert_t *peer_cert,
                                   time_t now);
 void or_handshake_certs_check_both(int severity,
                               or_handshake_certs_t *certs,
-                              struct tor_tls_t *tls,
+                              //struct tor_tls_t *tls,
+                              tor_x509_cert_t *peer_cert,
                               time_t now,
                               const ed25519_public_key_t **ed_id_out,
                               const common_digests_t **rsa_id_out);

@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2021, The Tor Project, Inc. */
+ * Copyright (c) 2007-2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -9,7 +9,7 @@
  * \brief Code to parse address policies.
  **/
 
-#define  ROUTERDESC_TOKEN_TABLE_PRIVATE
+#define  EXPOSE_ROUTERDESC_TOKEN_TABLE
 
 #include "core/or/or.h"
 
@@ -191,10 +191,6 @@ router_parse_addr_policy_private(directory_token_t *tok)
   const char *arg;
   uint16_t port_min, port_max;
   addr_policy_t result;
-
-  /* Safeguard: always flag non canonical because it is a stack allocated
-   * object and thus should not be considered a copy stored in a map. */
-  result.is_canonical = 0;
 
   arg = tok->args[0];
   if (strcmpstart(arg, "private"))

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, The Tor Project, Inc. */
+/* Copyright (c) 2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -22,7 +22,6 @@ void sendme_circuit_consider_sending(circuit_t *circ,
 int sendme_process_circuit_level(crypt_path_t *layer_hint,
                                  circuit_t *circ, const uint8_t *cell_payload,
                                  uint16_t cell_payload_len);
-int sendme_process_circuit_level_impl(crypt_path_t *, circuit_t *);
 int sendme_process_stream_level(edge_connection_t *conn, circuit_t *circ,
                                 uint16_t cell_body_len);
 
@@ -33,7 +32,7 @@ int sendme_circuit_data_received(circuit_t *circ, crypt_path_t *layer_hint);
 /* Update package window functions. */
 int sendme_note_circuit_data_packaged(circuit_t *circ,
                                       crypt_path_t *layer_hint);
-int sendme_note_stream_data_packaged(edge_connection_t *conn, size_t len);
+int sendme_note_stream_data_packaged(edge_connection_t *conn);
 
 /* Record cell digest on circuit. */
 void sendme_record_cell_digest_on_circ(circuit_t *circ, crypt_path_t *cpath);
@@ -49,7 +48,7 @@ void sendme_record_sending_cell_digest(circuit_t *circ, crypt_path_t *cpath);
 #define SENDME_MAX_SUPPORTED_VERSION 1
 
 /* The cell version constants for when emitting a cell. */
-#define SENDME_EMIT_MIN_VERSION_DEFAULT 1
+#define SENDME_EMIT_MIN_VERSION_DEFAULT 0
 #define SENDME_EMIT_MIN_VERSION_MIN 0
 #define SENDME_EMIT_MIN_VERSION_MAX UINT8_MAX
 
@@ -73,8 +72,6 @@ STATIC ssize_t build_cell_payload_v1(const uint8_t *cell_digest,
 STATIC bool sendme_is_valid(const circuit_t *circ,
                             const uint8_t *cell_payload,
                             size_t cell_payload_len);
-STATIC bool circuit_sendme_cell_is_next(int deliver_window,
-                                        int sendme_inc);
 
 #endif /* defined(TOR_UNIT_TESTS) */
 

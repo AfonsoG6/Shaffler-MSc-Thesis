@@ -1,17 +1,12 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2021, The Tor Project, Inc. */
+ * Copyright (c) 2007-2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
-/**
- * @file channelpadding.c
- * @brief Link-level padding code.
- **/
-
-/* CHANNEL_OBJECT_PRIVATE define needed for an O(1) implementation of
+/* TOR_CHANNEL_INTERNAL_ define needed for an O(1) implementation of
  * channelpadding_channel_to_channelinfo() */
-#define CHANNEL_OBJECT_PRIVATE
+#define TOR_CHANNEL_INTERNAL_
 
 #include "core/or/or.h"
 #include "core/or/channel.h"
@@ -27,8 +22,8 @@
 #include "feature/relay/router.h"
 #include "feature/relay/routermode.h"
 #include "lib/time/compat_time.h"
+#include "feature/rend/rendservice.h"
 #include "lib/evloop/timers.h"
-#include "feature/hs/hs_service.h"
 
 #include "core/or/cell_st.h"
 #include "core/or/or_connection_st.h"
@@ -90,7 +85,7 @@ static int consensus_nf_pad_single_onion;
  * for every single connection, every second.
  */
 void
-channelpadding_new_consensus_params(const networkstatus_t *ns)
+channelpadding_new_consensus_params(networkstatus_t *ns)
 {
 #define DFLT_NETFLOW_INACTIVE_KEEPALIVE_LOW 1500
 #define DFLT_NETFLOW_INACTIVE_KEEPALIVE_HIGH 9500
@@ -186,7 +181,7 @@ channelpadding_get_netflow_inactive_timeout_ms(const channel_t *chan)
     high_timeout = MAX(high_timeout, chan->padding_timeout_high_ms);
   }
 
-  if (low_timeout >= high_timeout)
+  if (low_timeout == high_timeout)
     return low_timeout; // No randomization
 
   /*
@@ -265,7 +260,7 @@ channelpadding_update_padding_for_channel(channel_t *chan,
     log_fn_ratelim(&relay_limit,LOG_PROTOCOL_WARN,LD_PROTOCOL,
            "Got a PADDING_NEGOTIATE from relay at %s (%s). "
            "This should not happen.",
-           channel_describe_peer(chan),
+           chan->get_remote_descr(chan, 0),
            hex_str(chan->identity_digest, DIGEST_LEN));
     return -1;
   }
@@ -300,26 +295,30 @@ STATIC int
 channelpadding_send_disable_command(channel_t *chan)
 {
   channelpadding_negotiate_t disable;
-  cell_t cell;
+  //cell_t cell;
+  cell_t *cell = tor_malloc_zero(sizeof(cell_t));
 
   tor_assert(chan);
   tor_assert(BASE_CHAN_TO_TLS(chan)->conn->link_proto >=
              MIN_LINK_PROTO_FOR_CHANNEL_PADDING);
 
-  memset(&cell, 0, sizeof(cell_t));
+  //memset(&cell, 0, sizeof(cell_t));
   memset(&disable, 0, sizeof(channelpadding_negotiate_t));
-  cell.command = CELL_PADDING_NEGOTIATE;
+  cell->command = CELL_PADDING_NEGOTIATE;
 
   channelpadding_negotiate_set_command(&disable, CHANNELPADDING_COMMAND_STOP);
 
-  if (channelpadding_negotiate_encode(cell.payload, CELL_PAYLOAD_SIZE,
-                                      &disable) < 0)
+  if (channelpadding_negotiate_encode(cell->payload, CELL_PAYLOAD_SIZE,
+                                      &disable) < 0) {
+    tor_free(cell);
     return -1;
-
-  if (chan->write_cell(chan, &cell) == 1)
+  }
+  if (chan->write_cell(chan, cell) == 1) {
     return 0;
-  else
+  } else {
+    tor_free(cell);
     return -1;
+  }
 }
 
 /**
@@ -333,28 +332,32 @@ channelpadding_send_enable_command(channel_t *chan, uint16_t low_timeout,
                                    uint16_t high_timeout)
 {
   channelpadding_negotiate_t enable;
-  cell_t cell;
+  //cell_t cell;
+  cell_t *cell = tor_malloc_zero(sizeof(cell_t));
 
   tor_assert(chan);
   tor_assert(BASE_CHAN_TO_TLS(chan)->conn->link_proto >=
              MIN_LINK_PROTO_FOR_CHANNEL_PADDING);
 
-  memset(&cell, 0, sizeof(cell_t));
+  //memset(&cell, 0, sizeof(cell_t));
   memset(&enable, 0, sizeof(channelpadding_negotiate_t));
-  cell.command = CELL_PADDING_NEGOTIATE;
+  cell->command = CELL_PADDING_NEGOTIATE;
 
   channelpadding_negotiate_set_command(&enable, CHANNELPADDING_COMMAND_START);
   channelpadding_negotiate_set_ito_low_ms(&enable, low_timeout);
   channelpadding_negotiate_set_ito_high_ms(&enable, high_timeout);
 
-  if (channelpadding_negotiate_encode(cell.payload, CELL_PAYLOAD_SIZE,
-                                      &enable) < 0)
+  if (channelpadding_negotiate_encode(cell->payload, CELL_PAYLOAD_SIZE,
+                                      &enable) < 0) {
+    tor_free(cell);
     return -1;
-
-  if (chan->write_cell(chan, &cell) == 1)
+  }
+  if (chan->write_cell(chan, cell) == 1) {
     return 0;
-  else
+  } else {
+    tor_free(cell);
     return -1;
+  }
 }
 
 /**
@@ -367,7 +370,7 @@ channelpadding_send_enable_command(channel_t *chan, uint16_t low_timeout,
 static void
 channelpadding_send_padding_cell_for_callback(channel_t *chan)
 {
-  cell_t cell;
+  //cell_t cell;
 
   /* Check that the channel is still valid and open */
   if (!chan || chan->state != CHANNEL_STATE_OPEN) {
@@ -399,7 +402,7 @@ channelpadding_send_padding_cell_for_callback(channel_t *chan)
         "Sending netflow keepalive on %"PRIu64" to %s (%s) after "
         "%"PRId64" ms. Delta %"PRId64"ms",
         (chan->global_identifier),
-        safe_str_client(channel_describe_peer(chan)),
+        safe_str_client(chan->get_remote_descr(chan, 0)),
         safe_str_client(hex_str(chan->identity_digest, DIGEST_LEN)),
         (monotime_coarse_diff_msec(&chan->timestamp_xfer,&now)),
         (
@@ -411,9 +414,10 @@ channelpadding_send_padding_cell_for_callback(channel_t *chan)
 
   /* Send the padding cell. This will cause the channel to get a
    * fresh timestamp_active */
-  memset(&cell, 0, sizeof(cell));
-  cell.command = CELL_PADDING;
-  chan->write_cell(chan, &cell);
+  //memset(&cell, 0, sizeof(cell));
+  cell_t *cell = tor_malloc_zero(sizeof(cell_t));
+  cell->command = CELL_PADDING;
+  chan->write_cell(chan, cell);
 }
 
 /**
@@ -744,7 +748,7 @@ channelpadding_decide_to_pad_channel(channel_t *chan)
     return CHANNELPADDING_WONTPAD;
   }
 
-  if (hs_service_allow_non_anonymous_connection(options) &&
+  if (rend_service_allow_non_anonymous_connection(options) &&
       !consensus_nf_pad_single_onion) {
     /* If the consensus just changed values, this channel may still
      * think padding is enabled. Negotiate it off. */
