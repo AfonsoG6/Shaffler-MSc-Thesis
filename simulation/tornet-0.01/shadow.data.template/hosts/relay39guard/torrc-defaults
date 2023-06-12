@@ -3,4 +3,4 @@
 %include ../../../conf/tor.relay.torrc
 %include ../../../conf/tor.relay.guardonly.torrc
 BandwidthRate 5242880
-BandwidthBurst 5242880
+BandwidthBurst 5347737

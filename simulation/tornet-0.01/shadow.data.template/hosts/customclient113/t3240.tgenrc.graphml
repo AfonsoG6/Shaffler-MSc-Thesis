@@ -22,12 +22,12 @@
       <data key="d5">10 minutes</data>
     </node>
     <node id="traffic">
-      <data key="d6">339703929</data>
+      <data key="d6">774198850</data>
       <data key="d7">./tgen.tor-flowmodel-300000000usec.graphml</data>
       <data key="d8">../../../conf/tgen.tor-streammodel-ccs2018.graphml</data>
       <data key="d9">../../../conf/tgen.tor-packetmodel-ccs2018.graphml</data>
       <data key="d10">path</data>
-      <data key="d11">198760536</data>
+      <data key="d11">782166697</data>
     </node>
     <edge source="start" target="traffic" />
     <edge source="traffic" target="traffic" />
