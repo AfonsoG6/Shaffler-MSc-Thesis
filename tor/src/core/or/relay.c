@@ -176,7 +176,8 @@ circuit_update_channel_usage(circuit_t *circ, cell_t *cell)
       return;
 
     if (circ->n_chan->channel_usage == CHANNEL_USED_FOR_FULL_CIRCS &&
-        cell->command == CELL_RELAY) {
+        (cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST &&
+          cell->command <= CELL_RELAY_DELAY_HIGHEST))) {
       circ->n_chan->channel_usage = CHANNEL_USED_FOR_USER_TRAFFIC;
     }
   } else {
@@ -200,7 +201,8 @@ circuit_update_channel_usage(circuit_t *circ, cell_t *cell)
         if (or_circ->p_chan->channel_usage < CHANNEL_USED_FOR_FULL_CIRCS) {
           or_circ->p_chan->channel_usage = CHANNEL_USED_FOR_FULL_CIRCS;
         }
-      } else if (cell->command == CELL_RELAY) {
+      } else if (cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST &&
+          cell->command <= CELL_RELAY_DELAY_HIGHEST)) {
         or_circ->p_chan->channel_usage = CHANNEL_USED_FOR_USER_TRAFFIC;
       }
     }
@@ -617,6 +619,9 @@ relay_send_command_from_edge_,(streamid_t stream_id, circuit_t *circ,
 
   memset(&cell, 0, sizeof(cell_t));
   cell.command = CELL_RELAY;
+  if (ALL_SENDERS_DECIDE_DELAYS || cpath_layer != NULL) {
+    cell.command = CELL_RELAY_DELAY_HIGHEST; // Delay scale factor [13, 127] (RENDEZMIX)
+  }
   if (CIRCUIT_IS_ORIGIN(circ)) {
     tor_assert(cpath_layer);
     cell.circ_id = circ->n_circ_id;
@@ -1774,7 +1779,8 @@ handle_relay_cell_command(cell_t *cell, circuit_t *circ,
         static ratelim_t early_warning_limit =
           RATELIM_INIT(EARLY_WARNING_INTERVAL);
         char *m;
-        if (cell->command == CELL_RELAY) {
+        if (cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST &&
+          cell->command <= CELL_RELAY_DELAY_HIGHEST)) {
           ++total_nonearly;
           if ((m = rate_limit_log(&early_warning_limit, approx_time()))) {
             double percentage = ((double)total_nonearly)/total_n_extend;
