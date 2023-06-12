@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2021, The Tor Project, Inc. */
+/* Copyright (c) 2009-2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -12,7 +12,9 @@
 #include "orconfig.h"
 #include "lib/testsupport/testsupport.h"
 #include "lib/malloc/malloc.h"
+#include "lib/thread/threads.h"
 
+#include <event2/event.h>
 #include <stdbool.h>
 
 void configure_libevent_logging(void);
@@ -61,15 +63,29 @@ void mainloop_event_free_(mainloop_event_t *event);
 
 /** Defines a configuration for using libevent with Tor: passed as an argument
  * to tor_libevent_initialize() to describe how we want to set up. */
-typedef struct tor_libevent_cfg_t {
+typedef struct tor_libevent_cfg {
   /** How many CPUs should we use (not currently useful). */
   int num_cpus;
   /** How many milliseconds should we allow between updating bandwidth limits?
    * (Not currently useful). */
   int msec_per_tick;
-} tor_libevent_cfg_t;
+} tor_libevent_cfg;
 
-void tor_libevent_initialize(tor_libevent_cfg_t *cfg);
+struct event_base *get_eventloop(int index);
+int get_local_eventloop_index(void);
+int get_num_eventloops(void);
+void rescan_eventloops(void);
+
+void tor_evloop_init_threadlocals(void);
+void tor_evloop_destroy_threadlocals(void);
+
+void start_eventloop_threads(void (*func)(void),
+                             tor_thread_t *(*spawn_fn)(void (*func)(void *),
+                                                       void *data));
+void join_eventloop_threads(void);
+
+void tor_libevent_initialize(tor_libevent_cfg *cfg,
+                             int num_additional_eventloops);
 bool tor_libevent_is_initialized(void);
 MOCK_DECL(struct event_base *, tor_libevent_get_base, (void));
 const char *tor_libevent_get_method(void);

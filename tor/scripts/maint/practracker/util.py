@@ -1,13 +1,9 @@
-# Future imports for Python 2.7, mandatory in 3.0
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import os
 
 # We don't want to run metrics for unittests, automatically-generated C files,
 # external libraries or git leftovers.
-EXCLUDE_SOURCE_DIRS = {"src/test/", "src/trunnel/", "src/ext/" }
+EXCLUDE_SOURCE_DIRS = {"src/test/", "src/trunnel/", "src/rust/",
+                       "src/ext/" }
 
 EXCLUDE_FILES = {"orconfig.h"}
 
@@ -38,12 +34,6 @@ def get_tor_c_files(tor_topdir, include_dirs=None):
                 if not (filename.endswith(".c") or filename.endswith(".h")):
                     continue
                 if filename in EXCLUDE_FILES:
-                    continue
-                # Avoid editor temporary files
-                bname = os.path.basename(filename)
-                if bname.startswith("."):
-                    continue
-                if bname.startswith("#"):
                     continue
 
                 full_path = os.path.join(root,filename)

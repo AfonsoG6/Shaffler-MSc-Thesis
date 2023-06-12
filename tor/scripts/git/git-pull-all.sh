@@ -2,7 +2,7 @@
 
 SCRIPT_NAME=$(basename "$0")
 
-usage()
+function usage()
 {
   echo "$SCRIPT_NAME [-h] [-n]"
   echo
@@ -20,7 +20,7 @@ usage()
   echo
   echo "   optional:"
   echo "   TOR_MASTER: the name of the directory containing the tor.git clone"
-  echo "       The primary tor git directory is \$GIT_PATH/\$TOR_MASTER"
+  echo "       The tor master git directory is \$GIT_PATH/\$TOR_MASTER"
   echo "       (default: tor; current: $TOR_MASTER_NAME)"
   echo "   TOR_WKT_NAME: the name of the directory containing the tor"
   echo "       worktrees. The tor worktrees are:"
@@ -37,7 +37,7 @@ usage()
 
 # Where are all those git repositories?
 GIT_PATH=${TOR_FULL_GIT_PATH:-"FULL_PATH_TO_GIT_REPOSITORY_DIRECTORY"}
-# The primary tor git repository directory from which all the worktree have
+# The tor master git repository directory from which all the worktree have
 # been created.
 TOR_MASTER_NAME=${TOR_MASTER_NAME:-"tor"}
 # The worktrees location (directory).
@@ -47,15 +47,67 @@ TOR_WKT_NAME=${TOR_WKT_NAME:-"tor-wkt"}
 # Git branches to manage #
 ##########################
 
-set -e
-eval "$(git-list-tor-branches.sh -b)"
-set +e
+# Configuration of the branches that need pulling. The values are in order:
+#   (1) Branch name to pull (update).
+#   (2) Full path of the git worktree.
+#
+# As an example:
+#   $ cd <PATH/TO/WORKTREE> (3)
+#   $ git checkout maint-0.3.5 (1)
+#   $ git pull
+#
+# First set of arrays are the maint-* branch and then the release-* branch.
+# New arrays need to be in the WORKTREE= array else they aren't considered.
+MAINT_029=( "maint-0.2.9" "$GIT_PATH/$TOR_WKT_NAME/maint-0.2.9" )
+MAINT_035=( "maint-0.3.5" "$GIT_PATH/$TOR_WKT_NAME/maint-0.3.5" )
+MAINT_040=( "maint-0.4.0" "$GIT_PATH/$TOR_WKT_NAME/maint-0.4.0" )
+MAINT_041=( "maint-0.4.1" "$GIT_PATH/$TOR_WKT_NAME/maint-0.4.1" )
+MAINT_MASTER=( "master" "$GIT_PATH/$TOR_MASTER_NAME" )
 
-# The main branch path has to be the main repository thus contains the
+RELEASE_029=( "release-0.2.9" "$GIT_PATH/$TOR_WKT_NAME/release-0.2.9" )
+RELEASE_035=( "release-0.3.5" "$GIT_PATH/$TOR_WKT_NAME/release-0.3.5" )
+RELEASE_040=( "release-0.4.0" "$GIT_PATH/$TOR_WKT_NAME/release-0.4.0" )
+RELEASE_041=( "release-0.4.1" "$GIT_PATH/$TOR_WKT_NAME/release-0.4.1" )
+
+# The master branch path has to be the main repository thus contains the
 # origin that will be used to fetch the updates. All the worktrees are created
 # from that repository.
 ORIGIN_PATH="$GIT_PATH/$TOR_MASTER_NAME"
 
+# SC2034 -- shellcheck thinks that these are unused.  We know better.
+ACTUALLY_THESE_ARE_USED=<<EOF
+${MAINT_029[0]}
+${MAINT_035[0]}
+${MAINT_040[0]}
+${MAINT_041[0]}
+${MAINT_MASTER[0]}
+${RELEASE_029[0]}
+${RELEASE_035[0]}
+${RELEASE_040[0]}
+${RELEASE_041[0]}
+EOF
+
+###########################
+# Git worktrees to manage #
+###########################
+
+# List of all worktrees to work on. All defined above. Ordering is important.
+# Always the maint-* branch first then the release-*.
+WORKTREE=(
+  MAINT_029[@]
+  RELEASE_029[@]
+
+  MAINT_035[@]
+  RELEASE_035[@]
+
+  MAINT_040[@]
+  RELEASE_040[@]
+
+  MAINT_041[@]
+  RELEASE_041[@]
+
+  MAINT_MASTER[@]
+)
 COUNT=${#WORKTREE[@]}
 
 #######################
@@ -159,7 +211,7 @@ function goto_repo
 function fetch_origin
 {
   local cmd="git fetch origin"
-  printf "%s Fetching origin..." "$MARKER"
+  printf "  %s Fetching origin..." "$MARKER"
   if [ $DRY_RUN -eq 0 ]; then
     msg=$( eval "$cmd" 2>&1 )
     validate_ret $? "$msg"
@@ -168,11 +220,11 @@ function fetch_origin
   fi
 }
 
-# Fetch tor-gitlab pull requests. No arguments.
-function fetch_tor_gitlab
+# Fetch tor-github pull requests. No arguments.
+function fetch_tor_github
 {
-  local cmd="git fetch tor-gitlab"
-  printf "%s Fetching tor-gitlab..." "$MARKER"
+  local cmd="git fetch tor-github"
+  printf "  %s Fetching tor-github..." "$MARKER"
   if [ $DRY_RUN -eq 0 ]; then
     msg=$( eval "$cmd" 2>&1 )
     validate_ret $? "$msg"
@@ -185,11 +237,9 @@ function fetch_tor_gitlab
 # Entry point #
 ###############
 
-# Get into our origin repository.
+# First, fetch tor-github.
 goto_repo "$ORIGIN_PATH"
-
-# First, fetch tor-gitlab
-fetch_tor_gitlab
+fetch_tor_github
 
 # Then, fetch the origin.
 fetch_origin

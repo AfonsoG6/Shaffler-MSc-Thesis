@@ -1,10 +1,5 @@
-/* Copyright (c) 2017-2021, The Tor Project, Inc. */
+/* Copyright (c) 2017-2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
-
-/**
- * @file scheduler_kist.c
- * @brief Implements the KIST cell scheduler.
- **/
 
 #define SCHEDULER_KIST_PRIVATE
 
@@ -13,14 +8,15 @@
 #include "app/config/config.h"
 #include "core/mainloop/connection.h"
 #include "feature/nodelist/networkstatus.h"
-#define CHANNEL_OBJECT_PRIVATE
+#define TOR_CHANNEL_INTERNAL_
 #include "core/or/channel.h"
 #include "core/or/channeltls.h"
-#define SCHEDULER_PRIVATE
+#define SCHEDULER_PRIVATE_
 #include "core/or/scheduler.h"
 #include "lib/math/fp.h"
 
 #include "core/or/or_connection_st.h"
+#include "core/or/connection_or.h"
 
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
@@ -51,22 +47,22 @@ socket_table_ent_eq(const socket_table_ent_t *a, const socket_table_ent_t *b)
   return a->chan == b->chan;
 }
 
-typedef HT_HEAD(socket_table_s, socket_table_ent_t) socket_table_t;
+typedef HT_HEAD(socket_table_s, socket_table_ent_s) socket_table_t;
 
 static socket_table_t socket_table = HT_INITIALIZER();
 
-HT_PROTOTYPE(socket_table_s, socket_table_ent_t, node, socket_table_ent_hash,
-             socket_table_ent_eq);
-HT_GENERATE2(socket_table_s, socket_table_ent_t, node, socket_table_ent_hash,
-             socket_table_ent_eq, 0.6, tor_reallocarray, tor_free_);
+HT_PROTOTYPE(socket_table_s, socket_table_ent_s, node, socket_table_ent_hash,
+             socket_table_ent_eq)
+HT_GENERATE2(socket_table_s, socket_table_ent_s, node, socket_table_ent_hash,
+             socket_table_ent_eq, 0.6, tor_reallocarray, tor_free_)
 
 /* outbuf_table hash table stuff. The outbuf_table keeps track of which
  * channels have data sitting in their outbuf so the kist scheduler can force
  * a write from outbuf to kernel periodically during a run and at the end of a
  * run. */
 
-typedef struct outbuf_table_ent_t {
-  HT_ENTRY(outbuf_table_ent_t) node;
+typedef struct outbuf_table_ent_s {
+  HT_ENTRY(outbuf_table_ent_s) node;
   channel_t *chan;
 } outbuf_table_ent_t;
 
@@ -82,10 +78,10 @@ outbuf_table_ent_eq(const outbuf_table_ent_t *a, const outbuf_table_ent_t *b)
   return a->chan->global_identifier == b->chan->global_identifier;
 }
 
-HT_PROTOTYPE(outbuf_table_s, outbuf_table_ent_t, node, outbuf_table_ent_hash,
-             outbuf_table_ent_eq);
-HT_GENERATE2(outbuf_table_s, outbuf_table_ent_t, node, outbuf_table_ent_hash,
-             outbuf_table_ent_eq, 0.6, tor_reallocarray, tor_free_);
+HT_PROTOTYPE(outbuf_table_s, outbuf_table_ent_s, node, outbuf_table_ent_hash,
+             outbuf_table_ent_eq)
+HT_GENERATE2(outbuf_table_s, outbuf_table_ent_s, node, outbuf_table_ent_hash,
+             outbuf_table_ent_eq, 0.6, tor_reallocarray, tor_free_)
 
 /*****************************************************************************
  * Other internal data
@@ -128,7 +124,32 @@ channel_outbuf_length(channel_t *chan)
   if (SCHED_BUG(BASE_CHAN_TO_TLS(chan)->conn == NULL, chan)) {
     return 0;
   }
-  return buf_datalen(TO_CONN(BASE_CHAN_TO_TLS(chan)->conn)->outbuf);
+  //return buf_datalen(TO_CONN(BASE_CHAN_TO_TLS(chan)->conn)->outbuf);
+  //return connection_get_outbuf_len(TO_CONN(BASE_CHAN_TO_TLS(chan)->conn));
+  
+  size_t len = 0;
+
+  // TODO: fix this ugly locking
+  connection_t *conn = TO_CONN(BASE_CHAN_TO_TLS(chan)->conn);
+  tor_assert(conn->safe_conn != NULL);
+  tor_mutex_acquire(&(conn->safe_conn->lock));
+  len = buf_datalen(conn->safe_conn->outbuf);
+  tor_mutex_release(&(conn->safe_conn->lock));
+
+  return len;
+}
+
+/* Little helper function for HT_FOREACH_FN. */
+static int
+each_channel_wakeup_listeners(outbuf_table_ent_t *ent, void *data)
+{
+  (void) data;
+  connection_t *conn = TO_CONN(BASE_CHAN_TO_TLS(ent->chan)->conn);
+  event_source_deliver_silently(conn->event_source,
+                                or_conn_outgoing_packed_cell, false);
+  event_source_wakeup_listener(conn->event_source,
+                               or_conn_outgoing_packed_cell);
+  return 0; /* Returning non-zero removes the element from the table. */
 }
 
 /* Little helper function for HT_FOREACH_FN. */
@@ -202,8 +223,21 @@ update_socket_info_impl, (socket_table_ent_t *ent))
   int64_t tcp_space, extra_space;
   tor_assert(ent);
   tor_assert(ent->chan);
-  const tor_socket_t sock =
-    TO_CONN(CONST_BASE_CHAN_TO_TLS(ent->chan)->conn)->s;
+
+  //const tor_socket_t sock =
+  //  TO_CONN(BASE_CHAN_TO_TLS((channel_t *) ent->chan)->conn)->s;
+
+  connection_t *conn = TO_CONN(BASE_CHAN_TO_TLS((channel_t *) ent->chan)->conn);
+  const tor_socket_t sock = conn->scheduler_socket_cache;
+
+  if (!SOCKET_OK(sock)) {
+    // the socket is closed, so we should not write anything
+    log_warn(LD_SCHED, "The socket for %p has been closed.", conn);
+    // TODO: this should be debug not warn
+    ent->limit = ent->cwnd = ent->unacked = ent->mss = ent->notsent = 0;
+    return;
+  }
+
   struct tcp_info tcp;
   socklen_t tcp_info_len = sizeof(tcp);
 
@@ -213,6 +247,15 @@ update_socket_info_impl, (socket_table_ent_t *ent))
 
   /* Gather information */
   if (getsockopt(sock, SOL_TCP, TCP_INFO, (void *)&(tcp), &tcp_info_len) < 0) {
+    if (errno == EBADF) {
+      // there is a race condition where the safe_conn could close the fd after
+      // we get it, in which case we should set a limit of 0
+      log_warn(LD_SCHED, "The socket for %p is not a valid file descriptor.",
+               conn);
+      // TODO: this should be debug not warn
+      ent->limit = ent->cwnd = ent->unacked = ent->mss = ent->notsent = 0;
+      return;
+    }
     if (errno == EINVAL) {
       /* Oops, this option is not provided by the kernel, we'll have to
        * disable KIST entirely. This can happen if tor was built on a machine
@@ -227,6 +270,15 @@ update_socket_info_impl, (socket_table_ent_t *ent))
     goto fallback;
   }
   if (ioctl(sock, SIOCOUTQNSD, &(ent->notsent)) < 0) {
+    if (errno == EBADF) {
+      // there is a race condition where the safe_conn could close the fd after
+      // we get it, in which case we should set a limit of 0
+      log_warn(LD_SCHED, "The socket for %p is not a valid file descriptor.",
+               conn);
+      // TODO: this should be debug not warn
+      ent->limit = ent->cwnd = ent->unacked = ent->mss = ent->notsent = 0;
+      return;
+    }
     if (errno == EINVAL) {
       log_notice(LD_SCHED, "Looks like our kernel doesn't have the support "
                            "for KIST anymore. We will fallback to the naive "
@@ -291,7 +343,10 @@ update_socket_info_impl, (socket_table_ent_t *ent))
   extra_space =
     clamp_double_to_int64(
                  (ent->cwnd * (int64_t)ent->mss) * sock_buf_size_factor) -
-    ent->notsent - (int64_t)channel_outbuf_length((channel_t *) ent->chan);
+    //ent->notsent - (int64_t)channel_outbuf_length((channel_t *) ent->chan);
+    ent->notsent - 0;
+  // TODO: we should take into account how much data is already queued, but
+  // we have no good way of doing that without locking
   if ((tcp_space + extra_space) < 0) {
     /* This means that the "notsent" queue is just too big so we shouldn't put
      * more in the kernel for now. */
@@ -344,7 +399,7 @@ init_socket_info(socket_table_t *table, const channel_t *chan)
 
 /* Add chan to the outbuf table if it isn't already in it. If it is, then don't
  * do anything */
-static void
+static bool
 outbuf_table_add(outbuf_table_t *table, channel_t *chan)
 {
   outbuf_table_ent_t search, *ent;
@@ -356,7 +411,9 @@ outbuf_table_add(outbuf_table_t *table, channel_t *chan)
     ent = tor_malloc_zero(sizeof(*ent));
     ent->chan = chan;
     HT_INSERT(outbuf_table_s, table, ent);
+    return true;
   }
+  return false;
 }
 
 static void
@@ -445,44 +502,24 @@ update_socket_written(socket_table_t *table, channel_t *chan, size_t bytes)
  * one cell for each and bouncing back and forth. This KIST impl avoids that
  * by only writing a channel's outbuf to the kernel if it has 8 cells or more
  * in it.
- *
- * Note: The number 8 has been picked for no particular reasons except that it
- * is 4096 bytes which is a common number for buffering. A TLS record can hold
- * up to 16KiB thus using 8 cells means that a relay will at most send a TLS
- * record of 4KiB or 1/4 of the maximum capacity of a TLS record.
  */
-MOCK_IMPL(int, channel_should_write_to_kernel,
-          (outbuf_table_t *table, channel_t *chan))
-{
-  outbuf_table_add(table, chan);
-  /* CELL_MAX_NETWORK_SIZE * 8 because we only want to write the outbuf to the
-   * kernel if there's 8 or more cells waiting */
-  return channel_outbuf_length(chan) > (CELL_MAX_NETWORK_SIZE * 8);
-}
+//MOCK_IMPL(int, channel_should_write_to_kernel,
+//          (outbuf_table_t *table, channel_t *chan))
+//{
+//  outbuf_table_add(table, chan);
+//  /* CELL_MAX_NETWORK_SIZE * 8 because we only want to write the outbuf to the
+//   * kernel if there's 8 or more cells waiting */
+//  return channel_outbuf_length(chan) > (CELL_MAX_NETWORK_SIZE * 8);
+//}
 
 /* Little helper function to write a channel's outbuf all the way to the
  * kernel */
 MOCK_IMPL(void, channel_write_to_kernel, (channel_t *chan))
 {
   tor_assert(chan);
-
-  /* This is possible because a channel might have an outbuf table entry even
-   * though it has no more cells in its outbuf. Just move on. */
-  size_t outbuf_len = channel_outbuf_length(chan);
-  if (outbuf_len == 0) {
-    return;
-  }
-
   log_debug(LD_SCHED, "Writing %lu bytes to kernel for chan %" PRIu64,
-            (unsigned long) outbuf_len, chan->global_identifier);
-
-  /* Note that 'connection_handle_write()' may change the scheduler state of
-   * the channel during the scheduling loop with
-   * 'connection_or_flushed_some()' -> 'scheduler_channel_wants_writes()'.
-   * This side-effect will only occur if the channel is currently in the
-   * 'SCHED_CHAN_WAITING_TO_WRITE' or 'SCHED_CHAN_IDLE' states, which KIST
-   * rarely uses, so it should be fine unless KIST begins using these states
-   * in the future. */
+            (unsigned long)channel_outbuf_length(chan),
+            chan->global_identifier);
   connection_handle_write(TO_CONN(BASE_CHAN_TO_TLS(chan)->conn), 0);
 }
 
@@ -624,7 +661,15 @@ kist_scheduler_run(void)
        */
       continue;
     }
-    outbuf_table_add(&outbuf_table, chan);
+    bool added_new = outbuf_table_add(&outbuf_table, chan);
+
+    if (added_new) {
+      connection_t *conn = TO_CONN(BASE_CHAN_TO_TLS(chan)->conn);
+      event_source_deliver_silently(conn->event_source,
+                                    or_conn_outgoing_packed_cell, true);
+      //tor_assert(conn->safe_conn != NULL);
+      //safe_connection_stop_caring_about_modified(conn->safe_conn);
+    }
 
     /* if we have switched to a new channel, consider writing the previous
      * channel's outbuf to the kernel. */
@@ -632,10 +677,10 @@ kist_scheduler_run(void)
       prev_chan = chan;
     }
     if (prev_chan != chan) {
-      if (channel_should_write_to_kernel(&outbuf_table, prev_chan)) {
-        channel_write_to_kernel(prev_chan);
-        outbuf_table_remove(&outbuf_table, prev_chan);
-      }
+      //if (channel_should_write_to_kernel(&outbuf_table, prev_chan)) {
+      //  channel_write_to_kernel(prev_chan);
+      //  outbuf_table_remove(&outbuf_table, prev_chan);
+      //}
       prev_chan = chan;
     }
 
@@ -734,7 +779,9 @@ kist_scheduler_run(void)
   } /* End of main scheduling loop */
 
   /* Write the outbuf of any channels that still have data */
-  HT_FOREACH_FN(outbuf_table_s, &outbuf_table, each_channel_write_to_kernel,
+  //HT_FOREACH_FN(outbuf_table_s, &outbuf_table, each_channel_write_to_kernel,
+  //              NULL);
+  HT_FOREACH_FN(outbuf_table_s, &outbuf_table, each_channel_wakeup_listeners,
                 NULL);
   /* We are done with it. */
   HT_FOREACH_FN(outbuf_table_s, &outbuf_table, free_outbuf_info_by_ent, NULL);

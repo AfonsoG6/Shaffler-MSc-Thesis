@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2021, The Tor Project, Inc. */
+/* Copyright (c) 2013-2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -102,7 +102,7 @@ static const ed25519_impl_t impl_donna = {
 
   ed25519_donna_open,
   ed25519_donna_sign,
-  NULL, /* Don't use donna's batching code because of #40078 */
+  ed25519_sign_open_batch_donna,
 
   ed25519_donna_blind_secret_key,
   ed25519_donna_blind_public_key,
@@ -795,7 +795,7 @@ ed25519_point_is_identity_element(const uint8_t *point)
 int
 ed25519_validate_pubkey(const ed25519_public_key_t *pubkey)
 {
-  uint8_t result[32] = {0};
+  uint8_t result[32] = {9};
 
   /* First check that we were not given the identity element */
   if (ed25519_point_is_identity_element(pubkey->pubkey)) {

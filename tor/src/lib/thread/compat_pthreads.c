@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2021, The Tor Project, Inc. */
+ * Copyright (c) 2007-2019, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -51,10 +51,6 @@ tor_pthread_helper_fn(void *_data)
   func(arg);
   return NULL;
 }
-/**
- * A pthread attribute to make threads start detached.
- */
-static pthread_attr_t attr_detached;
 /** True iff we've called tor_threads_init() */
 static int threads_initialized = 0;
 
@@ -68,7 +64,7 @@ static int threads_initialized = 0;
  * the caller's stack will still be around when the called function is
  * running.
  */
-int
+tor_thread_t*
 spawn_func(void (*func)(void *), void *data)
 {
   pthread_t thread;
@@ -79,12 +75,14 @@ spawn_func(void (*func)(void *), void *data)
   d = tor_malloc(sizeof(tor_pthread_data_t));
   d->data = data;
   d->func = func;
-  if (pthread_create(&thread, &attr_detached, tor_pthread_helper_fn, d)) {
+  if (pthread_create(&thread, NULL, tor_pthread_helper_fn, d)) {
     tor_free(d);
-    return -1;
+    return NULL;
   }
 
-  return 0;
+  tor_thread_t* tor_thread = tor_malloc(sizeof(tor_thread_t));
+  tor_thread->pthread = thread;
+  return tor_thread;
 }
 
 /** End the current thread/process.
@@ -93,6 +91,24 @@ void
 spawn_exit(void)
 {
   pthread_exit(NULL);
+}
+
+/** Join the thread and return -1 on error, or 0 if okay. */
+int
+join_thread(tor_thread_t* thread)
+{
+  int rv = pthread_join(thread->pthread, NULL);
+  if (rv != 0) {
+    return -1;
+  }
+  return 0;
+}
+
+/** Free the thread. */
+void
+free_thread(tor_thread_t* thread)
+{
+  tor_free(thread);
 }
 
 /** Return an integer representing this thread. */
@@ -256,15 +272,7 @@ tor_threads_init(void)
 {
   if (!threads_initialized) {
     tor_locking_init();
-    const int ret1 = pthread_attr_init(&attr_detached);
-    tor_assert(ret1 == 0);
-#ifndef PTHREAD_CREATE_DETACHED
-#define PTHREAD_CREATE_DETACHED 1
-#endif
-    const int ret2 =
-      pthread_attr_setdetachstate(&attr_detached, PTHREAD_CREATE_DETACHED);
-    tor_assert(ret2 == 0);
     threads_initialized = 1;
+    set_main_thread();
   }
-  set_main_thread();
 }
