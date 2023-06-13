@@ -78,7 +78,7 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
             break
         with open(os.path.join(templates_path, "tgenrc.graphml"), "r") as f:
             data = f.read()
-            data = data.replace("{servers}", get_servers_string(port))
+            data = data.replace("{servers}", get_servers_string(hosts, port))
             data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
             data = data.replace("{seed}", str(random.randint(100000000, 999999999)), 1)
             with open(os.path.join(client_path, f"t{flow_start}.tgenrc.graphml"), "w") as g:
