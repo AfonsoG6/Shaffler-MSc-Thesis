@@ -2579,7 +2579,7 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
 
   // RENDEZMIX
   copy->ready_ts = get_ready_ts(circ, cell, (exitward)? CELL_DIRECTION_OUT:CELL_DIRECTION_IN);
-  if (queue->ready_n == queue->n && copy->ready_ts.tv_sec > 0 && copy->ready_ts.tv_usec > 0) {
+  if (queue->ready_n == queue->n && copy->ready_ts.tv_sec > 0 && copy->ready_ts.tv_nsec > 0) {
     if (exitward) {
       smartlist_add(circ->n_chan->cmux->out_circs_to_update, circ);
     } else {
@@ -4076,7 +4076,7 @@ update_cmux_all_queues(circuitmux_t *cmux) {
   for (idx = 0; idx < smartlist_len(outlst); ++idx) {
     circuit_t *circ = smartlist_get(outlst, idx);
     int prev_ready_n = circ->n_chan_cells.ready_n;
-    update_ready_n(circ->n_chan_cells);
+    update_ready_n(&circ->n_chan_cells);
     if (prev_ready_n != circ->n_chan_cells.ready_n) {
       update_circuit_on_cmux(circ, CELL_DIRECTION_OUT);
     }
@@ -4089,7 +4089,7 @@ update_cmux_all_queues(circuitmux_t *cmux) {
     circuit_t *circ = smartlist_get(inlst, idx);
     or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
     int prev_ready_n = or_circ->p_chan_cells.ready_n;
-    update_ready_n(or_circ->p_chan_cells);
+    update_ready_n(&or_circ->p_chan_cells);
     if (prev_ready_n != or_circ->p_chan_cells.ready_n) {
       update_circuit_on_cmux(circ, CELL_DIRECTION_IN);
     }
