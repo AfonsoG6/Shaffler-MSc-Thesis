@@ -4056,6 +4056,7 @@ update_ready_n(cell_queue_t *queue)
 
     n++;
   }
+  log_info(LD_GENERAL, "[RENDEZMIX][DELAY] Updated ready_n: %d->%d", queue->ready_n, n);
   queue->ready_n = n;
 }
 
