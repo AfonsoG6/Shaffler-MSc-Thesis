@@ -3287,6 +3287,7 @@ circuit_queue_streams_are_blocked(circuit_t *circ)
 
 /** ----------------------------------------------- RENDEZMIX ------------------------------------------------------- */
 
+/*
 int
 probably_middle_node(or_connection_t *conn, circuit_t *circ)
 {
@@ -3313,7 +3314,7 @@ probably_middle_node(or_connection_t *conn, circuit_t *circ)
   return nodelist_probably_contains_address(&prev_node_addr) &&
          nodelist_probably_contains_address(&next_node_addr);
 }
-
+*/
 struct timespec
 get_sleep_timespec_from_command(uint8_t command)
 {
@@ -4094,7 +4095,7 @@ update_cmux_all_circuits(void) {
     // update_circuit_on_cmux() already calls update_ready_n()
     update_circuit_on_cmux(circ, CELL_DIRECTION_OUT);
     if (circ->magic == OR_CIRCUIT_MAGIC) {
-      update_circuit_on_cmux(TO_OR_CIRCUIT(circ), CELL_DIRECTION_IN);
+      update_circuit_on_cmux(circ, CELL_DIRECTION_IN);
     }
   }
 }
