@@ -99,6 +99,7 @@
 /* RENDEZMIX includes */
 #include <math.h>
 #include <src/ext/siphash.h>
+#include "core/or/circuitmux.h"
 
 static edge_connection_t *relay_lookup_conn(circuit_t *circ, cell_t *cell,
                                             cell_direction_t cell_direction,
