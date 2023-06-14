@@ -2581,9 +2581,9 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
   copy->ready_ts = get_ready_ts(circ, cell, (exitward)? CELL_DIRECTION_OUT:CELL_DIRECTION_IN);
   if (queue->ready_n == queue->n && copy->ready_ts.tv_sec > 0 && copy->ready_ts.tv_nsec > 0) {
     if (exitward) {
-      smartlist_add(circ->n_chan->cmux.out_circs_to_update, circ);
+      smartlist_add(circ->n_chan->cmux->out_circs_to_update, circ);
     } else {
-      smartlist_add(TO_OR_CIRCUIT(circ)->p_chan->cmux.in_circs_to_update, circ);
+      smartlist_add(TO_OR_CIRCUIT(circ)->p_chan->cmux->in_circs_to_update, circ);
     }
   }
 
