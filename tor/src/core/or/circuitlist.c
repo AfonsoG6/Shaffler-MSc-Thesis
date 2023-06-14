@@ -249,7 +249,7 @@ circuit_set_circid_chan_helper(circuit_t *circ, int direction,
     or_circuit_t *c = TO_OR_CIRCUIT(circ);
     chan_ptr = &c->p_chan;
     circid_ptr = &c->p_circ_id;
-    update_ready_n(&circ->p_chan_cells);
+    update_ready_n(&c->p_chan_cells);
     make_active = c->p_chan_cells.ready_n > 0;
   }
   old_chan = *chan_ptr;

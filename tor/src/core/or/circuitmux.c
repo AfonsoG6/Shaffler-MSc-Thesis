@@ -806,7 +806,7 @@ circuitmux_attach_circuit,(circuitmux_t *cmux, circuit_t *circ,
   } else {
     /* We want p_chan */
     chan = TO_OR_CIRCUIT(circ)->p_chan;
-    update_ready_n(&circ->p_chan_cells);
+    update_ready_n(&TO_OR_CIRCUIT(circ)->p_chan_cells);
     cell_count = TO_OR_CIRCUIT(circ)->p_chan_cells.ready_n;
     circ_id = TO_OR_CIRCUIT(circ)->p_circ_id;
   }
