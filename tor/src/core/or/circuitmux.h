@@ -158,5 +158,7 @@ void circuitmux_mark_destroyed_circids_usable(circuitmux_t *cmux,
 MOCK_DECL(int, circuitmux_compare_muxes,
           (circuitmux_t *cmux_1, circuitmux_t *cmux_2));
 
+void add_circ_to_update(circuit_t *circ, int exitward);
+
 #endif /* !defined(TOR_CIRCUITMUX_H) */
 

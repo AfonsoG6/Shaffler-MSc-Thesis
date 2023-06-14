@@ -2581,13 +2581,7 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
   // RENDEZMIX
   copy->ready_ts = get_ready_ts(circ, cell, (exitward)? CELL_DIRECTION_OUT:CELL_DIRECTION_IN);
   if (queue->ready_n == queue->n && copy->ready_ts.tv_sec > 0 && copy->ready_ts.tv_nsec > 0) {
-    if (exitward) {
-      struct circuitmux_s *cmux = circ->n_chan->cmux;
-      smartlist_add(cmux->out_circs_to_update, circ);
-    } else {
-      struct circuitmux_s *cmux = TO_OR_CIRCUIT(circ)->p_chan->cmux;
-      smartlist_add(cmux->in_circs_to_update, circ);
-    }
+    add_circ_to_update(circ, exitward)
   }
 
   copy->inserted_timestamp = monotime_coarse_get_stamp();
@@ -4071,7 +4065,7 @@ update_ready_n(cell_queue_t *queue)
 }
 
 void
-update_cmux_all_queues(struct circuitmux_s *cmux) {
+update_cmux_all_queues(circuitmux_t *cmux) {
   int idx;
   smartlist_t *outlst = cmux->out_circs_to_update;
   smartlist_t *inlst = cmux->in_circs_to_update;
