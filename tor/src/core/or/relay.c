@@ -2582,9 +2582,11 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
   copy->ready_ts = get_ready_ts(circ, cell, (exitward)? CELL_DIRECTION_OUT:CELL_DIRECTION_IN);
   if (queue->ready_n == queue->n && copy->ready_ts.tv_sec > 0 && copy->ready_ts.tv_nsec > 0) {
     if (exitward) {
-      smartlist_add(circ->n_chan->cmux->out_circs_to_update, circ);
+      struct circuitmux_s *cmux = circ->n_chan->cmux;
+      smartlist_add(cmux->out_circs_to_update, circ);
     } else {
-      smartlist_add(TO_OR_CIRCUIT(circ)->p_chan->cmux->in_circs_to_update, circ);
+      struct circuitmux_s *cmux = TO_OR_CIRCUIT(circ)->p_chan->cmux;
+      smartlist_add(cmux->in_circs_to_update, circ);
     }
   }
 
@@ -4069,7 +4071,7 @@ update_ready_n(cell_queue_t *queue)
 }
 
 void
-update_cmux_all_queues(circuitmux_t *cmux) {
+update_cmux_all_queues(struct circuitmux_s *cmux) {
   int idx;
   smartlist_t *outlst = cmux->out_circs_to_update;
   smartlist_t *inlst = cmux->in_circs_to_update;
