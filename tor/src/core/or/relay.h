@@ -137,8 +137,9 @@ STATIC size_t connection_edge_get_inbuf_bytes_to_package(size_t n_available,
 
 #endif /* defined(RELAY_PRIVATE) */
 
+/*
 int probably_middle_node(or_connection_t *conn, circuit_t *circ);
-
+*/
 struct timespec get_sleep_timespec_from_command(uint8_t command);
 
 unsigned bitcount32(uint32_t x);
