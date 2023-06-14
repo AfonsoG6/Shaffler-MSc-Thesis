@@ -2804,10 +2804,10 @@ update_circuit_on_cmux_(circuit_t *circ, cell_direction_t direction,
 
   /* Update the number of cells we have for the circuit mux */
   if (direction == CELL_DIRECTION_OUT) {
-    update_ready_n(circ->n_chan_cells);
+    update_ready_n(&circ->n_chan_cells);
     circuitmux_set_num_cells(cmux, circ, circ->n_chan_cells.ready_n);
   } else {
-    update_ready_n(or_circ->p_chan_cells);
+    update_ready_n(&or_circ->p_chan_cells);
     circuitmux_set_num_cells(cmux, circ, or_circ->p_chan_cells.ready_n);
   }
 }
