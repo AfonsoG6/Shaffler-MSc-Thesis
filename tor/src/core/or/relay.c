@@ -4072,24 +4072,6 @@ update_cmux_all_circuits(void) {
       continue;
     }
 
-    /* Depending on whether we are looking for client or service circs, skip
-     * circuits with other purposes. */
-    if (want_client_circ) {
-      if (circ->purpose != CIRCUIT_PURPOSE_C_INTRODUCING &&
-          circ->purpose != CIRCUIT_PURPOSE_C_INTRODUCE_ACK_WAIT &&
-          circ->purpose != CIRCUIT_PURPOSE_C_INTRODUCE_ACKED) {
-        continue;
-      }
-    } else { /* we are looking for service-side circs */
-      if (circ->state != CIRCUIT_STATE_OPEN) {
-        continue;
-      }
-      if (circ->purpose != CIRCUIT_PURPOSE_S_ESTABLISH_INTRO &&
-          circ->purpose != CIRCUIT_PURPOSE_S_INTRO) {
-        continue;
-      }
-    }
-
     // update_circuit_on_cmux() already calls update_ready_n()
     update_circuit_on_cmux(circ, CELL_DIRECTION_OUT);
     if (circ->magic == OR_CIRCUIT_MAGIC) {
