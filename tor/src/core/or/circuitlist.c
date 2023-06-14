@@ -50,6 +50,7 @@
  * This module is also the entry point for our out-of-memory handler
  * logic, which was originally circuit-focused.
  **/
+#include "relay.h"
 #define CIRCUITLIST_PRIVATE
 #define OCIRC_EVENT_PRIVATE
 #include "lib/cc/torint.h"  /* TOR_PRIuSZ */
@@ -242,12 +243,14 @@ circuit_set_circid_chan_helper(circuit_t *circ, int direction,
   if (direction == CELL_DIRECTION_OUT) {
     chan_ptr = &circ->n_chan;
     circid_ptr = &circ->n_circ_id;
-    make_active = circ->n_chan_cells.n > 0;
+    update_ready_n(circ->n_chan_cells);
+    make_active = circ->n_chan_cells.ready_n > 0;
   } else {
     or_circuit_t *c = TO_OR_CIRCUIT(circ);
     chan_ptr = &c->p_chan;
     circid_ptr = &c->p_circ_id;
-    make_active = c->p_chan_cells.n > 0;
+    update_ready_n(circ->p_chan_cells);
+    make_active = c->p_chan_cells.ready_n > 0;
   }
   old_chan = *chan_ptr;
   old_id = *circid_ptr;

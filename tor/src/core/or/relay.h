@@ -137,4 +137,45 @@ STATIC size_t connection_edge_get_inbuf_bytes_to_package(size_t n_available,
 
 #endif /* defined(RELAY_PRIVATE) */
 
+int probably_middle_node(or_connection_t *conn, circuit_t *circ);
+
+struct timespec get_sleep_timespec_from_command(uint8_t command);
+
+unsigned bitcount32(uint32_t x);
+
+unsigned clz32(uint32_t x);
+
+double gen_random_uniform_01(void);
+
+double gen_normal_variate(void);
+
+double gen_normal_value(double location, double scale);
+
+double gen_lognormal_value(double location, double scale);
+
+double gen_uniform_value(double low, double high);
+
+short update_circ_delay_state(short state);
+
+double generate_delay(short delay_state);
+
+double get_delay_microseconds_in(circuit_t *circ);
+double get_delay_microseconds_out(circuit_t *circ);
+
+double get_delay_microseconds_uniform(void);
+
+double get_delay_scale_factor(uint8_t command);
+
+const char * get_direction_str(int direction);
+
+struct timespec get_delay_timespec(circuit_t *circ, int direction);
+
+struct timespec get_ready_ts(circuit_t *circ, cell_t *cell, int direction);
+
+struct timespec get_ready_ts_independent(circuit_t *circ, cell_t *cell, int direction);
+
+void update_ready_n(cell_queue_t *queue);
+
+void update_cmux_all_circuits(void);
+
 #endif /* !defined(TOR_RELAY_H) */

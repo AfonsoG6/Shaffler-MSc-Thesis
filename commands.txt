@@ -2,19 +2,19 @@
 cd /part/simulation/data; tornettools stage consensuses-2023-04 server-descriptors-2023-04 userstats-relay-country.csv tmodel-ccs2018.github.io --onionperf_data_path onionperf-2023-04 --bandwidth_data_path bandwidth-2023-04.csv --geoip_path ~/tor/src/config/geoip
 
 # generate
-cd /part/simulation; tornettools generate data/relayinfo_staging_2023-04-01--2023-04-30.json data/userinfo_staging_2023-04-01--2023-04-30.json data/networkinfo_staging.gml data/tmodel-ccs2018.github.io -r -e BW,CIRC,STREAM --server_scale 0.5 --torperf_num_exit 0 --network_scale 0.01 --prefix tornet-0.01 && python3 patch_v2.py -s tornet-0.01 -c 300 -d 1
+cd /part/simulation; tornettools generate data/relayinfo_staging_2023-04-01--2023-04-30.json data/userinfo_staging_2023-04-01--2023-04-30.json data/networkinfo_staging.gml data/tmodel-ccs2018.github.io -r -e BW,CIRC,STREAM --server_scale 0.5 --network_scale 0.005 --prefix tornet-0.005 && python3 patch.py -s tornet-0.005 -c 300 -d 1
 
 # simulate
-cd /part/simulation; tornettools simulate tornet-0.01
+cd /part/simulation; tornettools simulate tornet-0.005
 
 # parse
-cd /part/simulation; tornettools parse tornet-0.01
+cd /part/simulation; tornettools parse tornet-0.005
 
 # plot
-cd /part/simulation; tornettools plot tornet-0.01 --tor_metrics_path data/tor_metrics_2023-04-01--2023-04-30.json --prefix pdfs
+cd /part/simulation; tornettools plot tornet-0.005 --tor_metrics_path data/tor_metrics_2023-04-01--2023-04-30.json --prefix pdfs
 
 #Archive
-cd /part/simulation; tornettools archive tornet-0.01
+cd /part/simulation; tornettools archive tornet-0.005
 
 # Docker Create
 docker-compose up
@@ -28,7 +28,7 @@ docker attach $(docker container list | grep "rendezmix.*Up" | awk '{print $1}')
 # Docker Detach: CTRL + P->Q(base)
 
 # Docker Copy:
-docker cp $(docker container list | grep "rendezmix.*Up" | awk '{print $1}'):/part/simulation/tornet-0.01.zip ~/nas
+docker cp $(docker container list | grep "rendezmix.*Up" | awk '{print $1}'):/part/simulation/tornet-0.005.zip ~/nas
 
 # Misc.:
 
@@ -36,4 +36,5 @@ cd /root/tor && make && make install
 ln -s $(which tor) ~/.local/bin/tor
 cd /root/rendezmix/tor && git reset --hard HEAD && git pull && make && make install && rm -rf /part/simulation && cp -r /root/rendezmix/simulation /part/simulation && cd /part/simulation
 
-cd /part/simulation && tornettools simulate tornet-0.005 && cd datasets/ && python3 parse.py -s ../tornet-0.005 -o /root/shadowM2 && python3 cleanup.py -d /root/shadowM2
+cd /part/simulation && tornettools simulate tornet-0.005 && cd datasets/ && python3 stage.py -s ../tornet-0.005 && python3 parse.py -s ../tornet-0.005
+ && python3 cleanup.py -d dataset
