@@ -2583,8 +2583,8 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
   // RENDEZMIX
   copy->ready_ts = get_ready_ts(circ, cell, (exitward)? CELL_DIRECTION_OUT:CELL_DIRECTION_IN);
   if (copy->ready_ts.tv_sec > 0 && copy->ready_ts.tv_nsec > 0) {
-    if (exitward) cell_queue_append(circ->n_chan_delayed_cells, copy);
-    else cell_queue_append(TO_OR_CIRCUIT(circ)->p_chan_delayed_cells, copy);
+    if (exitward) cell_queue_append(&circ->n_chan_delayed_cells, copy);
+    else cell_queue_append(&TO_OR_CIRCUIT(circ)->p_chan_delayed_cells, copy);
 
     add_circ_to_update(circ, exitward);
   }
