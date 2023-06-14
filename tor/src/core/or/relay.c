@@ -44,6 +44,7 @@
  * The connection_edge_process_relay_cell() function handles all the different
  * types of relay cells, launching requests or transmitting data as needed.
  **/
+#include "or.h"
 #define RELAY_PRIVATE
 
 #include "core/or/or.h"
@@ -2578,6 +2579,13 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
 
   // RENDEZMIX
   copy->ready_ts = get_ready_ts(circ, cell, (exitward)? CELL_DIRECTION_OUT:CELL_DIRECTION_IN);
+  if (queue->ready_n == queue->n && copy->ready_ts.tv_sec > 0 && copy->ready_ts.tv_usec > 0) {
+    if (exitward) {
+      smartlist_add(circ->n_chan->cmux->out_circs_to_update, circ);
+    } else {
+      smartlist_add(TO_OR_CIRCUIT(circ)->p_chan->cmux->in_circs_to_update, circ);
+    }
+  }
 
   copy->inserted_timestamp = monotime_coarse_get_stamp();
 
@@ -4060,28 +4068,34 @@ update_ready_n(cell_queue_t *queue)
 }
 
 void
-update_cmux_all_circuits(circuitmux_t *cmux) {
+update_cmux_all_queues(circuitmux_t *cmux) {
   int idx;
-  smartlist_t *lst = circuit_get_global_list();
-  or_circuit_t *or_circ;
+  smartlist_t *outlst = cmux->out_circs_to_update;
+  smartlist_t *inlst = cmux->in_circs_to_update;
 
-  for (idx = 0; idx < smartlist_len(lst); ++idx) {
-    circuit_t *circ = smartlist_get(lst, idx);
-
-    /* Ignore a marked for close circuit or if the state is not open. */
-    if (!circ || circ->marked_for_close) {
-      continue;
-    }
-
-    // update_circuit_on_cmux() already calls update_ready_n()
-    if (circ->n_chan && circ->n_chan->cmux && circ->n_chan->cmux == cmux) {
+  for (idx = 0; idx < smartlist_len(outlst); ++idx) {
+    circuit_t *circ = smartlist_get(outlst, idx);
+    int prev_ready_n = circ->n_chan_cells.ready_n;
+    update_ready_n(circ->n_chan_cells);
+    if (prev_ready_n != circ->n_chan_cells.ready_n) {
       update_circuit_on_cmux(circ, CELL_DIRECTION_OUT);
     }
-    if (circ->magic == OR_CIRCUIT_MAGIC) {
-      or_circ = TO_OR_CIRCUIT(circ);
-      if (or_circ && or_circ->p_chan && or_circ->p_chan->cmux && or_circ->p_chan->cmux == cmux) {
-        update_circuit_on_cmux(circ, CELL_DIRECTION_IN);
-      }
+    if (circ->n_chan_cells.ready_n == circ->n_chan_cells.n) {
+      // All cells in the queue are ready, so we can remove from "to update" list
+      smartlist_del(outlst, idx);
+    }
+  }
+  for (idx = 0; idx < smartlist_len(inlst); ++idx) {
+    circuit_t *circ = smartlist_get(inlst, idx);
+    or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
+    int prev_ready_n = or_circ->p_chan_cells.ready_n;
+    update_ready_n(or_circ->p_chan_cells);
+    if (prev_ready_n != or_circ->p_chan_cells.ready_n) {
+      update_circuit_on_cmux(circ, CELL_DIRECTION_IN);
+    }
+    if (or_circ->p_chan_cells.ready_n == or_circ->p_chan_cells.n) {
+      // All cells in the queue are ready, so we can remove from "to update" list
+      smartlist_del(inlst, idx);
     }
   }
 }

@@ -79,6 +79,9 @@
 #include "core/or/destroy_cell_queue_st.h"
 #include "core/or/or_circuit_st.h"
 
+/* RENDEZMIX includes */
+#include "lib/smartlist_core.h"
+
 /*
  * Private typedefs for circuitmux.c
  */
@@ -144,7 +147,10 @@ struct circuitmux_s {
   /* Policy-specific data */
   circuitmux_policy_data_t *policy_data;
 
-  monotime_t last_update; // RENDEZMIX
+  /* RENDEZMIX */
+  monotime_t last_update;
+  smartlist_t *out_circs_to_update;
+  smartlist_t *in_circs_to_update;
 };
 
 /*
@@ -250,6 +256,10 @@ circuitmux_alloc(void)
   rv->chanid_circid_map = tor_malloc_zero(sizeof(*( rv->chanid_circid_map)));
   HT_INIT(chanid_circid_muxinfo_map, rv->chanid_circid_map);
   destroy_cell_queue_init(&rv->destroy_cell_queue);
+
+  /* RENDEZMIX */
+  rv->out_circs_to_update = smartlist_new();
+  rv->in_circs_to_update = smartlist_new();
 
   return rv;
 }
@@ -745,7 +755,7 @@ circuitmux_num_cells, (circuitmux_t *cmux))
 
   monotime_get(&now);
   if (monotime_diff_msec(&now, &cmux->last_update) > 1) {
-    update_cmux_all_circuits(cmux);
+    update_cmux_all_queues(cmux);
     cmux->last_update = now;
   }
 
