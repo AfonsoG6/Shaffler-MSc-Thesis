@@ -45,13 +45,7 @@
  * types of relay cells, launching requests or transmitting data as needed.
  **/
 
-#include "relay.h"
-#include "or.h"
 #define RELAY_PRIVATE
-
-/* RENDEZMIX includes */
-#include <math.h>
-#include <src/ext/siphash.h>
 
 #include "core/or/or.h"
 #include "feature/client/addressmap.h"
@@ -101,6 +95,10 @@
 #include "feature/nodelist/routerinfo_st.h"
 #include "core/or/socks_request_st.h"
 #include "core/or/sendme.h"
+
+/* RENDEZMIX includes */
+#include <math.h>
+#include <src/ext/siphash.h>
 
 static edge_connection_t *relay_lookup_conn(circuit_t *circ, cell_t *cell,
                                             cell_direction_t cell_direction,

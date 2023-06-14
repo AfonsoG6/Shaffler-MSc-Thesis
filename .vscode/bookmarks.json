@@ -29,12 +29,12 @@
 			"path": "tor/src/core/or/relay.c",
 			"bookmarks": [
 				{
-					"line": 2773,
+					"line": 2771,
 					"column": 68,
 					"label": ""
 				},
 				{
-					"line": 2911,
+					"line": 2909,
 					"column": 68,
 					"label": ""
 				}

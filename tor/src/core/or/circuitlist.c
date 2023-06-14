@@ -50,7 +50,6 @@
  * This module is also the entry point for our out-of-memory handler
  * logic, which was originally circuit-focused.
  **/
-#include "relay.h"
 #define CIRCUITLIST_PRIVATE
 #define OCIRC_EVENT_PRIVATE
 #include "lib/cc/torint.h"  /* TOR_PRIuSZ */
