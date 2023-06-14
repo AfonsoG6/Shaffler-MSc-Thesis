@@ -16,6 +16,7 @@ struct packed_cell_t {
   char body[CELL_MAX_NETWORK_SIZE]; /**< Cell as packed for network. */
   uint32_t inserted_timestamp; /**< Time (in timestamp units) when this cell
                                 * was inserted */
+  struct timespec ready_ts;
 };
 
 /** A queue of cells on a circuit, waiting to be added to the
@@ -24,6 +25,7 @@ struct cell_queue_t {
   /** Linked list of packed_cell_t*/
   TOR_SIMPLEQ_HEAD(cell_simpleq, packed_cell_t) head;
   int n; /**< The number of cells in the queue. */
+  int ready_n; /**< The number of cells in the queue that are ready to be sent. */
 };
 
 #endif /* !defined(PACKED_CELL_ST_H) */

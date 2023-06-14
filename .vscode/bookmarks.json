@@ -1,0 +1,94 @@
+{
+	"files": [
+		{
+			"path": "tor/src/core/mainloop/mainloop.c",
+			"bookmarks": [
+				{
+					"line": 2411,
+					"column": 26,
+					"label": ""
+				},
+				{
+					"line": 2511,
+					"column": 66,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "tor/src/core/or/channel.c",
+			"bookmarks": [
+				{
+					"line": 1726,
+					"column": 63,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "tor/src/core/or/relay.c",
+			"bookmarks": [
+				{
+					"line": 2773,
+					"column": 68,
+					"label": ""
+				},
+				{
+					"line": 2911,
+					"column": 68,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "tor/src/core/or/cell_queue_st.h",
+			"bookmarks": [
+				{
+					"line": 12,
+					"column": 22,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "tor/src/core/or/circuitmux.c",
+			"bookmarks": [
+				{
+					"line": 780,
+					"column": 63,
+					"label": ""
+				},
+				{
+					"line": 1110,
+					"column": 55,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "tor/src/core/or/circuitmux_ewma.c",
+			"bookmarks": [
+				{
+					"line": 476,
+					"column": 44,
+					"label": ""
+				},
+				{
+					"line": 565,
+					"column": 39,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "tor/src/core/or/scheduler_vanilla.c",
+			"bookmarks": [
+				{
+					"line": 46,
+					"column": 27,
+					"label": ""
+				}
+			]
+		}
+	]
+}

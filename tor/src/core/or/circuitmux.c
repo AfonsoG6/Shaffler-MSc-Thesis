@@ -740,6 +740,8 @@ circuitmux_num_cells, (circuitmux_t *cmux))
 {
   tor_assert(cmux);
 
+  update_cmux_all_circuits(); // Perhaps only updating the circuits with this cmux would be better for performance
+
   return cmux->n_cells + cmux->destroy_cell_queue.n;
 }
 
@@ -798,12 +800,14 @@ circuitmux_attach_circuit,(circuitmux_t *cmux, circuit_t *circ,
   if (direction == CELL_DIRECTION_OUT) {
     /* It's n_chan */
     chan = circ->n_chan;
-    cell_count = circ->n_chan_cells.n;
+    update_ready_n(circ->n_chan_cells);
+    cell_count = circ->n_chan_cells.ready_n;
     circ_id = circ->n_circ_id;
   } else {
     /* We want p_chan */
     chan = TO_OR_CIRCUIT(circ)->p_chan;
-    cell_count = TO_OR_CIRCUIT(circ)->p_chan_cells.n;
+    update_ready_n(circ->p_chan_cells);
+    cell_count = TO_OR_CIRCUIT(circ)->p_chan_cells.ready_n;
     circ_id = TO_OR_CIRCUIT(circ)->p_circ_id;
   }
   /* Assert that we did get a channel */

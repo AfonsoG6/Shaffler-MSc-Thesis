@@ -75,43 +75,4 @@ STATIC void channel_tls_process_authenticate_cell(var_cell_t *cell,
                                                   channel_tls_t *tlschan);
 #endif /* defined(CHANNELTLS_PRIVATE) */
 
-int probably_middle_node(or_connection_t *conn, circuit_t *circ);
-
-struct timespec get_sleep_timespec_from_command(uint8_t command);
-
-unsigned bitcount32(uint32_t x);
-
-unsigned clz32(uint32_t x);
-
-double gen_random_uniform_01(void);
-
-double gen_normal_variate(void);
-
-double gen_normal_value(double location, double scale);
-
-double gen_lognormal_value(double location, double scale);
-
-double gen_uniform_value(double low, double high);
-
-short update_circ_delay_state(short state);
-
-double generate_delay(short delay_state);
-
-double get_delay_microseconds_in(circuit_t *circ);
-double get_delay_microseconds_out(circuit_t *circ);
-
-double get_delay_microseconds_uniform(void);
-
-double get_delay_scale_factor(uint8_t command);
-
-const char * get_direction_str(int direction);
-
-int get_direction(circuit_t *circ, channel_tls_t *chan, cell_t *cell);
-
-struct timespec get_delay_timespec(circuit_t *circ, int direction);
-
-void delay_cell(circuit_t *circ, channel_tls_t *chan, cell_t *cell);
-
-void delay_cell_independent(circuit_t *circ, channel_tls_t *chan, cell_t *cell);
-
 #endif /* !defined(TOR_CHANNELTLS_H) */
