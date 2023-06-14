@@ -2581,7 +2581,7 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
   // RENDEZMIX
   copy->ready_ts = get_ready_ts(circ, cell, (exitward)? CELL_DIRECTION_OUT:CELL_DIRECTION_IN);
   if (queue->ready_n == queue->n && copy->ready_ts.tv_sec > 0 && copy->ready_ts.tv_nsec > 0) {
-    add_circ_to_update(circ, exitward)
+    add_circ_to_update(circ, exitward);
   }
 
   copy->inserted_timestamp = monotime_coarse_get_stamp();
@@ -4062,37 +4062,4 @@ update_ready_n(cell_queue_t *queue)
   }
   log_info(LD_GENERAL, "[RENDEZMIX][DELAY] Updated ready_n: %d->%d", queue->ready_n, n);
   queue->ready_n = n;
-}
-
-void
-update_cmux_all_queues(circuitmux_t *cmux) {
-  int idx;
-  smartlist_t *outlst = cmux->out_circs_to_update;
-  smartlist_t *inlst = cmux->in_circs_to_update;
-
-  for (idx = 0; idx < smartlist_len(outlst); ++idx) {
-    circuit_t *circ = smartlist_get(outlst, idx);
-    int prev_ready_n = circ->n_chan_cells.ready_n;
-    update_ready_n(&circ->n_chan_cells);
-    if (prev_ready_n != circ->n_chan_cells.ready_n) {
-      update_circuit_on_cmux(circ, CELL_DIRECTION_OUT);
-    }
-    if (circ->n_chan_cells.ready_n == circ->n_chan_cells.n) {
-      // All cells in the queue are ready, so we can remove from "to update" list
-      smartlist_del(outlst, idx);
-    }
-  }
-  for (idx = 0; idx < smartlist_len(inlst); ++idx) {
-    circuit_t *circ = smartlist_get(inlst, idx);
-    or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
-    int prev_ready_n = or_circ->p_chan_cells.ready_n;
-    update_ready_n(&or_circ->p_chan_cells);
-    if (prev_ready_n != or_circ->p_chan_cells.ready_n) {
-      update_circuit_on_cmux(circ, CELL_DIRECTION_IN);
-    }
-    if (or_circ->p_chan_cells.ready_n == or_circ->p_chan_cells.n) {
-      // All cells in the queue are ready, so we can remove from "to update" list
-      smartlist_del(inlst, idx);
-    }
-  }
 }

@@ -1356,6 +1356,7 @@ circuitmux_compare_muxes, (circuitmux_t *cmux_1, circuitmux_t *cmux_2))
   }
 }
 
+/** ----------------------------------------------- RENDEZMIX ------------------------------------------------------- */
 
 void
 add_circ_to_update(circuit_t *circ, int exitward)
@@ -1364,5 +1365,38 @@ add_circ_to_update(circuit_t *circ, int exitward)
     smartlist_add(circ->n_chan->cmux->out_circs_to_update, circ);
   } else {
     smartlist_add(TO_OR_CIRCUIT(circ)->p_chan->cmux->in_circs_to_update, circ);
+  }
+}
+
+void
+update_cmux_all_queues(circuitmux_t *cmux) {
+  int idx;
+  smartlist_t *outlst = cmux->out_circs_to_update;
+  smartlist_t *inlst = cmux->in_circs_to_update;
+
+  for (idx = 0; idx < smartlist_len(outlst); ++idx) {
+    circuit_t *circ = smartlist_get(outlst, idx);
+    int prev_ready_n = circ->n_chan_cells.ready_n;
+    update_ready_n(&circ->n_chan_cells);
+    if (prev_ready_n != circ->n_chan_cells.ready_n) {
+      update_circuit_on_cmux(circ, CELL_DIRECTION_OUT);
+    }
+    if (circ->n_chan_cells.ready_n == circ->n_chan_cells.n) {
+      // All cells in the queue are ready, so we can remove from "to update" list
+      smartlist_del(outlst, idx);
+    }
+  }
+  for (idx = 0; idx < smartlist_len(inlst); ++idx) {
+    circuit_t *circ = smartlist_get(inlst, idx);
+    or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
+    int prev_ready_n = or_circ->p_chan_cells.ready_n;
+    update_ready_n(&or_circ->p_chan_cells);
+    if (prev_ready_n != or_circ->p_chan_cells.ready_n) {
+      update_circuit_on_cmux(circ, CELL_DIRECTION_IN);
+    }
+    if (or_circ->p_chan_cells.ready_n == or_circ->p_chan_cells.n) {
+      // All cells in the queue are ready, so we can remove from "to update" list
+      smartlist_del(inlst, idx);
+    }
   }
 }
