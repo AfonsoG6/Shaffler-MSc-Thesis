@@ -45,6 +45,7 @@
  * types of relay cells, launching requests or transmitting data as needed.
  **/
 
+#include "or.h"
 #define RELAY_PRIVATE
 
 #include "core/or/or.h"
@@ -4064,19 +4065,25 @@ void
 update_cmux_all_circuits(void) {
   int idx;
   smartlist_t *lst = circuit_get_global_list();
+  or_circuit_t *or_circ;
 
   for (idx = 0; idx < smartlist_len(lst); ++idx) {
     circuit_t *circ = smartlist_get(lst, idx);
 
     /* Ignore a marked for close circuit or if the state is not open. */
-    if (circ->marked_for_close) {
+    if (!circ || circ->marked_for_close) {
       continue;
     }
 
     // update_circuit_on_cmux() already calls update_ready_n()
-    update_circuit_on_cmux(circ, CELL_DIRECTION_OUT);
+    if (circ->n_chan && circ->n_chan->cmux) {
+      update_circuit_on_cmux(circ, CELL_DIRECTION_OUT);
+    }
     if (circ->magic == OR_CIRCUIT_MAGIC) {
-      update_circuit_on_cmux(circ, CELL_DIRECTION_IN);
+      or_circ = TO_OR_CIRCUIT(circ);
+      if (or_circ && or_circ->p_chan && or_circ->p_chan->cmux) {
+        update_circuit_on_cmux(circ, CELL_DIRECTION_IN);
+      }
     }
   }
 }
