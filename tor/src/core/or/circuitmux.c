@@ -1356,3 +1356,13 @@ circuitmux_compare_muxes, (circuitmux_t *cmux_1, circuitmux_t *cmux_2))
   }
 }
 
+
+void
+add_circ_to_update(circuit_t *circ, int exitward)
+{
+  if (exitward) {
+    smartlist_add(circ->n_chan->cmux->out_circs_to_update, circ);
+  } else {
+    smartlist_add(TO_OR_CIRCUIT(circ)->p_chan->cmux->in_circs_to_update, circ);
+  }
+}
