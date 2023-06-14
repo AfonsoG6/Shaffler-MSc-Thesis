@@ -177,6 +177,6 @@ struct timespec get_ready_ts_independent(circuit_t *circ, cell_t *cell, int dire
 
 void update_ready_n(cell_queue_t *queue);
 
-void update_cmux_all_queues(circuitmux_t *cmux);
+void update_cmux_all_queues(struct circuitmux_s *cmux);
 
 #endif /* !defined(TOR_RELAY_H) */
