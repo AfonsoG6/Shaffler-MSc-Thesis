@@ -1077,7 +1077,6 @@ void
 channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
 {
   channel_tls_t *chan;
-  circuit_t *circ;
   int handshaking;
 
   tor_assert(cell);
@@ -1165,7 +1164,6 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
       channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
       break;
     default:
-      circ = circuit_get_by_circid_channel(cell->circ_id, &(chan->base_));
       if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
           cell->command <= CELL_RELAY_DELAY_HIGHEST) {
         channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);

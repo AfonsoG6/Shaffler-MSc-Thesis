@@ -38,3 +38,5 @@ cd /root/rendezmix/tor && git reset --hard HEAD && git pull && make && make inst
 
 cd /part/simulation && tornettools simulate tornet-0.005 && cd datasets/ && python3 stage.py -s ../tornet-0.005 && python3 parse.py -s ../tornet-0.005
  && python3 cleanup.py -d dataset
+
+./autogen.sh && ./configure --disable-asciidoc --disable-unittests && make && make install
