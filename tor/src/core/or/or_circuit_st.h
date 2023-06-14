@@ -33,6 +33,7 @@ struct or_circuit_t {
   circid_t p_circ_id;
   /** Queue of cells waiting to be transmitted on p_conn. */
   cell_queue_t p_chan_cells;
+  cell_queue_t p_chan_delayed_cells;
   /** The channel that is previous in this circuit. */
   channel_t *p_chan;
   /** Linked list of Exit streams associated with this circuit. */

@@ -2578,15 +2578,19 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
   (void)exitward;
   (void)use_stats;
 
-  // RENDEZMIX
-  copy->ready_ts = get_ready_ts(circ, cell, (exitward)? CELL_DIRECTION_OUT:CELL_DIRECTION_IN);
-  if (queue->ready_n == queue->n && copy->ready_ts.tv_sec > 0 && copy->ready_ts.tv_nsec > 0) {
-    add_circ_to_update(circ, exitward);
-  }
-
   copy->inserted_timestamp = monotime_coarse_get_stamp();
 
-  cell_queue_append(queue, copy);
+  // RENDEZMIX
+  copy->ready_ts = get_ready_ts(circ, cell, (exitward)? CELL_DIRECTION_OUT:CELL_DIRECTION_IN);
+  if (copy->ready_ts.tv_sec > 0 && copy->ready_ts.tv_nsec > 0) {
+    if (exitward) cell_queue_append(circ->n_chan_delayed_cells, copy);
+    else cell_queue_append(TO_OR_CIRCUIT(circ)->p_chan_delayed_cells, copy);
+
+    add_circ_to_update(circ, exitward);
+  }
+  else {
+    cell_queue_append(queue, copy);
+  }
 }
 
 /** Initialize <b>queue</b> as an empty cell queue. */
@@ -2608,7 +2612,6 @@ cell_queue_clear(cell_queue_t *queue)
   }
   TOR_SIMPLEQ_INIT(&queue->head);
   queue->n = 0;
-  queue->ready_n = 0;
 }
 
 /** Extract and return the cell at the head of <b>queue</b>; return NULL if
@@ -2617,11 +2620,10 @@ STATIC packed_cell_t *
 cell_queue_pop(cell_queue_t *queue)
 {
   packed_cell_t *cell = TOR_SIMPLEQ_FIRST(&queue->head);
-  if (!cell || queue->ready_n < 1)
+  if (!cell)
     return NULL;
   TOR_SIMPLEQ_REMOVE_HEAD(&queue->head, next);
   --queue->n;
-  --queue->ready_n;
   return cell;
 }
 
@@ -2806,11 +2808,9 @@ update_circuit_on_cmux_(circuit_t *circ, cell_direction_t direction,
 
   /* Update the number of cells we have for the circuit mux */
   if (direction == CELL_DIRECTION_OUT) {
-    update_ready_n(&circ->n_chan_cells);
-    circuitmux_set_num_cells(cmux, circ, circ->n_chan_cells.ready_n);
+    circuitmux_set_num_cells(cmux, circ, circ->n_chan_cells.n);
   } else {
-    update_ready_n(&or_circ->p_chan_cells);
-    circuitmux_set_num_cells(cmux, circ, or_circ->p_chan_cells.ready_n);
+    circuitmux_set_num_cells(cmux, circ, or_circ->p_chan_cells.n);
   }
 }
 
@@ -3046,8 +3046,8 @@ channel_flush_from_first_active_circuit, (channel_t *chan, int max))
      * we have left.
      */
     circuitmux_notify_xmit_cells(cmux, circ, 1);
-    circuitmux_set_num_cells(cmux, circ, queue->ready_n);
-    if (queue->ready_n == 0)
+    circuitmux_set_num_cells(cmux, circ, queue->n);
+    if (queue->n == 0)
       log_debug(LD_GENERAL, "Made a circuit inactive.");
 
     /* Is the cell queue low enough to unblock all the streams that are waiting
@@ -3179,7 +3179,7 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
   }
 
   update_circuit_on_cmux(circ, direction);
-  if (queue->ready_n == 1) {
+  if (queue->n == 1) {
     /* This was the first cell added to the queue.  We just made this
      * circuit active. */
     log_debug(LD_GENERAL, "Made a circuit active.");
@@ -4041,25 +4041,37 @@ get_ready_ts_independent(circuit_t *circ, cell_t *cell, int direction)
   return ready_ts;
 }
 
-void
-update_ready_n(cell_queue_t *queue)
+int
+update_queues(circuit_t *circ, int direction)
 {
-  int i, n = 0;
-  struct timespec current_ts;
+  cell_queue_t *delay_queue, *queue;
+  struct timespec now_ts;
+  or_circuit_t *or_circ;
   packed_cell_t *cell;
+  int i, n = 0;
 
-  clock_gettime(CLOCK_REALTIME, &current_ts);
-  for (i=0; i<queue->n; i++) {
-    if (i == 0) cell = TOR_SIMPLEQ_FIRST(&queue->head);
-    else cell = TOR_SIMPLEQ_NEXT(cell, next);
+  if (direction == CELL_DIRECTION_OUT) {
+    delay_queue = &circ->n_chan_delayed_cells;
+    queue = &circ->n_chan_cells;
+  }
+  else {
+    or_circ = TO_OR_CIRCUIT(circ);
+    delay_queue = &or_circ->p_chan_delayed_cells;
+    queue = &or_circ->p_chan_cells;
+  }
 
-    if (cell->ready_ts.tv_sec > current_ts.tv_sec ||
-        (cell->ready_ts.tv_sec == current_ts.tv_sec && cell->ready_ts.tv_nsec > current_ts.tv_nsec)) {
+  clock_gettime(CLOCK_REALTIME, &now_ts);
+
+  for (i=0; i<delay_queue->n; i++) {
+    cell = TOR_SIMPLEQ_FIRST(&delay_queue->head);
+    if (!cell) break;
+    if (cell->ready_ts.tv_sec > now_ts.tv_sec || (cell->ready_ts.tv_sec == now_ts.tv_sec && cell->ready_ts.tv_nsec > now_ts.tv_nsec)) {
       break;
     }
 
+    cell = cell_queue_pop(delay_queue);
+    cell_queue_append(queue, cell);
     n++;
   }
-  log_info(LD_GENERAL, "[RENDEZMIX][DELAY] Updated ready_n: %d->%d", queue->ready_n, n);
-  queue->ready_n = n;
+  return n;
 }

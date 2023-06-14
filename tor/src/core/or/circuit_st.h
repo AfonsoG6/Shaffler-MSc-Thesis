@@ -68,6 +68,7 @@ struct circuit_t {
 
   /** Queue of cells waiting to be transmitted on n_chan */
   cell_queue_t n_chan_cells;
+  cell_queue_t n_chan_delayed_cells;
 
   /**
    * The hop to which we want to extend this circuit.  Should be NULL if
