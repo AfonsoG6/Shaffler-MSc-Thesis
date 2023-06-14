@@ -80,7 +80,7 @@
 #include "core/or/or_circuit_st.h"
 
 /* RENDEZMIX includes */
-#include "lib/smartlist_core.h"
+#include "lib/smartlist_core/smartlist_core.h"
 
 /*
  * Private typedefs for circuitmux.c
