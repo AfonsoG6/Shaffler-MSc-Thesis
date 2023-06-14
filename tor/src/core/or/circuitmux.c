@@ -754,7 +754,7 @@ circuitmux_num_cells, (circuitmux_t *cmux))
   tor_assert(cmux);
 
   monotime_get(&now);
-  if (monotime_diff_msec(&now, &cmux->last_update) > 1) {
+  if (monotime_diff_usec(&now, &cmux->last_update) > 1) {
     update_cmux_all_queues(cmux);
     cmux->last_update = now;
   }
@@ -817,14 +817,12 @@ circuitmux_attach_circuit,(circuitmux_t *cmux, circuit_t *circ,
   if (direction == CELL_DIRECTION_OUT) {
     /* It's n_chan */
     chan = circ->n_chan;
-    update_ready_n(&circ->n_chan_cells);
-    cell_count = circ->n_chan_cells.ready_n;
+    cell_count = circ->n_chan_cells.n;
     circ_id = circ->n_circ_id;
   } else {
     /* We want p_chan */
     chan = TO_OR_CIRCUIT(circ)->p_chan;
-    update_ready_n(&TO_OR_CIRCUIT(circ)->p_chan_cells);
-    cell_count = TO_OR_CIRCUIT(circ)->p_chan_cells.ready_n;
+    cell_count = TO_OR_CIRCUIT(circ)->p_chan_cells.n;
     circ_id = TO_OR_CIRCUIT(circ)->p_circ_id;
   }
   /* Assert that we did get a channel */
@@ -1376,27 +1374,23 @@ update_cmux_all_queues(circuitmux_t *cmux) {
 
   for (idx = 0; idx < smartlist_len(outlst); ++idx) {
     circuit_t *circ = smartlist_get(outlst, idx);
-    int prev_ready_n = circ->n_chan_cells.ready_n;
-    update_ready_n(&circ->n_chan_cells);
-    if (prev_ready_n != circ->n_chan_cells.ready_n) {
+    if (update_queues(circ, CELL_DIRECTION_OUT)) {
       update_circuit_on_cmux(circ, CELL_DIRECTION_OUT);
-    }
-    if (circ->n_chan_cells.ready_n == circ->n_chan_cells.n) {
-      // All cells in the queue are ready, so we can remove from "to update" list
-      smartlist_del(outlst, idx);
+      if (circ->n_chan_delayed_cells.n == 0) {
+        smartlist_del(outlst, idx);
+        idx--; // smartlist_del replaces the idx'th element with the last one
+      }
     }
   }
+
   for (idx = 0; idx < smartlist_len(inlst); ++idx) {
     circuit_t *circ = smartlist_get(inlst, idx);
-    or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
-    int prev_ready_n = or_circ->p_chan_cells.ready_n;
-    update_ready_n(&or_circ->p_chan_cells);
-    if (prev_ready_n != or_circ->p_chan_cells.ready_n) {
+    if (update_queues(circ, CELL_DIRECTION_IN)) {
       update_circuit_on_cmux(circ, CELL_DIRECTION_IN);
-    }
-    if (or_circ->p_chan_cells.ready_n == or_circ->p_chan_cells.n) {
-      // All cells in the queue are ready, so we can remove from "to update" list
-      smartlist_del(inlst, idx);
+      if (TO_OR_CIRCUIT(circ)->p_chan_delayed_cells.n == 0) {
+        smartlist_del(inlst, idx);
+        idx--; // smartlist_del replaces the idx'th element with the last one
+      }
     }
   }
 }

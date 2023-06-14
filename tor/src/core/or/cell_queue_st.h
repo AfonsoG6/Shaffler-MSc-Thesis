@@ -25,7 +25,6 @@ struct cell_queue_t {
   /** Linked list of packed_cell_t*/
   TOR_SIMPLEQ_HEAD(cell_simpleq, packed_cell_t) head;
   int n; /**< The number of cells in the queue. */
-  int ready_n; /**< The number of cells in the queue that are ready to be sent. */
 };
 
 #endif /* !defined(PACKED_CELL_ST_H) */

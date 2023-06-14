@@ -175,6 +175,6 @@ struct timespec get_ready_ts(circuit_t *circ, cell_t *cell, int direction);
 
 struct timespec get_ready_ts_independent(circuit_t *circ, cell_t *cell, int direction);
 
-void update_ready_n(cell_queue_t *queue);
+int update_queues(circuit_t *circ, int direction);
 
 #endif /* !defined(TOR_RELAY_H) */
