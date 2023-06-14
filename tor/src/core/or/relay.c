@@ -44,8 +44,6 @@
  * The connection_edge_process_relay_cell() function handles all the different
  * types of relay cells, launching requests or transmitting data as needed.
  **/
-
-#include "or.h"
 #define RELAY_PRIVATE
 
 #include "core/or/or.h"
@@ -4062,7 +4060,7 @@ update_ready_n(cell_queue_t *queue)
 }
 
 void
-update_cmux_all_circuits(void) {
+update_cmux_all_circuits(circuitmux_t *cmux) {
   int idx;
   smartlist_t *lst = circuit_get_global_list();
   or_circuit_t *or_circ;
@@ -4076,12 +4074,12 @@ update_cmux_all_circuits(void) {
     }
 
     // update_circuit_on_cmux() already calls update_ready_n()
-    if (circ->n_chan && circ->n_chan->cmux) {
+    if (circ->n_chan && circ->n_chan->cmux && circ->n_chan->cmux == cmux) {
       update_circuit_on_cmux(circ, CELL_DIRECTION_OUT);
     }
     if (circ->magic == OR_CIRCUIT_MAGIC) {
       or_circ = TO_OR_CIRCUIT(circ);
-      if (or_circ && or_circ->p_chan && or_circ->p_chan->cmux) {
+      if (or_circ && or_circ->p_chan && or_circ->p_chan->cmux && or_circ->p_chan->cmux == cmux) {
         update_circuit_on_cmux(circ, CELL_DIRECTION_IN);
       }
     }

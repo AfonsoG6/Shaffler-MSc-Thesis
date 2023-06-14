@@ -29,12 +29,12 @@
 			"path": "tor/src/core/or/relay.c",
 			"bookmarks": [
 				{
-					"line": 2772,
+					"line": 2770,
 					"column": 68,
 					"label": ""
 				},
 				{
-					"line": 2910,
+					"line": 2908,
 					"column": 68,
 					"label": ""
 				}
@@ -54,12 +54,12 @@
 			"path": "tor/src/core/or/circuitmux.c",
 			"bookmarks": [
 				{
-					"line": 780,
+					"line": 787,
 					"column": 63,
 					"label": ""
 				},
 				{
-					"line": 1110,
+					"line": 1117,
 					"column": 55,
 					"label": ""
 				}

@@ -143,6 +143,8 @@ struct circuitmux_s {
 
   /* Policy-specific data */
   circuitmux_policy_data_t *policy_data;
+
+  monotime_t last_update; // RENDEZMIX
 };
 
 /*
@@ -738,9 +740,14 @@ circuitmux_num_cells_for_circuit(circuitmux_t *cmux, circuit_t *circ)
 MOCK_IMPL(unsigned int,
 circuitmux_num_cells, (circuitmux_t *cmux))
 {
+  struct monotime_t now;
   tor_assert(cmux);
 
-  update_cmux_all_circuits(); // Perhaps only updating the circuits with this cmux would be better for performance
+  monotime_get(&now);
+  if (monotime_diff_msec(&now, &cmux->last_update) > 1) {
+    update_cmux_all_circuits(cmux);
+    cmux->last_update = now;
+  }
 
   return cmux->n_cells + cmux->destroy_cell_queue.n;
 }
