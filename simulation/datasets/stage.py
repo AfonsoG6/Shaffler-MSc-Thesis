@@ -40,13 +40,13 @@ def get_client_flows(hostname: str, hosts_path: str) -> None:
             site_counter += 1
             info_clients[hostname].append({
                 "timestamp": timestamp,
-                "duration": 30,
+                "duration": 60,
                 "circuit_idx": circuit_idx,
                 "site_idx": site_idx
             })
             info_servers[port].append({
                 "timestamp": timestamp,
-                "duration": 30,
+                "duration": 60,
                 "circuit_idx": circuit_idx,
                 "site_idx": site_idx
             })
