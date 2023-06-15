@@ -2650,6 +2650,7 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
                               int wide_circ_ids, int use_stats)
 {
   packed_cell_t *copy = packed_cell_copy(cell, wide_circ_ids);
+  int prev_n;
   (void)circ;
   (void)exitward;
   (void)use_stats;
@@ -2659,13 +2660,26 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
   // RENDEZMIX
   copy->ready_ts = get_ready_ts(circ, cell, (exitward)? CELL_DIRECTION_OUT:CELL_DIRECTION_IN);
   if (copy->ready_ts.tv_sec > 0 || copy->ready_ts.tv_nsec > 0) {
-    if (exitward) cell_queue_append(&circ->n_chan_delayed_cells, copy);
-    else cell_queue_append(&TO_OR_CIRCUIT(circ)->p_chan_delayed_cells, copy);
+    if (exitward) {
+      prev_n = circ->n_chan_delayed_cells.n;
+      cell_queue_append(&circ->n_chan_delayed_cells, copy);
+    }
+    else {
+      prev_n = TO_OR_CIRCUIT(circ)->p_chan_delayed_cells.n;
+      cell_queue_append(&TO_OR_CIRCUIT(circ)->p_chan_delayed_cells, copy);
+    }
 
-    add_circ_to_update(circ, exitward);
+    if (prev_n == 0)
+      add_circ_to_update(circ, exitward);
   }
   else {
-    cell_queue_append(queue, copy);
+    // Keep order of cells
+    if (exitward && circ->n_chan_delayed_cells.n > 0)
+      cell_queue_append(&circ->n_chan_delayed_cells, copy);
+    else if (!exitward && TO_OR_CIRCUIT(circ)->p_chan_delayed_cells.n > 0)
+      cell_queue_append(&TO_OR_CIRCUIT(circ)->p_chan_delayed_cells, copy);
+    else
+      cell_queue_append(queue, copy);
   }
 }
 
