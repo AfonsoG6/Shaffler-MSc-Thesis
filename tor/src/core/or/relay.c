@@ -3977,9 +3977,11 @@ get_ready_ts(circuit_t *circ, cell_t *cell, int direction)
   struct timespec previous_cell_ts, delay_ts, ready_ts;
   double delay, ready; // in seconds
 
-  if (!(cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST && cell->command <= CELL_RELAY_DELAY_HIGHEST)))
-    return (struct timespec){0, 0};
   if (!circ || (cell->command == CELL_RELAY && !circ->delay_command))
+    return (struct timespec){0, 0};
+  if (circ->magic == ORIGIN_CIRCUIT_MAGIC)
+    return (struct timespec){0, 0};
+  if (!(cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST && cell->command <= CELL_RELAY_DELAY_HIGHEST)))
     return (struct timespec){0, 0};
 
   // After receiving a delay command once, we mark the circuit as using delays
