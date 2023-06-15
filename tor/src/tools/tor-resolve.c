@@ -1,5 +1,5 @@
 /* Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson
- * Copyright (c) 2007-2019, The Tor Project, Inc.
+ * Copyright (c) 2007-2021, The Tor Project, Inc.
  */
 /* See LICENSE for licensing information */
 
@@ -45,8 +45,10 @@
 
 #define RESPONSE_LEN_4 8
 #define log_sock_error(act, _s)                                         \
-  STMT_BEGIN log_fn(LOG_ERR, LD_NET, "Error while %s: %s", act,         \
-              tor_socket_strerror(tor_socket_errno(_s))); STMT_END
+  STMT_BEGIN                                                            \
+    log_fn(LOG_ERR, LD_NET, "Error while %s: %s", act,                  \
+    tor_socket_strerror(tor_socket_errno(_s)));                         \
+  STMT_END
 
 static void usage(void) ATTR_NORETURN;
 
@@ -251,7 +253,7 @@ build_socks_resolve_request(uint8_t **out,
 }
 
 static void
-onion_warning(const char *hostname)
+onion_hs_warning(const char *hostname)
 {
   log_warn(LD_NET,
         "%s is a hidden service; those don't have IP addresses. "
@@ -259,6 +261,15 @@ onion_warning(const char *hostname)
         "fake address for hidden services.  Or you can have your "
         "application send the address to Tor directly; we recommend an "
         "application that uses SOCKS 5 with hostnames.",
+           hostname);
+}
+
+static void
+onion_exit_warning(const char *hostname)
+{
+  log_warn(LD_NET,
+        "%s is a link pointing to an exit node; however, .exit domains"
+        "have been long defunct and are not valid anymore.",
            hostname);
 }
 
@@ -304,9 +315,15 @@ parse_socks4a_resolve_response(const char *hostname,
   if (status != 90) {
     log_warn(LD_NET,"Got status response '%d': socks request failed.", status);
     if (!strcasecmpend(hostname, ".onion")) {
-      onion_warning(hostname);
+      onion_hs_warning(hostname);
       result = -1; goto cleanup;
     }
+
+    if (!strcasecmpend(hostname, ".exit")) {
+      onion_exit_warning(hostname);
+      result = -1; goto cleanup;
+    }
+
     result = -1; goto cleanup;
   }
 
@@ -491,7 +508,11 @@ do_resolve(const char *hostname,
                (unsigned)reply_field,
                socks5_reason_to_string(reply_field));
       if (reply_field == 4 && !strcasecmpend(hostname, ".onion")) {
-        onion_warning(hostname);
+        onion_hs_warning(hostname);
+      }
+
+      if (reply_field == 4 && !strcasecmpend(hostname, ".exit")) {
+        onion_exit_warning(hostname);
       }
 
       socks5_server_reply_free(reply);
@@ -507,7 +528,7 @@ do_resolve(const char *hostname,
     } else if (atype == SOCKS5_ATYPE_IPV6) {
       /* IPv6 address */
       tor_addr_from_ipv6_bytes(result_addr,
-        (const char *)socks5_server_reply_getarray_bind_addr_ipv6(reply));
+        socks5_server_reply_getarray_bind_addr_ipv6(reply));
     } else if (atype == SOCKS5_ATYPE_HOSTNAME) {
       /* Domain name */
       domainname_t *dn =

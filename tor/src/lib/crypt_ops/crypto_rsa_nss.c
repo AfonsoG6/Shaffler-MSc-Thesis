@@ -1,7 +1,7 @@
 /* Copyright (c) 2001, Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2019, The Tor Project, Inc. */
+ * Copyright (c) 2007-2021, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -23,9 +23,11 @@
 
 #include <string.h>
 
+DISABLE_GCC_WARNING("-Wstrict-prototypes")
 #include <keyhi.h>
 #include <pk11pub.h>
 #include <secder.h>
+ENABLE_GCC_WARNING("-Wstrict-prototypes")
 
 #ifdef ENABLE_OPENSSL
 #include <openssl/rsa.h>
@@ -645,7 +647,7 @@ crypto_pk_asn1_decode(const char *str, size_t len)
   return result;
 }
 
-DISABLE_GCC_WARNING(unused-parameter)
+DISABLE_GCC_WARNING("-Wunused-parameter")
 
 /** Given a crypto_pk_t <b>pk</b>, allocate a new buffer containing the Base64
  * encoding of the DER representation of the private key into the
@@ -679,9 +681,12 @@ crypto_pk_asn1_encode_private(const crypto_pk_t *pk,
 /** Given a buffer containing the DER representation of the
  * private key <b>str</b>, decode and return the result on success, or NULL
  * on failure.
+ *
+ * If <b>max_bits</b> is nonnegative, reject any key longer than max_bits
+ * without performing any expensive validation on it.
  */
 crypto_pk_t *
-crypto_pk_asn1_decode_private(const char *str, size_t len)
+crypto_pk_asn1_decode_private(const char *str, size_t len, int max_bits)
 {
   tor_assert(str);
   tor_assert(len < INT_MAX);
@@ -729,6 +734,15 @@ crypto_pk_asn1_decode_private(const char *str, size_t len)
   if (! crypto_pk_is_valid_private_key(output)) {
     crypto_pk_free(output);
     output = NULL;
+  }
+
+  if (output) {
+    const int bits = SECKEY_PublicKeyStrengthInBits(output->pubkey);
+    if (max_bits >= 0 && bits > max_bits) {
+      log_info(LD_CRYPTO, "Private key longer than expected.");
+      crypto_pk_free(output);
+      output = NULL;
+    }
   }
 
   if (slot)

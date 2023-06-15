@@ -1,8 +1,13 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2019, The Tor Project, Inc. */
+ * Copyright (c) 2007-2021, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
+
+/**
+ * @file crypt_path_st.h
+ * @brief Path structures for origin circuits.
+ **/
 
 #ifndef CRYPT_PATH_ST_H
 #define CRYPT_PATH_ST_H
@@ -16,13 +21,18 @@ struct fast_handshake_state_t;
 struct ntor_handshake_state_t;
 struct crypto_dh_t;
 struct onion_handshake_state_t {
+  /** One of `ONION_HANDSHAKE_TYPE_*`.  Determines which member of the union
+   * is accessible. */
   uint16_t tag;
   union {
     struct fast_handshake_state_t *fast;
     struct crypto_dh_t *tap;
     struct ntor_handshake_state_t *ntor;
+    struct ntor3_handshake_state_t *ntor3;
   } u;
 };
+
+struct congestion_control_t;
 
 /** Macro to encapsulate private members of a struct.
  *
@@ -74,6 +84,9 @@ struct crypt_path_t {
                        * at this step? */
   int deliver_window; /**< How many cells are we willing to deliver originating
                        * at this step? */
+
+  /** Congestion control info */
+  struct congestion_control_t *ccontrol;
 
   /*********************** Private members ****************************/
 

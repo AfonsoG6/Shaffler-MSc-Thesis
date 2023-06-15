@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2019, The Tor Project, Inc. */
+ * Copyright (c) 2007-2021, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -59,22 +59,25 @@ read_to_chunk_tls(buf_t *buf, chunk_t *chunk, tor_tls_t *tls,
  * Second, the TLS stream's events do not correspond directly to network
  * events: sometimes, before a TLS stream can read, the network must be
  * ready to write -- or vice versa.
+ *
+ * On success, return the number of bytes read. On error, a TOR_TLS_* negative
+ * code is returned (expect any of them except TOR_TLS_DONE).
  */
 int
-buf_read_from_tls(buf_t *buf, tor_tls_t *tls, size_t at_most, size_t *total_read)
+buf_read_from_tls(buf_t *buf, tor_tls_t *tls, size_t at_most)
 {
   int r = 0;
-  *total_read = 0;
+  size_t total_read = 0;
 
   check_no_tls_errors();
 
-  IF_BUG_ONCE(buf->datalen >= INT_MAX)
-    return -1;
-  IF_BUG_ONCE(buf->datalen >= INT_MAX - at_most)
-    return -1;
+  IF_BUG_ONCE(buf->datalen > BUF_MAX_LEN)
+    return TOR_TLS_ERROR_MISC;
+  IF_BUG_ONCE(buf->datalen > BUF_MAX_LEN - at_most)
+    return TOR_TLS_ERROR_MISC;
 
-  while (at_most > *total_read) {
-    size_t readlen = at_most - *total_read;
+  while (at_most > total_read) {
+    size_t readlen = at_most - total_read;
     chunk_t *chunk;
     if (!buf->tail || CHUNK_REMAINING_CAPACITY(buf->tail) < MIN_READ_LEN) {
       chunk = buf_add_chunk_with_capacity(buf, at_most, 1);
@@ -90,11 +93,10 @@ buf_read_from_tls(buf_t *buf, tor_tls_t *tls, size_t at_most, size_t *total_read
     r = read_to_chunk_tls(buf, chunk, tls, readlen);
     if (r < 0)
       return r; /* Error */
-    *total_read += r;
-    if ((size_t)r < readlen) /* eof, block, or no more to read. */
-      break;
+    tor_assert(total_read+r <= BUF_MAX_LEN);
+    total_read += r;
   }
-  return TOR_TLS_DONE;
+  return (int)total_read;
 }
 
 /** Helper for buf_flush_to_tls(): try to write <b>sz</b> bytes from chunk
@@ -133,13 +135,12 @@ flush_chunk_tls(tor_tls_t *tls, buf_t *buf, chunk_t *chunk, size_t sz)
  * more than <b>flushlen</b> bytes.
  */
 int
-buf_flush_to_tls(buf_t *buf, tor_tls_t *tls, size_t flushlen,
-                 size_t *total_written)
+buf_flush_to_tls(buf_t *buf, tor_tls_t *tls, size_t flushlen)
 {
-  *total_written = 0;
   int r;
+  size_t flushed = 0;
   ssize_t sz;
-  if (BUG(flushlen > buf->datalen)) {
+  IF_BUG_ONCE(flushlen > buf->datalen) {
     flushlen = buf->datalen;
   }
   sz = (ssize_t) flushlen;
@@ -162,10 +163,11 @@ buf_flush_to_tls(buf_t *buf, tor_tls_t *tls, size_t flushlen,
     r = flush_chunk_tls(tls, buf, buf->head, flushlen0);
     if (r < 0)
       return r;
-    *total_written += r;
+    flushed += r;
     sz -= r;
     if (r == 0) /* Can't flush any more now. */
       break;
   } while (sz > 0);
-  return TOR_TLS_DONE;
+  tor_assert(flushed <= BUF_MAX_LEN);
+  return (int)flushed;
 }

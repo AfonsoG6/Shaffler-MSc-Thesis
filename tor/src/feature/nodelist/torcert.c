@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2019, The Tor Project, Inc. */
+/* Copyright (c) 2014-2021, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -13,7 +13,7 @@
  * contents themselves may be another Ed25519 key, a digest of a
  * RSA key, or some other material.
  *
- * In this module there is also support for a crooss-certification of
+ * In this module there is also support for a cross-certification of
  * Ed25519 identities using (older) RSA1024 identities.
  *
  * Tor uses other types of certificate too, beyond those described in this
@@ -37,11 +37,11 @@
 
 #include "core/or/or_handshake_certs_st.h"
 
-/** Helper for tor_cert_create(): signs any 32 bytes, not just an ed25519
- * key.
+/** As tor_cert_create(), but accept an arbitrary signed_key_type as the
+ * subject key -- not just an ed25519 key.
  */
-static tor_cert_t *
-tor_cert_sign_impl(const ed25519_keypair_t *signing_key,
+tor_cert_t *
+tor_cert_create_raw(const ed25519_keypair_t *signing_key,
                       uint8_t cert_type,
                       uint8_t signed_key_type,
                       const uint8_t signed_key_info[32],
@@ -128,13 +128,13 @@ tor_cert_sign_impl(const ed25519_keypair_t *signing_key,
  * the public part of <b>signing_key</b> in the certificate.
  */
 tor_cert_t *
-tor_cert_create(const ed25519_keypair_t *signing_key,
+tor_cert_create_ed25519(const ed25519_keypair_t *signing_key,
                 uint8_t cert_type,
                 const ed25519_public_key_t *signed_key,
                 time_t now, time_t lifetime,
                 uint32_t flags)
 {
-  return tor_cert_sign_impl(signing_key, cert_type,
+  return tor_cert_create_raw(signing_key, cert_type,
                             SIGNED_KEY_TYPE_ED25519, signed_key->pubkey,
                             now, lifetime, flags);
 }
@@ -505,8 +505,7 @@ or_handshake_certs_free_(or_handshake_certs_t *certs)
 int
 or_handshake_certs_rsa_ok(int severity,
                           or_handshake_certs_t *certs,
-                          //tor_tls_t *tls,
-                          tor_x509_cert_t *peer_cert,
+                          tor_tls_t *tls,
                           time_t now)
 {
   tor_x509_cert_t *link_cert = certs->link_cert;
@@ -516,8 +515,7 @@ or_handshake_certs_rsa_ok(int severity,
   if (certs->started_here) {
     if (! (id_cert && link_cert))
       ERR("The certs we wanted (ID, Link) were missing");
-    //if (! tor_tls_cert_matches_key(tls, link_cert))
-    if (! tor_tls_cert_matches_key(peer_cert, link_cert))
+    if (! tor_tls_cert_matches_key(tls, link_cert))
       ERR("The link certificate didn't match the TLS public key");
     if (! tor_tls_cert_is_valid(severity, link_cert, id_cert, now, 0))
       ERR("The link certificate was not valid");
@@ -542,8 +540,7 @@ or_handshake_certs_rsa_ok(int severity,
 int
 or_handshake_certs_ed25519_ok(int severity,
                               or_handshake_certs_t *certs,
-                              //tor_tls_t *tls,
-                              tor_x509_cert_t *peer_cert,
+                              tor_tls_t *tls,
                               time_t now)
 {
   ed25519_checkable_t check[10];
@@ -568,8 +565,7 @@ or_handshake_certs_ed25519_ok(int severity,
       ERR("No Ed25519 link key");
     {
       /* check for a match with the TLS cert. */
-      //tor_x509_cert_t *peer_cert = tor_tls_get_peer_cert(tls);
-      
+      tor_x509_cert_t *peer_cert = tor_tls_get_peer_cert(tls);
       if (BUG(!peer_cert)) {
         /* This is a bug, because if we got to this point, we are a connection
          * that was initiated here, and we completed a TLS handshake. The
@@ -581,7 +577,7 @@ or_handshake_certs_ed25519_ok(int severity,
       int okay = tor_memeq(peer_cert_digests->d[DIGEST_SHA256],
                            certs->ed_sign_link->signed_key.pubkey,
                            DIGEST256_LEN);
-      //tor_x509_cert_free(peer_cert);
+      tor_x509_cert_free(peer_cert);
       if (!okay)
         ERR("Link certificate does not match TLS certificate");
     }
@@ -688,8 +684,7 @@ check_tap_onion_key_crosscert,(const uint8_t *crosscert,
 void
 or_handshake_certs_check_both(int severity,
                               or_handshake_certs_t *certs,
-                              //tor_tls_t *tls,
-                              tor_x509_cert_t *peer_cert,
+                              tor_tls_t *tls,
                               time_t now,
                               const ed25519_public_key_t **ed_id_out,
                               const common_digests_t **rsa_id_out)
@@ -701,7 +696,7 @@ or_handshake_certs_check_both(int severity,
   *rsa_id_out = NULL;
 
   if (certs->ed_id_sign) {
-    if (or_handshake_certs_ed25519_ok(severity, certs, peer_cert, now)) {
+    if (or_handshake_certs_ed25519_ok(severity, certs, tls, now)) {
       tor_assert(certs->ed_id_sign);
       tor_assert(certs->id_cert);
 
@@ -719,7 +714,7 @@ or_handshake_certs_check_both(int severity,
      * certificates, we expect to verify them! */
   } else {
     /* No ed25519 keys given in the CERTS cell */
-    if (or_handshake_certs_rsa_ok(severity, certs, peer_cert, now)) {
+    if (or_handshake_certs_rsa_ok(severity, certs, tls, now)) {
       *rsa_id_out = tor_x509_cert_get_id_digests(certs->id_cert);
     }
   }

@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2019, The Tor Project, Inc. */
+ * Copyright (c) 2007-2021, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -44,9 +44,8 @@
  * The connection_edge_process_relay_cell() function handles all the different
  * types of relay cells, launching requests or transmitting data as needed.
  **/
-#include "or.h"
-#define RELAY_PRIVATE
 
+#define RELAY_PRIVATE
 #include "core/or/or.h"
 #include "feature/client/addressmap.h"
 #include "lib/err/backtrace.h"
@@ -57,6 +56,7 @@
 #include "core/or/circuitlist.h"
 #include "core/or/circuituse.h"
 #include "core/or/circuitpadding.h"
+#include "core/or/extendinfo.h"
 #include "lib/compress/compress.h"
 #include "app/config/config.h"
 #include "core/mainloop/connection.h"
@@ -67,6 +67,7 @@
 #include "lib/crypt_ops/crypto_util.h"
 #include "feature/dircommon/directory.h"
 #include "feature/relay/dns.h"
+#include "feature/relay/circuitbuild_relay.h"
 #include "feature/stats/geoip_stats.h"
 #include "feature/hs/hs_cache.h"
 #include "core/mainloop/mainloop.h"
@@ -77,11 +78,12 @@
 #include "core/or/reasons.h"
 #include "core/or/relay.h"
 #include "core/crypto/relay_crypto.h"
-#include "feature/rend/rendcache.h"
 #include "feature/rend/rendcommon.h"
 #include "feature/nodelist/describe.h"
 #include "feature/nodelist/routerlist.h"
 #include "core/or/scheduler.h"
+#include "feature/hs/hs_metrics.h"
+#include "feature/stats/rephist.h"
 
 #include "core/or/cell_st.h"
 #include "core/or/cell_queue_st.h"
@@ -95,6 +97,8 @@
 #include "feature/nodelist/routerinfo_st.h"
 #include "core/or/socks_request_st.h"
 #include "core/or/sendme.h"
+#include "core/or/congestion_control_common.h"
+#include "core/or/congestion_control_flow.h"
 
 /* RENDEZMIX includes */
 #include <math.h>
@@ -117,13 +121,6 @@ static void adjust_exit_policy_from_exitpolicy_failure(origin_circuit_t *circ,
                                                   entry_connection_t *conn,
                                                   node_t *node,
                                                   const tor_addr_t *addr);
-
-/** Stop reading on edge connections when we have this many cells
- * waiting on the appropriate queue. */
-#define CELL_QUEUE_HIGHWATER_SIZE 256
-/** Start reading from edge connections again when we get down to this many
- * cells. */
-#define CELL_QUEUE_LOWWATER_SIZE 64
 
 /** Stats: how many relay cells have originated at this hop, or have
  * been relayed onward (not recognized at this hop)?
@@ -343,8 +340,17 @@ circuit_receive_relay_cell(cell_t *cell, circuit_t *circ,
       }
       return 0;
     }
-    log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,
-           "Didn't recognize cell, but circ stops here! Closing circ.");
+    if (BUG(CIRCUIT_IS_ORIGIN(circ))) {
+      /* Should be impossible at this point. */
+      return -END_CIRC_REASON_TORPROTOCOL;
+    }
+    or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
+    if (++or_circ->n_cells_discarded_at_end == 1) {
+      time_t seconds_open = approx_time() - circ->timestamp_created.tv_sec;
+      log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,
+             "Didn't recognize a cell, but circ stops here! Closing circuit. "
+             "It was created %ld seconds ago.", (long)seconds_open);
+    }
     return -END_CIRC_REASON_TORPROTOCOL;
   }
 
@@ -503,7 +509,7 @@ relay_header_unpack(relay_header_t *dest, const uint8_t *src)
 }
 
 /** Convert the relay <b>command</b> into a human-readable string. */
-static const char *
+const char *
 relay_command_to_string(uint8_t command)
 {
   static char buf[64];
@@ -877,7 +883,7 @@ connection_ap_process_end_not_open(
               ttl = (int)ntohl(get_uint32(cell->payload+RELAY_HEADER_SIZE+5));
           } else if (rh->length == 17 || rh->length == 21) {
             tor_addr_from_ipv6_bytes(&addr,
-                                (char*)(cell->payload+RELAY_HEADER_SIZE+1));
+                                     (cell->payload+RELAY_HEADER_SIZE+1));
             if (rh->length == 21)
               ttl = (int)ntohl(get_uint32(cell->payload+RELAY_HEADER_SIZE+17));
           }
@@ -951,7 +957,7 @@ connection_ap_process_end_not_open(
           break; /* break means it'll close, below */
         /* Else fall through: expire this circuit, clear the
          * chosen_exit_name field, and try again. */
-        /* Falls through. */
+        FALLTHROUGH;
       case END_STREAM_REASON_RESOLVEFAILED:
       case END_STREAM_REASON_TIMEOUT:
       case END_STREAM_REASON_MISC:
@@ -1102,7 +1108,7 @@ connected_cell_parse(const relay_header_t *rh, const cell_t *cell,
       return -1;
     if (get_uint8(payload + 4) != 6)
       return -1;
-    tor_addr_from_ipv6_bytes(addr_out, (char*)(payload + 5));
+    tor_addr_from_ipv6_bytes(addr_out, (payload + 5));
     bytes = ntohl(get_uint32(payload + 21));
     if (bytes <= INT32_MAX)
       *ttl_out = (int) bytes;
@@ -1175,7 +1181,7 @@ resolved_cell_parse(const cell_t *cell, const relay_header_t *rh,
       if (answer_len != 16)
         goto err;
       addr = tor_malloc_zero(sizeof(*addr));
-      tor_addr_from_ipv6_bytes(&addr->addr, (const char*) cp);
+      tor_addr_from_ipv6_bytes(&addr->addr, cp);
       cp += 16;
       addr->ttl = ntohl(get_uint32(cp));
       cp += 4;
@@ -1513,6 +1519,25 @@ connection_edge_process_relay_cell_not_open(
 //  return -1;
 }
 
+/**
+ * Return true iff our decryption layer_hint is from the last hop
+ * in a circuit.
+ */
+static bool
+relay_crypt_from_last_hop(origin_circuit_t *circ, crypt_path_t *layer_hint)
+{
+  tor_assert(circ);
+  tor_assert(layer_hint);
+  tor_assert(circ->cpath);
+
+  if (layer_hint != circ->cpath->prev) {
+    log_fn(LOG_PROTOCOL_WARN, LD_CIRC,
+           "Got unexpected relay data from intermediate hop");
+    return false;
+  }
+  return true;
+}
+
 /** Process a SENDME cell that arrived on <b>circ</b>. If it is a stream level
  * cell, it is destined for the given <b>conn</b>. If it is a circuit level
  * cell, it is destined for the <b>layer_hint</b>. The <b>domain</b> is the
@@ -1563,6 +1588,7 @@ process_sendme_cell(const relay_header_t *rh, const cell_t *cell,
   }
 
   /* Stream level SENDME cell. */
+  // TODO: Turn this off for cc_alg=1,2,3; use XON/XOFF instead
   ret = sendme_process_stream_level(conn, circ, rh->length);
   if (ret < 0) {
     /* Means we need to close the circuit with reason ret. */
@@ -1698,6 +1724,13 @@ handle_relay_cell_command(cell_t *cell, circuit_t *circ,
         circuit_read_valid_data(TO_ORIGIN_CIRCUIT(circ), rh->length);
       }
 
+      /* For onion service connection, update the metrics. */
+      if (conn->hs_ident) {
+        hs_metrics_app_write_bytes(&conn->hs_ident->identity_pk,
+                                   conn->hs_ident->orig_virtual_port,
+                                   rh->length);
+      }
+
       stats_n_data_bytes_received += rh->length;
       connection_buf_add((char*)(cell->payload + RELAY_HEADER_SIZE),
                               rh->length, TO_CONN(conn));
@@ -1720,13 +1753,52 @@ handle_relay_cell_command(cell_t *cell, circuit_t *circ,
       }
 
       return 0;
+    case RELAY_COMMAND_XOFF:
+      if (!conn) {
+        if (CIRCUIT_IS_ORIGIN(circ)) {
+          origin_circuit_t *ocirc = TO_ORIGIN_CIRCUIT(circ);
+          if (relay_crypt_from_last_hop(ocirc, layer_hint) &&
+              connection_half_edge_is_valid_data(ocirc->half_streams,
+                                                rh->stream_id)) {
+            circuit_read_valid_data(ocirc, rh->length);
+          }
+        }
+        return 0;
+      }
+
+      if (circuit_process_stream_xoff(conn, layer_hint, cell)) {
+        if (CIRCUIT_IS_ORIGIN(circ)) {
+          circuit_read_valid_data(TO_ORIGIN_CIRCUIT(circ), rh->length);
+        }
+      }
+      return 0;
+    case RELAY_COMMAND_XON:
+      if (!conn) {
+        if (CIRCUIT_IS_ORIGIN(circ)) {
+          origin_circuit_t *ocirc = TO_ORIGIN_CIRCUIT(circ);
+          if (relay_crypt_from_last_hop(ocirc, layer_hint) &&
+              connection_half_edge_is_valid_data(ocirc->half_streams,
+                                                rh->stream_id)) {
+            circuit_read_valid_data(ocirc, rh->length);
+          }
+        }
+        return 0;
+      }
+
+      if (circuit_process_stream_xon(conn, layer_hint, cell)) {
+        if (CIRCUIT_IS_ORIGIN(circ)) {
+          circuit_read_valid_data(TO_ORIGIN_CIRCUIT(circ), rh->length);
+        }
+      }
+      return 0;
     case RELAY_COMMAND_END:
       reason = rh->length > 0 ?
         get_uint8(cell->payload+RELAY_HEADER_SIZE) : END_STREAM_REASON_MISC;
       if (!conn) {
         if (CIRCUIT_IS_ORIGIN(circ)) {
           origin_circuit_t *ocirc = TO_ORIGIN_CIRCUIT(circ);
-          if (connection_half_edge_is_valid_end(ocirc->half_streams,
+          if (relay_crypt_from_last_hop(ocirc, layer_hint) &&
+              connection_half_edge_is_valid_end(ocirc->half_streams,
                                                 rh->stream_id)) {
 
             circuit_read_valid_data(ocirc, rh->length);
@@ -1937,7 +2009,8 @@ handle_relay_cell_command(cell_t *cell, circuit_t *circ,
 
       if (CIRCUIT_IS_ORIGIN(circ)) {
         origin_circuit_t *ocirc = TO_ORIGIN_CIRCUIT(circ);
-        if (connection_half_edge_is_valid_resolved(ocirc->half_streams,
+        if (relay_crypt_from_last_hop(ocirc, layer_hint) &&
+            connection_half_edge_is_valid_resolved(ocirc->half_streams,
                                                     rh->stream_id)) {
           circuit_read_valid_data(ocirc, rh->length);
           log_info(domain,
@@ -2072,6 +2145,7 @@ void
 circuit_reset_sendme_randomness(circuit_t *circ)
 {
   circ->have_sent_sufficiently_random_cell = 0;
+  // XXX: do we need to change this check for congestion control?
   circ->send_randomness_after_n_cells = CIRCWINDOW_INCREMENT / 2 +
     crypto_fast_rng_get_uint(get_thread_fast_rng(), CIRCWINDOW_INCREMENT / 2);
 }
@@ -2265,7 +2339,7 @@ connection_edge_package_raw_inbuf(edge_connection_t *conn, int package_partial,
   }
 
   /* Handle the stream-level SENDME package window. */
-  if (sendme_note_stream_data_packaged(conn) < 0) {
+  if (sendme_note_stream_data_packaged(conn, length) < 0) {
     connection_stop_reading(TO_CONN(conn));
     log_debug(domain,"conn->package_window reached 0.");
     circuit_consider_stop_edge_reading(circ, cpath_layer);
@@ -2331,15 +2405,16 @@ circuit_resume_edge_reading_helper(edge_connection_t *first_conn,
   /* How many cells do we have space for?  It will be the minimum of
    * the number needed to exhaust the package window, and the minimum
    * needed to fill the cell queue. */
-  max_to_package = circ->package_window;
+
+  max_to_package = congestion_control_get_package_window(circ, layer_hint);
   if (CIRCUIT_IS_ORIGIN(circ)) {
     cells_on_queue = circ->n_chan_cells.n;
   } else {
     or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
     cells_on_queue = or_circ->p_chan_cells.n;
   }
-  if (CELL_QUEUE_HIGHWATER_SIZE - cells_on_queue < max_to_package)
-    max_to_package = CELL_QUEUE_HIGHWATER_SIZE - cells_on_queue;
+  if (cell_queue_highwatermark() - cells_on_queue < max_to_package)
+    max_to_package = cell_queue_highwatermark() - cells_on_queue;
 
   /* Once we used to start listening on the streams in the order they
    * appeared in the linked list.  That leads to starvation on the
@@ -2379,7 +2454,8 @@ circuit_resume_edge_reading_helper(edge_connection_t *first_conn,
   /* Activate reading starting from the chosen stream */
   for (conn=chosen_stream; conn; conn = conn->next_stream) {
     /* Start reading for the streams starting from here */
-    if (conn->base_.marked_for_close || conn->package_window <= 0)
+    if (conn->base_.marked_for_close || conn->package_window <= 0 ||
+        conn->xoff_received)
       continue;
     if (!layer_hint || conn->cpath_layer == layer_hint) {
       connection_start_reading(TO_CONN(conn));
@@ -2390,7 +2466,8 @@ circuit_resume_edge_reading_helper(edge_connection_t *first_conn,
   }
   /* Go back and do the ones we skipped, circular-style */
   for (conn = first_conn; conn != chosen_stream; conn = conn->next_stream) {
-    if (conn->base_.marked_for_close || conn->package_window <= 0)
+    if (conn->base_.marked_for_close || conn->package_window <= 0 ||
+        conn->xoff_received)
       continue;
     if (!layer_hint || conn->cpath_layer == layer_hint) {
       connection_start_reading(TO_CONN(conn));
@@ -2476,7 +2553,7 @@ circuit_consider_stop_edge_reading(circuit_t *circ, crypt_path_t *layer_hint)
     or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
     log_debug(domain,"considering circ->package_window %d",
               circ->package_window);
-    if (circ->package_window <= 0) {
+    if (congestion_control_get_package_window(circ, layer_hint) <= 0) {
       log_debug(domain,"yes, not-at-origin. stopped.");
       for (conn = or_circ->n_streams; conn; conn=conn->next_stream)
         connection_stop_reading(TO_CONN(conn));
@@ -2487,7 +2564,7 @@ circuit_consider_stop_edge_reading(circuit_t *circ, crypt_path_t *layer_hint)
   /* else, layer hint is defined, use it */
   log_debug(domain,"considering layer_hint->package_window %d",
             layer_hint->package_window);
-  if (layer_hint->package_window <= 0) {
+  if (congestion_control_get_package_window(circ, layer_hint) <= 0) {
     log_debug(domain,"yes, at-origin. stopped.");
     for (conn = TO_ORIGIN_CIRCUIT(circ)->p_streams; conn;
          conn=conn->next_stream) {
@@ -2500,13 +2577,13 @@ circuit_consider_stop_edge_reading(circuit_t *circ, crypt_path_t *layer_hint)
 }
 
 /** The total number of cells we have allocated. */
-//static size_t total_cells_allocated = 0;
+static size_t total_cells_allocated = 0;
 
 /** Release storage held by <b>cell</b>. */
 static inline void
 packed_cell_free_unchecked(packed_cell_t *cell)
 {
-  //--total_cells_allocated;
+  --total_cells_allocated;
   tor_free(cell);
 }
 
@@ -2514,7 +2591,7 @@ packed_cell_free_unchecked(packed_cell_t *cell)
 STATIC packed_cell_t *
 packed_cell_new(void)
 {
-  //++total_cells_allocated;
+  ++total_cells_allocated;
   return tor_malloc_zero(sizeof(packed_cell_t));
 }
 
@@ -2542,9 +2619,8 @@ dump_cell_pool_usage(int severity)
   }
   SMARTLIST_FOREACH_END(c);
   tor_log(severity, LD_MM,
-          "%d cells allocated on %d circuits.", n_cells, n_circs);
-  //        "%d cells allocated on %d circuits. %d cells leaked.",
-  //        n_cells, n_circs, (int)total_cells_allocated - n_cells);
+          "%d cells allocated on %d circuits. %d cells leaked.",
+          n_cells, n_circs, (int)total_cells_allocated - n_cells);
 }
 
 /** Allocate a new copy of packed <b>cell</b>. */
@@ -2702,11 +2778,11 @@ packed_cell_mem_cost(void)
 }
 
 /* DOCDOC */
-//size_t
-//cell_queues_get_total_allocation(void)
-//{
-//  return total_cells_allocated * packed_cell_mem_cost();
-//}
+size_t
+cell_queues_get_total_allocation(void)
+{
+  return total_cells_allocated * packed_cell_mem_cost();
+}
 
 /** How long after we've been low on memory should we try to conserve it? */
 #define MEMORY_PRESSURE_INTERVAL (30*60)
@@ -2714,19 +2790,25 @@ packed_cell_mem_cost(void)
 /** The time at which we were last low on memory. */
 static time_t last_time_under_memory_pressure = 0;
 
+/** Statistics on how many bytes were removed by the OOM per type. */
+uint64_t oom_stats_n_bytes_removed_dns = 0;
+uint64_t oom_stats_n_bytes_removed_cell = 0;
+uint64_t oom_stats_n_bytes_removed_geoip = 0;
+uint64_t oom_stats_n_bytes_removed_hsdir = 0;
+
 /** Check whether we've got too much space used for cells.  If so,
  * call the OOM handler and return 1.  Otherwise, return 0. */
 STATIC int
 cell_queues_check_size(void)
 {
+  size_t removed = 0;
   time_t now = time(NULL);
-  //size_t alloc = cell_queues_get_total_allocation();
-  size_t alloc = 0;
+  size_t alloc = cell_queues_get_total_allocation();
   alloc += half_streams_get_total_allocation();
-  //alloc += buf_get_total_allocation();
+  alloc += buf_get_total_allocation();
   alloc += tor_compress_get_total_allocation();
-  const size_t rend_cache_total = rend_cache_get_total_allocation();
-  alloc += rend_cache_total;
+  const size_t hs_cache_total = hs_cache_get_total_allocation();
+  alloc += hs_cache_total;
   const size_t geoip_client_cache_total =
     geoip_client_cache_total_allocation();
   alloc += geoip_client_cache_total;
@@ -2735,26 +2817,36 @@ cell_queues_check_size(void)
   if (alloc >= get_options()->MaxMemInQueues_low_threshold) {
     last_time_under_memory_pressure = approx_time();
     if (alloc >= get_options()->MaxMemInQueues) {
+      /* Note this overload down */
+      rep_hist_note_overload(OVERLOAD_GENERAL);
+
       /* If we're spending over 20% of the memory limit on hidden service
        * descriptors, free them until we're down to 10%. Do the same for geoip
        * client cache. */
-      if (rend_cache_total > get_options()->MaxMemInQueues / 5) {
+      if (hs_cache_total > get_options()->MaxMemInQueues / 5) {
         const size_t bytes_to_remove =
-          rend_cache_total - (size_t)(get_options()->MaxMemInQueues / 10);
-        alloc -= hs_cache_handle_oom(now, bytes_to_remove);
+          hs_cache_total - (size_t)(get_options()->MaxMemInQueues / 10);
+        removed = hs_cache_handle_oom(now, bytes_to_remove);
+        oom_stats_n_bytes_removed_hsdir += removed;
+        alloc -= removed;
       }
       if (geoip_client_cache_total > get_options()->MaxMemInQueues / 5) {
         const size_t bytes_to_remove =
           geoip_client_cache_total -
           (size_t)(get_options()->MaxMemInQueues / 10);
-        alloc -= geoip_client_cache_handle_oom(now, bytes_to_remove);
+        removed = geoip_client_cache_handle_oom(now, bytes_to_remove);
+        oom_stats_n_bytes_removed_geoip += removed;
+        alloc -= removed;
       }
       if (dns_cache_total > get_options()->MaxMemInQueues / 5) {
         const size_t bytes_to_remove =
           dns_cache_total - (size_t)(get_options()->MaxMemInQueues / 10);
-        alloc -= dns_cache_handle_oom(now, bytes_to_remove);
+        removed = dns_cache_handle_oom(now, bytes_to_remove);
+        oom_stats_n_bytes_removed_dns += removed;
+        alloc -= removed;
       }
-      circuits_handle_oom(alloc);
+      removed = circuits_handle_oom(alloc);
+      oom_stats_n_bytes_removed_cell += removed;
       return 1;
     }
   }
@@ -2967,10 +3059,23 @@ channel_flush_from_first_active_circuit, (channel_t *chan, int max))
       streams_blocked = circ->streams_blocked_on_p_chan;
     }
 
-    /* Circuitmux told us this was active, so it should have cells */
-    if (/*BUG(*/ queue->n == 0 /*)*/) {
-      log_warn(LD_BUG, "Found a supposedly active circuit with no cells "
-               "to send. Trying to recover.");
+    /* Circuitmux told us this was active, so it should have cells.
+     *
+     * Note: In terms of logic and coherence, this should never happen but the
+     * cmux dragon is powerful. Reason is that when the OOM is triggered, when
+     * cleaning up circuits, we mark them for close and then clear their cell
+     * queues. And so, we can have a circuit considered active by the cmux
+     * dragon but without cells. The cmux subsystem is only notified of this
+     * when the circuit is freed which leaves a tiny window between close and
+     * free to end up here.
+     *
+     * We are accepting this as an "ok" race else the changes are likely non
+     * trivial to make the mark for close to set the num cells to 0 and change
+     * the free functions to detach the circuit conditionnaly without creating
+     * a chain effect of madness.
+     *
+     * The lesson here is arti will prevail and leave the cmux dragon alone. */
+    if (queue->n == 0) {
       circuitmux_set_num_cells(cmux, circ, 0);
       if (! circ->marked_for_close)
         circuit_mark_for_close(circ, END_CIRC_REASON_INTERNAL);
@@ -3052,7 +3157,7 @@ channel_flush_from_first_active_circuit, (channel_t *chan, int max))
 
     /* Is the cell queue low enough to unblock all the streams that are waiting
      * to write to this circuit? */
-    if (streams_blocked && queue->n <= CELL_QUEUE_LOWWATER_SIZE)
+    if (streams_blocked && queue->n <= cell_queue_lowwatermark())
       set_streams_blocked_on_circ(circ, chan, 0, 0); /* unblock streams */
 
     /* If n_flushed < max still, loop around and pick another circuit */
@@ -3063,6 +3168,9 @@ channel_flush_from_first_active_circuit, (channel_t *chan, int max))
 }
 
 /* Minimum value is the maximum circuit window size.
+ *
+ * This value is set to a lower bound we believe is reasonable with congestion
+ * control and basic network tunning parameters.
  *
  * SENDME cells makes it that we can control how many cells can be inflight on
  * a circuit from end to end. This logic makes it that on any circuit cell
@@ -3086,19 +3194,46 @@ channel_flush_from_first_active_circuit, (channel_t *chan, int max))
  * DoS memory pressure so the default size is a middle ground between not
  * having any limit and having a very restricted one. This is why we can also
  * control it through a consensus parameter. */
-#define RELAY_CIRC_CELL_QUEUE_SIZE_MIN CIRCWINDOW_START_MAX
+#define RELAY_CIRC_CELL_QUEUE_SIZE_MIN 50
 /* We can't have a consensus parameter above this value. */
 #define RELAY_CIRC_CELL_QUEUE_SIZE_MAX INT32_MAX
 /* Default value is set to a large value so we can handle padding cells
- * properly which aren't accounted for in the SENDME window. Default is 50000
- * allowed cells in the queue resulting in ~25MB. */
+ * properly which aren't accounted for in the SENDME window. Default is 2500
+ * allowed cells in the queue resulting in ~1MB. */
 #define RELAY_CIRC_CELL_QUEUE_SIZE_DEFAULT \
   (50 * RELAY_CIRC_CELL_QUEUE_SIZE_MIN)
 
-/* The maximum number of cell a circuit queue can contain. This is updated at
+/* The maximum number of cells a circuit queue can contain. This is updated at
  * every new consensus and controlled by a parameter. */
 static int32_t max_circuit_cell_queue_size =
   RELAY_CIRC_CELL_QUEUE_SIZE_DEFAULT;
+/** Maximum number of cell on an outbound circuit queue. This is updated at
+ * every new consensus and controlled by a parameter. This default is incorrect
+ * and won't be used at all except in unit tests. */
+static int32_t max_circuit_cell_queue_size_out =
+  RELAY_CIRC_CELL_QUEUE_SIZE_DEFAULT;
+
+/** Return consensus parameter "circ_max_cell_queue_size". The given ns can be
+ * NULL. */
+static uint32_t
+get_param_max_circuit_cell_queue_size(const networkstatus_t *ns)
+{
+  return networkstatus_get_param(ns, "circ_max_cell_queue_size",
+                                 RELAY_CIRC_CELL_QUEUE_SIZE_DEFAULT,
+                                 RELAY_CIRC_CELL_QUEUE_SIZE_MIN,
+                                 RELAY_CIRC_CELL_QUEUE_SIZE_MAX);
+}
+
+/** Return consensus parameter "circ_max_cell_queue_size_out". The given ns can
+ * be NULL. */
+static uint32_t
+get_param_max_circuit_cell_queue_size_out(const networkstatus_t *ns)
+{
+  return networkstatus_get_param(ns, "circ_max_cell_queue_size_out",
+                                 get_param_max_circuit_cell_queue_size(ns),
+                                 RELAY_CIRC_CELL_QUEUE_SIZE_MIN,
+                                 RELAY_CIRC_CELL_QUEUE_SIZE_MAX);
+}
 
 /* Called when the consensus has changed. At this stage, the global consensus
  * object has NOT been updated. It is called from
@@ -3110,10 +3245,9 @@ relay_consensus_has_changed(const networkstatus_t *ns)
 
   /* Update the circuit max cell queue size from the consensus. */
   max_circuit_cell_queue_size =
-    networkstatus_get_param(ns, "circ_max_cell_queue_size",
-                            RELAY_CIRC_CELL_QUEUE_SIZE_DEFAULT,
-                            RELAY_CIRC_CELL_QUEUE_SIZE_MIN,
-                            RELAY_CIRC_CELL_QUEUE_SIZE_MAX);
+    get_param_max_circuit_cell_queue_size(ns);
+  max_circuit_cell_queue_size_out =
+    get_param_max_circuit_cell_queue_size_out(ns);
 }
 
 /** Add <b>cell</b> to the queue of <b>circ</b> writing to <b>chan</b>
@@ -3130,6 +3264,7 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
 {
   or_circuit_t *orcirc = NULL;
   cell_queue_t *queue;
+  int32_t max_queue_size;
   int streams_blocked;
   int exitward;
   if (circ->marked_for_close)
@@ -3139,13 +3274,21 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
   if (exitward) {
     queue = &circ->n_chan_cells;
     streams_blocked = circ->streams_blocked_on_n_chan;
+    max_queue_size = max_circuit_cell_queue_size_out;
   } else {
     orcirc = TO_OR_CIRCUIT(circ);
     queue = &orcirc->p_chan_cells;
     streams_blocked = circ->streams_blocked_on_p_chan;
+    max_queue_size = max_circuit_cell_queue_size;
   }
 
-  if (PREDICT_UNLIKELY(queue->n >= max_circuit_cell_queue_size)) {
+  if (PREDICT_UNLIKELY(queue->n >= max_queue_size)) {
+    /* This DoS defense only applies at the Guard as in the p_chan is likely
+     * a client IP attacking the network. */
+    if (exitward && CIRCUIT_IS_ORCIRC(circ)) {
+      dos_note_circ_max_outq(CONST_TO_OR_CIRCUIT(circ)->p_chan);
+    }
+
     log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,
            "%s circuit has %d cells in its queue, maximum allowed is %d. "
            "Closing circuit for safety reasons.",
@@ -3170,7 +3313,7 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
 
   /* If we have too many cells on the circuit, we should stop reading from
    * the edge streams for a while. */
-  if (!streams_blocked && queue->n >= CELL_QUEUE_HIGHWATER_SIZE)
+  if (!streams_blocked && queue->n >= cell_queue_highwatermark())
     set_streams_blocked_on_circ(circ, chan, 1, 0); /* block streams */
 
   if (streams_blocked && fromstream) {
@@ -3240,7 +3383,7 @@ decode_address_from_payload(tor_addr_t *addr_out, const uint8_t *payload,
   case RESOLVED_TYPE_IPV6:
     if (payload[1] != 16)
       return NULL;
-    tor_addr_from_ipv6_bytes(addr_out, (char*)(payload+2));
+    tor_addr_from_ipv6_bytes(addr_out, (payload+2));
     break;
   default:
     tor_addr_make_unspec(addr_out);
@@ -3287,6 +3430,7 @@ circuit_queue_streams_are_blocked(circuit_t *circ)
   }
 }
 
+
 /** ----------------------------------------------- RENDEZMIX ------------------------------------------------------- */
 
 /*
@@ -3296,21 +3440,16 @@ probably_middle_node(or_connection_t *conn, circuit_t *circ)
   channel_tls_t *n_chan;
   connection_t *n_conn;
   tor_addr_t prev_node_addr, next_node_addr;
-
   if (!conn || !circ)
     return false;
-
   n_chan = BASE_CHAN_TO_TLS(circ->n_chan);
   if (!n_chan)
     return false; // Is Exit node
-
   n_conn = &(n_chan->conn->base_);
   if (!n_conn)
     return false; // Is Exit node
-
   prev_node_addr = conn->base_.addr;
   next_node_addr = n_conn->addr;
-
   // We're probably a middle node if the previous and next nodes are in the
   // nodelist
   return nodelist_probably_contains_address(&prev_node_addr) &&

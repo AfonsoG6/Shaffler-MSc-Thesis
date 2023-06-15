@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2019, The Tor Project, Inc. */
+ * Copyright (c) 2007-2021, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -19,27 +19,27 @@
  **/
 #include "core/or/or.h"
 #include "core/or/channel.h"
-#include "core/or/circuitbuild.h"
 #include "core/or/circuitlist.h"
 #include "core/or/connection_or.h"
+#include "core/or/congestion_control_common.h"
+#include "core/or/congestion_control_flow.h"
 #include "app/config/config.h"
 #include "core/mainloop/cpuworker.h"
 #include "lib/crypt_ops/crypto_rand.h"
 #include "lib/crypt_ops/crypto_util.h"
 #include "core/or/onion.h"
+#include "feature/relay/circuitbuild_relay.h"
 #include "feature/relay/onion_queue.h"
 #include "feature/stats/rephist.h"
 #include "feature/relay/router.h"
+#include "lib/evloop/workqueue.h"
 #include "core/crypto/onion_crypto.h"
-#include "app/main/tor_threads.h"
-#include "lib/evloop/compat_libevent.h"
-#include "core/mainloop/cpuworker_sys.h"
 
 #include "core/or/or_circuit_st.h"
 
 static void queue_pending_tasks(void);
 
-typedef struct worker_state_s {
+typedef struct worker_state_t {
   int generation;
   server_onion_keys_t *onion_keys;
 } worker_state_t;
@@ -72,35 +72,11 @@ worker_state_free_void(void *arg)
   worker_state_free_(arg);
 }
 
+static replyqueue_t *replyqueue = NULL;
 static threadpool_t *threadpool = NULL;
-static tor_threadlocal_t replyqueue;
 
 static int total_pending_tasks = 0;
 static int max_pending_tasks = 128;
-
-static void
-cpu_init_threadlocals(void)
-{
-  tor_threadlocal_init(&replyqueue);
-}
-
-static void
-cpu_destroy_threadlocals(void)
-{
-  tor_threadlocal_destroy(&replyqueue);
-}
-
-void
-local_replyqueue_init(struct event_base *base)
-{
-  tor_assert(tor_threadlocal_get(&replyqueue) == NULL);
-
-  replyqueue_t *rq = replyqueue_new(0, threadpool);
-  int result = replyqueue_register_reply_event(rq, base);
-  tor_assert(result == 0);
-
-  tor_threadlocal_set(&replyqueue, (void *)rq);
-}
 
 /** Initialize the cpuworker subsystem. It is OK to call this more than once
  * during Tor's lifetime.
@@ -108,6 +84,9 @@ local_replyqueue_init(struct event_base *base)
 void
 cpu_init(void)
 {
+  if (!replyqueue) {
+    replyqueue = replyqueue_new(0);
+  }
   if (!threadpool) {
     /*
       In our threadpool implementation, half the threads are permissive and
@@ -117,30 +96,18 @@ cpu_init(void)
     */
     const int n_threads = get_num_cpus(get_options()) + 1;
     threadpool = threadpool_new(n_threads,
+                                replyqueue,
                                 worker_state_new,
                                 worker_state_free_void,
-                                NULL,
-                                start_tor_thread);
-  }
-  if (!tor_threadlocal_get(&replyqueue)) {
-    struct event_base *base = tor_libevent_get_base();
-    local_replyqueue_init(base);
+                                NULL);
+
+    int r = threadpool_register_reply_event(threadpool, NULL);
+
+    tor_assert(r == 0);
   }
 
   /* Total voodoo. Can we make this more sensible? */
   max_pending_tasks = get_num_cpus(get_options()) * 64;
-}
-
-/** Shutdown the cpuworker subsystem, and wait for any threads to join. */
-void
-cpu_shutdown(void)
-{
-  if (threadpool != NULL) {
-    threadpool_shutdown(threadpool);
-    threadpool = NULL;
-  }
-
-  // TODO: clean up all replyqueues
 }
 
 /** Magic numbers to make sure our cpuworker_requests don't grow any
@@ -160,6 +127,11 @@ typedef struct cpuworker_request_t {
 
   /** A create cell for the cpuworker to process. */
   create_cell_t create_cell;
+
+  /**
+   * A copy of this relay's consensus params that are relevant to
+   * the circuit, for use in negotiation. */
+  circuit_params_t circ_ns_params;
 
   /* Turn the above into a tagged union if needed. */
 } cpuworker_request_t;
@@ -193,9 +165,11 @@ typedef struct cpuworker_reply_t {
   uint8_t keys[CPATH_KEY_MATERIAL_LEN];
   /** Input to use for authenticating introduce1 cells. */
   uint8_t rend_auth_material[DIGEST_LEN];
+  /** Negotiated circuit parameters. */
+  circuit_params_t circ_params;
 } cpuworker_reply_t;
 
-typedef struct cpuworker_job_u {
+typedef struct cpuworker_job_u_t {
   or_circuit_t *circ;
   union {
     cpuworker_request_t request;
@@ -281,7 +255,7 @@ estimated_usec_for_onionskins(uint32_t n_requests, uint16_t onionskin_type)
   if (onionskin_type > MAX_ONION_HANDSHAKE_TYPE) /* should be impossible */
     return 1000 * (uint64_t)n_requests;
   if (PREDICT_UNLIKELY(onionskins_n_processed[onionskin_type] < 100)) {
-    /* Until we have 100 data points, just asssume everything takes 1 msec. */
+    /* Until we have 100 data points, just assume everything takes 1 msec. */
     return 1000 * (uint64_t)n_requests;
   } else {
     /* This can't overflow: we'll never have more than 500000 onionskins
@@ -344,7 +318,7 @@ cpuworker_log_onionskin_overhead(int severity, int onionskin_type,
 
 /** Handle a reply from the worker threads. */
 static void
-cpuworker_onion_handshake_replyfn(void *work_, workqueue_reply_t reply_status)
+cpuworker_onion_handshake_replyfn(void *work_)
 {
   cpuworker_job_t *job = work_;
   cpuworker_reply_t rpl;
@@ -352,10 +326,6 @@ cpuworker_onion_handshake_replyfn(void *work_, workqueue_reply_t reply_status)
 
   tor_assert(total_pending_tasks > 0);
   --total_pending_tasks;
-
-  if (reply_status != WQ_RPL_REPLY) {
-    goto done_processing;
-  }
 
   /* Could avoid this, but doesn't matter. */
   memcpy(&rpl, &job->u.reply, sizeof(rpl));
@@ -418,6 +388,18 @@ cpuworker_onion_handshake_replyfn(void *work_, workqueue_reply_t reply_status)
     goto done_processing;
   }
 
+  /* If the client asked for congestion control, if our consensus parameter
+   * allowed it to negotiate as enabled, allocate a congestion control obj. */
+  if (rpl.circ_params.cc_enabled) {
+    if (get_options()->SbwsExit) {
+      TO_CIRCUIT(circ)->ccontrol = congestion_control_new(&rpl.circ_params,
+                                                          CC_PATH_SBWS);
+    } else {
+      TO_CIRCUIT(circ)->ccontrol = congestion_control_new(&rpl.circ_params,
+                                                          CC_PATH_EXIT);
+    }
+  }
+
   if (onionskin_answer(circ,
                        &rpl.created_cell,
                        (const char*)rpl.keys, sizeof(rpl.keys),
@@ -426,6 +408,7 @@ cpuworker_onion_handshake_replyfn(void *work_, workqueue_reply_t reply_status)
     circuit_mark_for_close(TO_CIRCUIT(circ), END_CIRC_REASON_INTERNAL);
     goto done_processing;
   }
+
   log_debug(LD_OR,"onionskin_answer succeeded. Yay.");
 
  done_processing:
@@ -464,9 +447,12 @@ cpuworker_onion_handshake_threadfn(void *state_, void *work_)
   n = onion_skin_server_handshake(cc->handshake_type,
                                   cc->onionskin, cc->handshake_len,
                                   onion_keys,
+                                  &req.circ_ns_params,
                                   cell_out->reply,
+                                  sizeof(cell_out->reply),
                                   rpl.keys, CPATH_KEY_MATERIAL_LEN,
-                                  rpl.rend_auth_material);
+                                  rpl.rend_auth_material,
+                                  &rpl.circ_params);
   if (n < 0) {
     /* failure */
     log_debug(LD_OR,"onion_skin_server_handshake failed.");
@@ -489,6 +475,7 @@ cpuworker_onion_handshake_threadfn(void *state_, void *work_)
     }
     rpl.success = 1;
   }
+
   rpl.magic = CPUWORKER_REPLY_MAGIC;
   if (req.timed) {
     struct timeval tv_diff;
@@ -531,18 +518,15 @@ queue_pending_tasks(void)
 MOCK_IMPL(workqueue_entry_t *,
 cpuworker_queue_work,(workqueue_priority_t priority,
                       workqueue_reply_t (*fn)(void *, void *),
-                      void (*reply_fn)(void *, workqueue_reply_t),
+                      void (*reply_fn)(void *),
                       void *arg))
 {
   tor_assert(threadpool);
-  replyqueue_t *local_replyqueue = tor_threadlocal_get(&replyqueue);
-  tor_assert(local_replyqueue);
 
   return threadpool_queue_work_priority(threadpool,
                                         priority,
                                         fn,
                                         reply_fn,
-                                        local_replyqueue,
                                         arg);
 }
 
@@ -561,8 +545,6 @@ assign_onionskin_to_cpuworker(or_circuit_t *circ,
   int should_time;
 
   tor_assert(threadpool);
-  replyqueue_t *local_replyqueue = tor_threadlocal_get(&replyqueue);
-  tor_assert(local_replyqueue);
 
   if (!circ->p_chan) {
     log_info(LD_OR,"circ->p_chan gone. Failing circ.");
@@ -594,6 +576,11 @@ assign_onionskin_to_cpuworker(or_circuit_t *circ,
   if (should_time)
     tor_gettimeofday(&req.started_at);
 
+  /* Copy the current cached consensus params relevant to
+   * circuit negotiation into the CPU worker context */
+  req.circ_ns_params.cc_enabled = congestion_control_enabled();
+  req.circ_ns_params.sendme_inc_cells = congestion_control_sendme_inc();
+
   job = tor_malloc_zero(sizeof(cpuworker_job_t));
   job->circ = circ;
   memcpy(&job->u.request, &req, sizeof(req));
@@ -604,7 +591,6 @@ assign_onionskin_to_cpuworker(or_circuit_t *circ,
                                       WQ_PRI_HIGH,
                                       cpuworker_onion_handshake_threadfn,
                                       cpuworker_onion_handshake_replyfn,
-                                      local_replyqueue,
                                       job);
   if (!queue_entry) {
     log_warn(LD_BUG, "Couldn't queue work on threadpool");
@@ -640,24 +626,3 @@ cpuworker_cancel_circ_handshake(or_circuit_t *circ)
     circ->workqueue_entry = NULL;
   }
 }
-
-static int
-subsys_cpuworker_initialize(void)
-{
-  cpu_init_threadlocals();
-  return 0;
-}
-
-static void
-subsys_cpuworker_shutdown(void)
-{
-  cpu_destroy_threadlocals();
-}
-
-const struct subsys_fns_t sys_cpuworker = {
-  .name = "cpuworker",
-  .supported = true,
-  .level = 7,
-  .initialize = subsys_cpuworker_initialize,
-  .shutdown = subsys_cpuworker_shutdown,
-};

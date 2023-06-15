@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2019, The Tor Project, Inc. */
+ * Copyright (c) 2007-2021, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -12,19 +12,15 @@
 #ifndef TOR_CPUWORKER_H
 #define TOR_CPUWORKER_H
 
-#include "lib/evloop/workqueue.h"
-
-void local_replyqueue_init(struct event_base *base);
 void cpu_init(void);
-void cpu_shutdown(void);
 void cpuworkers_rotate_keyinfo(void);
-struct workqueue_entry_s;
+struct workqueue_entry_t;
 enum workqueue_reply_t;
 enum workqueue_priority_t;
-MOCK_DECL(struct workqueue_entry_s *, cpuworker_queue_work, (
+MOCK_DECL(struct workqueue_entry_t *, cpuworker_queue_work, (
                     enum workqueue_priority_t priority,
                     enum workqueue_reply_t (*fn)(void *, void *),
-                    void (*reply_fn)(void *, workqueue_reply_t),
+                    void (*reply_fn)(void *),
                     void *arg));
 
 struct create_cell_t;

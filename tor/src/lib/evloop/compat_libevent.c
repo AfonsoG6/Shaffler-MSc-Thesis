@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2019, The Tor Project, Inc. */
+/* Copyright (c) 2009-2021, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -15,6 +15,7 @@
 #include "lib/log/util_bug.h"
 #include "lib/string/compat_string.h"
 
+#include <event2/event.h>
 #include <event2/thread.h>
 #include <string.h>
 
@@ -75,11 +76,8 @@ tor_event_free_(struct event *ev)
   event_free(ev);
 }
 
-/** Global event bases for use by the eventloop threads. */
-static tor_thread_t **threads = NULL;
-static struct event_base **eventloops = NULL;
-static tor_threadlocal_t eventloop_index;
-static int num_eventloops = -1;
+/** Global event base for use by the main thread. */
+static struct event_base *the_event_base = NULL;
 
 /**
  * @defgroup postloop post-loop event helpers
@@ -97,11 +95,11 @@ static int num_eventloops = -1;
  * @{ */
 
 /**
- * Events that stop Libevent from running any more events on the current
+ * An event that stops Libevent from running any more events on the current
  * iteration of its loop, until it has re-checked for socket events, signal
  * events, timeouts, etc.
  */
-struct event **rescan_eventloop_events = NULL;
+static struct event *rescan_mainloop_ev = NULL;
 
 /**
  * Callback to implement rescan_mainloop_ev: it simply exits the mainloop,
@@ -118,40 +116,6 @@ rescan_mainloop_cb(evutil_socket_t fd, short events, void *arg)
 
 /** @} */
 
-struct event_base *
-get_eventloop(int index)
-{
-  tor_assert(index >= 0 && index < num_eventloops);
-  tor_assert(eventloops != NULL);
-  tor_assert(eventloops[index] != NULL);
-  return eventloops[index];
-}
-
-int
-get_local_eventloop_index(void) {
-  int *index = tor_threadlocal_get(&eventloop_index);
-  tor_assert(index != NULL);
-  return *index;
-}
-
-int
-get_num_eventloops(void)
-{
-  tor_assert(num_eventloops != -1);
-  return num_eventloops;
-}
-
-/* Tell the eventloops to stop soon. */
-void
-rescan_eventloops(void)
-{
-  tor_assert(rescan_eventloop_events != NULL);
-  for (int i=0; i<num_eventloops; i++) {
-    tor_assert(rescan_eventloop_events[i] != NULL);
-    event_active(rescan_eventloop_events[i], EV_READ, 1);
-  }
-}
-
 /* This is what passes for version detection on OSX.  We set
  * MACOSX_KQUEUE_IS_BROKEN to true iff we're on a version of OSX before
  * 10.4.0 (aka 1040). */
@@ -164,122 +128,25 @@ rescan_eventloops(void)
 #endif /* defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) */
 #endif /* defined(__APPLE__) */
 
-/** Initialize the threadlocals. Must be run before libevent is initialized. */
-void
-tor_evloop_init_threadlocals(void)
-{
-  tor_assert(tor_threadlocal_init(&eventloop_index) == 0);
-}
-
-/** Destroy the threadlocals. Must be run after tor_libevent_free_all. */
-void
-tor_evloop_destroy_threadlocals(void)
-{
-  tor_threadlocal_destroy(&eventloop_index);
-}
-
-/** Initialize the current thread. */
-static void
-init_eventloop_thread(int index)
-{
-  tor_assert(index >= 0 && index < num_eventloops);
-  tor_assert(tor_threadlocal_get(&eventloop_index) == NULL);
-
-  int* this_thread_index = tor_malloc(sizeof(int));
-  *this_thread_index = index;
-  tor_threadlocal_set(&eventloop_index, (void *)this_thread_index);
-}
-
-/* Destory the current thread. */
-static void
-destroy_eventloop_thread(void)
-{
-  int *this_thread_index = (int *)tor_threadlocal_get(&eventloop_index);
-  if (this_thread_index != NULL) {
-    tor_threadlocal_set(&eventloop_index, NULL);
-    tor_free(this_thread_index);
-  }
-}
-
-struct thread_data {
-  void (*func)(void);
-  int index;
-};
-
-static void
-thread_wrapper(void *data_void)
-{
-  tor_assert(data_void != NULL);
-  struct thread_data *data = (struct thread_data *)data_void;
-  void (*func)(void) = data->func;
-  int index = data->index;
-  tor_free(data_void);
-
-  init_eventloop_thread(index);
-  func();
-  destroy_eventloop_thread();
-}
-
-/* Start the eventloop threads and make them run 'func'. Threads will
-   be started using 'spawn_fn'. */
-void
-start_eventloop_threads(void (*func)(void),
-                        tor_thread_t *(*spawn_fn)(void (*func)(void *),
-                                                  void *data))
-{
-  // the first thread (i==0) should already have been initialized
-  for (int i=1; i<num_eventloops; i++) {
-    struct thread_data *data = tor_malloc(sizeof(struct thread_data));
-    data->func = func;
-    data->index = i;
-    tor_thread_t *thread = spawn_fn(thread_wrapper, (void *)data);
-    tor_assert(thread != NULL);
-    threads[i] = thread;
-  }
-}
-
-/* Wait for the eventloop threads to finish. */
-void
-join_eventloop_threads(void)
-{
-  for (int i=1; i<num_eventloops; i++) {
-    if (threads[i] != NULL) {
-      tor_assert(join_thread(threads[i]) == 0);
-      free_thread(threads[i]);
-      threads[i] = NULL;
-    }
-  }
-}
-
 /** Initialize the Libevent library and set up the event base. */
 void
-tor_libevent_initialize(tor_libevent_cfg *torcfg,
-                        int num_additional_eventloops)
+tor_libevent_initialize(tor_libevent_cfg_t *torcfg)
 {
+  tor_assert(the_event_base == NULL);
   /* some paths below don't use torcfg, so avoid unused variable warnings */
   (void)torcfg;
-
-  tor_assert(num_eventloops == -1);
-  num_eventloops = num_additional_eventloops+1;
-  eventloops = tor_malloc_zero(num_eventloops*sizeof(struct event_base *));
-  threads = tor_malloc_zero(num_eventloops*sizeof(tor_thread_t *));
-  rescan_eventloop_events = tor_malloc_zero(num_eventloops*sizeof(tor_thread_t *));
-
-  /* This main thread has no tor_thread_t, so we set it to NULL. Should already
-     be NULL from tor_malloc_zero, but we do this explicitly anyways. */
-  threads[0] = NULL;
-
-  int libevent_started_correctly = 1;
 
   {
     int attempts = 0;
     struct event_config *cfg;
 
-    tor_assert(evthread_use_pthreads() == 0);
-
     ++attempts;
     cfg = event_config_new();
     tor_assert(cfg);
+
+    /* Telling Libevent not to try to turn locking on can avoid a needless
+     * socketpair() attempt. */
+    event_config_set_flag(cfg, EVENT_BASE_FLAG_NOLOCK);
 
     if (torcfg->num_cpus > 0)
       event_config_set_num_cpus_hint(cfg, torcfg->num_cpus);
@@ -288,28 +155,26 @@ tor_libevent_initialize(tor_libevent_cfg *torcfg,
      * Libevent any dup'd fds.  This lets us avoid some syscalls. */
     event_config_set_flag(cfg, EVENT_BASE_FLAG_EPOLL_USE_CHANGELIST);
 
-    for (int i=0; i<num_eventloops; i++) {
-      eventloops[i] = event_base_new_with_config(cfg);
-      rescan_eventloop_events[i] = event_new(eventloops[i], -1, 0,
-                                             rescan_mainloop_cb,
-                                             eventloops[i]);
-      libevent_started_correctly = (libevent_started_correctly &&
-                                    eventloops[i] != NULL &&
-                                    rescan_eventloop_events[i] != NULL);
-    }
+    the_event_base = event_base_new_with_config(cfg);
 
     event_config_free(cfg);
   }
 
-  if (libevent_started_correctly == 0) {
+  if (!the_event_base) {
     /* LCOV_EXCL_START */
     log_err(LD_GENERAL, "Unable to initialize Libevent: cannot continue.");
     exit(1); // exit ok: libevent is broken.
     /* LCOV_EXCL_STOP */
   }
 
-  /* Initialize this main thread. */
-  init_eventloop_thread(0);
+  rescan_mainloop_ev = event_new(the_event_base, -1, 0,
+                                 rescan_mainloop_cb, the_event_base);
+  if (!rescan_mainloop_ev) {
+    /* LCOV_EXCL_START */
+    log_err(LD_GENERAL, "Unable to create rescan event: cannot continue.");
+    exit(1); // exit ok: libevent is broken.
+    /* LCOV_EXCL_STOP */
+  }
 
   log_info(LD_GENERAL,
       "Initialized libevent version %s using method %s. Good.",
@@ -323,26 +188,22 @@ tor_libevent_initialize(tor_libevent_cfg *torcfg,
 bool
 tor_libevent_is_initialized(void)
 {
-  return num_eventloops != -1;
+  return the_event_base != NULL;
 }
 
 /** Return the current Libevent event base that we're set up to use. */
 MOCK_IMPL(struct event_base *,
 tor_libevent_get_base, (void))
 {
-  int *index = tor_threadlocal_get(&eventloop_index);
-  tor_assert(index != NULL);
-  struct event_base *event_base = eventloops[*index];
-  tor_assert(event_base != NULL);
-  return event_base;
+  tor_assert(the_event_base != NULL);
+  return the_event_base;
 }
 
 /** Return the name of the Libevent backend we're using. */
 const char *
 tor_libevent_get_method(void)
 {
-  struct event_base *event_base = tor_libevent_get_base();
-  return event_base_get_method(event_base);
+  return event_base_get_method(the_event_base);
 }
 
 /** Return a string representation of the version of the currently running
@@ -493,12 +354,7 @@ mainloop_event_postloop_cb(evutil_socket_t fd, short what, void *arg)
    * callback run after rescan_mainloop_cb is called -- that is, on the
    * next iteration of the loop.
    */
-
-  int *index = tor_threadlocal_get(&eventloop_index);
-  tor_assert(index != NULL);
-  struct event *rescan_event = rescan_eventloop_events[*index];
-  tor_assert(rescan_event != NULL);
-  event_active(rescan_event, EV_READ, 1);
+  event_active(rescan_mainloop_ev, EV_READ, 1);
 
   mainloop_event_t *mev = arg;
   mev->cb(mev, mev->userdata);
@@ -576,7 +432,7 @@ mainloop_event_activate(mainloop_event_t *event)
  *
  * If the event is scheduled for a different time, cancel it and run
  * after this delay instead.  If the event is currently pending to run
- * <em>now</b>, has no effect.
+ * <b>now</b>, has no effect.
  *
  * Do not call this function with <b>tv</b> == NULL -- use
  * mainloop_event_activate() instead.
@@ -639,29 +495,10 @@ tor_init_libevent_rng(void)
 void
 tor_libevent_free_all(void)
 {
-  /* Make sure all eventloop threads have stopped. */
-  join_eventloop_threads();
-
-  /* Destroy this main thread. Other eventloop threads should already have
-     called this locally. */
-  destroy_eventloop_thread();
-
-  /* Destroy the rescan events since we own them. */
-  for (int i=0; i<num_eventloops; i++) {
-    event_free(rescan_eventloop_events[i]);
-    rescan_eventloop_events[i] = NULL;
-  }
-
-  /* Destory the event bases since we own them. */
-  for (int i=0; i<num_eventloops; i++) {
-    event_base_free(eventloops[i]);
-    eventloops[i] = NULL;
-  }
-
-  tor_free(eventloops);
-  tor_free(threads);
-  tor_free(rescan_eventloop_events);
-  num_eventloops = -1;
+  tor_event_free(rescan_mainloop_ev);
+  if (the_event_base)
+    event_base_free(the_event_base);
+  the_event_base = NULL;
 }
 
 /**

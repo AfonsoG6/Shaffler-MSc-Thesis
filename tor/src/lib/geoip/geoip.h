@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2019, The Tor Project, Inc. */
+ * Copyright (c) 2007-2021, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -21,16 +21,17 @@
 #ifdef GEOIP_PRIVATE
 STATIC int geoip_parse_entry(const char *line, sa_family_t family);
 STATIC void clear_geoip_db(void);
+
+STATIC int geoip_get_country_by_ipv4(uint32_t ipaddr);
+STATIC int geoip_get_country_by_ipv6(const struct in6_addr *addr);
 #endif /* defined(GEOIP_PRIVATE) */
 
 struct in6_addr;
 struct tor_addr_t;
 
-int geoip_get_country_by_ipv4(uint32_t ipaddr);
-int geoip_get_country_by_ipv6(const struct in6_addr *addr);
-
 /** A per-country GeoIP record. */
 typedef struct geoip_country_t {
+  /** A nul-terminated two-letter country-code. */
   char countrycode[3];
 } geoip_country_t;
 
