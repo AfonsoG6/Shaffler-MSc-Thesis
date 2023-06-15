@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2019, The Tor Project, Inc. */
+ * Copyright (c) 2007-2021, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -52,13 +52,11 @@
 #include "app/config/config.h"
 #include "app/config/statefile.h"
 #include "app/main/ntmain.h"
-#include "app/main/tor_threads.h"
 #include "core/mainloop/connection.h"
 #include "core/mainloop/cpuworker.h"
 #include "core/mainloop/mainloop.h"
 #include "core/mainloop/netstatus.h"
 #include "core/mainloop/periodic.h"
-#include "core/mainloop/throughput_logging.h"
 #include "core/or/channel.h"
 #include "core/or/channelpadding.h"
 #include "core/or/channeltls.h"
@@ -73,12 +71,13 @@
 #include "feature/client/bridges.h"
 #include "feature/client/dnsserv.h"
 #include "feature/client/entrynodes.h"
+#include "feature/client/proxymode.h"
 #include "feature/client/transports.h"
 #include "feature/control/control.h"
 #include "feature/control/control_events.h"
 #include "feature/dirauth/authmode.h"
 #include "feature/dircache/consdiffmgr.h"
-#include "feature/dircache/dirserv.h"
+#include "feature/dirclient/dirclient_modes.h"
 #include "feature/dircommon/directory.h"
 #include "feature/hibernate/hibernate.h"
 #include "feature/hs/hs_cache.h"
@@ -92,10 +91,9 @@
 #include "feature/relay/routerkeys.h"
 #include "feature/relay/routermode.h"
 #include "feature/relay/selftest.h"
-#include "feature/rend/rendcache.h"
-#include "feature/rend/rendservice.h"
 #include "feature/stats/geoip_stats.h"
 #include "feature/stats/predict_ports.h"
+#include "feature/stats/connstats.h"
 #include "feature/stats/rephist.h"
 #include "lib/buf/buffers.h"
 #include "lib/crypt_ops/crypto_rand.h"
@@ -182,10 +180,6 @@ static int main_loop_should_exit = 0;
  * main_loop_should_exit is true.
  */
 static int main_loop_exit_value = 0;
-/** Flag: if true, it's time to shut down, so the other eventloops should
- * exit as soon as possible.
- */
-static int other_eventloops_should_exit = 0;
 
 /** We set this to 1 when we've opened a circuit, so we can print a log
  * entry to inform the user that Tor is working.  We set it to 0 when
@@ -209,8 +203,6 @@ static void conn_read_callback(evutil_socket_t fd, short event, void *_conn);
 static void conn_write_callback(evutil_socket_t fd, short event, void *_conn);
 static void shutdown_did_not_work_callback(evutil_socket_t fd, short event,
                                            void *arg) ATTR_NORETURN;
-
-static event_registry_t *event_registry = NULL;
 
 /****************************************************************************
  *
@@ -244,8 +236,6 @@ note_that_we_maybe_cant_complete_circuits(void)
   can_complete_circuits = 0;
 }
 
-static unsigned long eventloop_counter = 0;
-
 /** Add <b>conn</b> to the array of connections that we can poll on.  The
  * connection's socket must be set; the connection starts out
  * non-reading and non-writing.
@@ -253,63 +243,29 @@ static unsigned long eventloop_counter = 0;
 int
 connection_add_impl(connection_t *conn, int is_connecting)
 {
-  (void) is_connecting;
-
-  tor_assert(conn != NULL);
+  tor_assert(conn);
+  tor_assert(SOCKET_OK(conn->s) ||
+             conn->linked ||
+             (conn->type == CONN_TYPE_AP &&
+              TO_EDGE_CONN(conn)->is_dns_request));
 
   tor_assert(conn->conn_array_index == -1); /* can only connection_add once */
   conn->conn_array_index = smartlist_len(connection_array);
   smartlist_add(connection_array, conn);
 
-  event_listener_attach(conn->event_listener, tor_libevent_get_base());
-  // TODO: check for error
+  (void) is_connecting;
 
-  if (conn->safe_conn == NULL) {
-    tor_assert(conn->type != CONN_TYPE_OR);
-    tor_assert(SOCKET_OK(conn->s) ||
-               conn->linked ||
-               (conn->type == CONN_TYPE_AP &&
-                TO_EDGE_CONN(conn)->is_dns_request));
-
-    if (SOCKET_OK(conn->s) || conn->linked) {
-      conn->read_event = tor_event_new(tor_libevent_get_base(),
-           conn->s, EV_READ|EV_PERSIST, conn_read_callback, conn);
-      conn->write_event = tor_event_new(tor_libevent_get_base(),
-           conn->s, EV_WRITE|EV_PERSIST, conn_write_callback, conn);
-      /* XXXX CHECK FOR NULL RETURN! */
-    }
-
-    log_debug(LD_NET, "new conn type %s, socket %d, address %s, n_conns %d.",
-              conn_type_to_string(conn->type), (int)conn->s, conn->address,
-              smartlist_len(connection_array));
-  } else {
-    tor_assert(conn->type == CONN_TYPE_OR);
-
-    int eventloop_index;
-    int num_eventloops = get_num_eventloops();
-
-    if (num_eventloops > 1) {
-      // use one of the worker threads
-      eventloop_index = 1 + (eventloop_counter%(num_eventloops-1));
-      eventloop_counter += 1;
-    } else {
-      // use the main thread
-      eventloop_index = 0;
-    }
-
-    struct event_base *base = get_eventloop(eventloop_index);
-    error_t rv = safe_connection_register_events(conn->safe_conn, base);
-
-    if (rv != E_SUCCESS) {
-      smartlist_remove(connection_array, conn);
-      conn->conn_array_index = -1;
-      return 1;
-    }
-
-    log_debug(LD_NET, "new conn type %s, address %s, n_conns %d.",
-              conn_type_to_string(conn->type), conn->address,
-              smartlist_len(connection_array));
+  if (SOCKET_OK(conn->s) || conn->linked) {
+    conn->read_event = tor_event_new(tor_libevent_get_base(),
+         conn->s, EV_READ|EV_PERSIST, conn_read_callback, conn);
+    conn->write_event = tor_event_new(tor_libevent_get_base(),
+         conn->s, EV_WRITE|EV_PERSIST, conn_write_callback, conn);
+    /* XXXX CHECK FOR NULL RETURN! */
   }
+
+  log_debug(LD_NET,"new conn type %s, socket %d, address %s, n_conns %d.",
+            conn_type_to_string(conn->type), (int)conn->s, conn->address,
+            smartlist_len(connection_array));
 
   return 0;
 }
@@ -318,29 +274,11 @@ connection_add_impl(connection_t *conn, int is_connecting)
 void
 connection_unregister_events(connection_t *conn)
 {
-  tor_assert(conn != NULL);
-  if (conn->safe_conn == NULL) {
-    tor_assert(conn->type != CONN_TYPE_OR);
-    if (conn->read_event) {
-      if (event_del(conn->read_event))
-        log_warn(LD_BUG, "Error removing read event for %d", (int)conn->s);
-      tor_free(conn->read_event);
-    }
-    if (conn->write_event) {
-      if (event_del(conn->write_event))
-        log_warn(LD_BUG, "Error removing write event for %d", (int)conn->s);
-      tor_free(conn->write_event);
-    }
-    if (conn->type == CONN_TYPE_AP_DNS_LISTENER) {
-      dnsserv_close_listener(conn);
-    }
-  } else {
-    tor_assert(conn->type == CONN_TYPE_OR);
-    safe_connection_unregister_events(conn->safe_conn);
+  tor_event_free(conn->read_event);
+  tor_event_free(conn->write_event);
+  if (conn->type == CONN_TYPE_AP_DNS_LISTENER) {
+    dnsserv_close_listener(conn);
   }
-
-  event_listener_detach(conn->event_listener);
-  // TODO: do we want to process the remaining events?
 }
 
 /** Remove the connection from the global list, and remove the
@@ -355,7 +293,7 @@ connection_remove(connection_t *conn)
 
   tor_assert(conn);
 
-  log_debug(LD_NET, "removing socket %d (type %s), n_conns now %d",
+  log_debug(LD_NET,"removing socket %d (type %s), n_conns now %d",
             (int)conn->s, conn_type_to_string(conn->type),
             smartlist_len(connection_array));
 
@@ -663,7 +601,6 @@ MOCK_IMPL(void,
 connection_stop_reading,(connection_t *conn))
 {
   tor_assert(conn);
-  tor_assert(conn->type != CONN_TYPE_OR);
 
   if (connection_check_event(conn, conn->read_event) < 0) {
     return;
@@ -686,7 +623,6 @@ MOCK_IMPL(void,
 connection_start_reading,(connection_t *conn))
 {
   tor_assert(conn);
-  tor_assert(conn->type != CONN_TYPE_OR);
 
   if (connection_check_event(conn, conn->read_event) < 0) {
     return;
@@ -697,6 +633,13 @@ connection_start_reading,(connection_t *conn))
     if (connection_should_read_from_linked_conn(conn))
       connection_start_reading_from_linked_conn(conn);
   } else {
+    if (CONN_IS_EDGE(conn) && TO_EDGE_CONN(conn)->xoff_received) {
+      /* We should not get called here if we're waiting for an XON, but
+       * belt-and-suspenders */
+      log_info(LD_NET,
+               "Request to start reading on an edgeconn blocked with XOFF");
+      return;
+    }
     if (event_add(conn->read_event, NULL))
       log_warn(LD_NET, "Error from libevent setting read event state for %d "
                "to watched: %s",
@@ -710,7 +653,6 @@ int
 connection_is_writing(connection_t *conn)
 {
   tor_assert(conn);
-  tor_assert(conn->type != CONN_TYPE_OR);
 
   return conn->writing_to_linked_conn ||
     (conn->write_event && event_pending(conn->write_event, EV_WRITE, NULL));
@@ -721,7 +663,6 @@ MOCK_IMPL(void,
 connection_stop_writing,(connection_t *conn))
 {
   tor_assert(conn);
-  tor_assert(conn->type != CONN_TYPE_OR);
 
   if (connection_check_event(conn, conn->write_event) < 0) {
     return;
@@ -745,7 +686,6 @@ MOCK_IMPL(void,
 connection_start_writing,(connection_t *conn))
 {
   tor_assert(conn);
-  tor_assert(conn->type != CONN_TYPE_OR);
 
   if (connection_check_event(conn, conn->write_event) < 0) {
     return;
@@ -1024,7 +964,6 @@ conn_close_if_marked(int i)
     return 0; /* nothing to see here, move along */
   now = time(NULL);
   assert_connection_ok(conn, now);
-  /* assert_all_pending_dns_resolves_ok(); */
 
   log_debug(LD_NET,"Cleaning up connection (fd "TOR_SOCKET_T_FORMAT").",
             conn->s);
@@ -1039,44 +978,33 @@ conn_close_if_marked(int i)
       connection_wants_to_flush(conn)) {
     /* s == -1 means it's an incomplete edge connection, or that the socket
      * has already been closed as unflushable. */
-    //ssize_t sz = connection_bucket_write_limit(conn, now);
-    ssize_t sz = 0;
+    ssize_t sz = connection_bucket_write_limit(conn, now);
     if (!conn->hold_open_until_flushed)
       log_info(LD_NET,
                "Conn (addr %s, fd %d, type %s, state %d) marked, but wants "
-               "to flush %d bytes. (Marked at %s:%d)",
+               "to flush %"TOR_PRIuSZ" bytes. (Marked at %s:%d)",
                escaped_safe_str_client(conn->address),
                (int)conn->s, conn_type_to_string(conn->type), conn->state,
-               (int)conn->outbuf_flushlen,
-                conn->marked_for_close_file, conn->marked_for_close);
+               connection_get_outbuf_len(conn),
+               conn->marked_for_close_file, conn->marked_for_close);
     if (conn->linked_conn) {
-      sz = connection_bucket_write_limit(conn, now);
-      retval = buf_move_to_buf(conn->linked_conn->inbuf, conn->outbuf,
-                               &conn->outbuf_flushlen);
+      retval = (int) buf_move_all(conn->linked_conn->inbuf, conn->outbuf);
       if (retval >= 0) {
         /* The linked conn will notice that it has data when it notices that
          * we're gone. */
         connection_start_reading_from_linked_conn(conn->linked_conn);
       }
       log_debug(LD_GENERAL, "Flushed last %d bytes from a linked conn; "
-               "%d left; flushlen %d; wants-to-flush==%d", retval,
+               "%d left; wants-to-flush==%d", retval,
                 (int)connection_get_outbuf_len(conn),
-                (int)conn->outbuf_flushlen,
                 connection_wants_to_flush(conn));
     } else if (connection_speaks_cells(conn)) {
       if (conn->state == OR_CONN_STATE_OPEN) {
-        // TODO: force TLS flush here, need to communicate to other thread somehow
-        //       really we need to tell the thread to close, and whether it should
-        //       try to flush or not
-        retval = -1;
-        //retval = buf_flush_to_tls(conn->outbuf, TO_OR_CONN(conn)->tls, sz,
-        //                       &conn->outbuf_flushlen);
+        retval = buf_flush_to_tls(conn->outbuf, TO_OR_CONN(conn)->tls, sz);
       } else
         retval = -1; /* never flush non-open broken tls connections */
     } else {
-      sz = connection_bucket_write_limit(conn, now);
-      retval = buf_flush_to_socket(conn->outbuf, conn->s, sz,
-                                   &conn->outbuf_flushlen);
+      retval = buf_flush_to_socket(conn->outbuf, conn->s, sz);
     }
     if (retval >= 0 && /* Technically, we could survive things like
                           TLS_WANT_WRITE here. But don't bother for now. */
@@ -1113,13 +1041,12 @@ conn_close_if_marked(int i)
       return 0;
     }
     if (connection_wants_to_flush(conn)) {
-      //log_fn(LOG_INFO, LD_NET, "We stalled too much while trying to write %d "
-      log_fn(LOG_INFO, LD_NET, "We stalled too much while trying to write <?> "
+      log_fn(LOG_INFO, LD_NET, "We stalled too much while trying to write %d "
              "bytes to address %s.  If this happens a lot, either "
              "something is wrong with your network connection, or "
              "something is wrong with theirs. "
              "(fd %d, type %s, state %d, marked at %s:%d).",
-             //(int)connection_get_outbuf_len(conn),
+             (int)connection_get_outbuf_len(conn),
              escaped_safe_str_client(conn->address),
              (int)conn->s, conn_type_to_string(conn->type), conn->state,
              conn->marked_for_close_file,
@@ -1199,14 +1126,14 @@ directory_info_has_arrived(time_t now, int from_cache, int suppress_logs)
 
   if (!router_have_minimum_dir_info()) {
     int quiet = suppress_logs || from_cache ||
-                directory_too_idle_to_fetch_descriptors(options, now);
+                dirclient_too_idle_to_fetch_descriptors(options, now);
     tor_log(quiet ? LOG_INFO : LOG_NOTICE, LD_DIR,
         "I learned some more directory information, but not enough to "
         "build a circuit: %s", get_dir_info_status_string());
     update_all_descriptor_downloads(now);
     return;
   } else {
-    if (directory_fetches_from_authorities(options)) {
+    if (dirclient_fetches_from_authorities(options)) {
       update_all_descriptor_downloads(now);
     }
 
@@ -1218,7 +1145,7 @@ directory_info_has_arrived(time_t now, int from_cache, int suppress_logs)
 
   if (server_mode(options) && !net_is_disabled() && !from_cache &&
       (have_completed_a_circuit() || !any_predicted_circuits(now)))
-   router_do_reachability_checks(1, 1);
+   router_do_reachability_checks();
 }
 
 /** Perform regular maintenance tasks for a single connection.  This
@@ -1227,6 +1154,7 @@ directory_info_has_arrived(time_t now, int from_cache, int suppress_logs)
 static void
 run_connection_housekeeping(int i, time_t now)
 {
+  cell_t cell;
   connection_t *conn = smartlist_get(connection_array, i);
   const or_options_t *options = get_options();
   or_connection_t *or_conn;
@@ -1275,7 +1203,7 @@ run_connection_housekeeping(int i, time_t now)
      the connection or send a keepalive, depending. */
 
   or_conn = TO_OR_CONN(conn);
-  //tor_assert(conn->outbuf);
+  tor_assert(conn->outbuf);
 
   chan = TLS_CHAN_TO_BASE(or_conn->chan);
   tor_assert(chan);
@@ -1293,7 +1221,7 @@ run_connection_housekeeping(int i, time_t now)
      * mark it now. */
     log_info(LD_OR,
              "Expiring non-used OR connection to fd %d (%s:%d) [Too old].",
-             (int)conn->s, conn->address, conn->port);
+             (int)conn->s, fmt_and_decorate_addr(&conn->addr), conn->port);
     if (conn->state == OR_CONN_STATE_CONNECTING)
       connection_or_connect_failed(TO_OR_CONN(conn),
                                    END_OR_CONN_REASON_TIMEOUT,
@@ -1303,19 +1231,17 @@ run_connection_housekeeping(int i, time_t now)
     if (past_keepalive) {
       /* We never managed to actually get this connection open and happy. */
       log_info(LD_OR,"Expiring non-open OR connection to fd %d (%s:%d).",
-               (int)conn->s,conn->address, conn->port);
+               (int)conn->s, fmt_and_decorate_addr(&conn->addr), conn->port);
       connection_or_close_normally(TO_OR_CONN(conn), 0);
     }
   } else if (we_are_hibernating() &&
              ! have_any_circuits &&
-//             !connection_get_outbuf_len(conn)) {
-// TODO: we should have a way to make sure the safe connection has no data to send
-             1) {
+             !connection_get_outbuf_len(conn)) {
     /* We're hibernating or shutting down, there's no circuits, and nothing to
      * flush.*/
     log_info(LD_OR,"Expiring non-used OR connection to fd %d (%s:%d) "
              "[Hibernating or exiting].",
-             (int)conn->s,conn->address, conn->port);
+             (int)conn->s, fmt_and_decorate_addr(&conn->addr), conn->port);
     connection_or_close_normally(TO_OR_CONN(conn), 1);
   } else if (!have_any_circuits &&
              now - or_conn->idle_timeout >=
@@ -1323,7 +1249,7 @@ run_connection_housekeeping(int i, time_t now)
     log_info(LD_OR,"Expiring non-used OR connection %"PRIu64" to fd %d "
              "(%s:%d) [no circuits for %d; timeout %d; %scanonical].",
              (chan->global_identifier),
-             (int)conn->s, conn->address, conn->port,
+             (int)conn->s, fmt_and_decorate_addr(&conn->addr), conn->port,
              (int)(now - chan->timestamp_last_had_circuits),
              or_conn->idle_timeout,
              or_conn->is_canonical ? "" : "non");
@@ -1335,20 +1261,17 @@ run_connection_housekeeping(int i, time_t now)
     log_fn(LOG_PROTOCOL_WARN,LD_PROTOCOL,
            "Expiring stuck OR connection to fd %d (%s:%d). (%d bytes to "
            "flush; %d seconds since last write)",
-           (int)conn->s, conn->address, conn->port,
-           //(int)connection_get_outbuf_len(conn),
-           12345678, // TODO: do something sensible here
+           (int)conn->s, fmt_and_decorate_addr(&conn->addr), conn->port,
+           (int)connection_get_outbuf_len(conn),
            (int)(now-conn->timestamp_last_write_allowed));
     connection_or_close_normally(TO_OR_CONN(conn), 0);
-  } else if (past_keepalive && 1) { //!connection_get_outbuf_len(conn)) {
-// TODO: we should have a way to make sure the safe connection has no data to send
+  } else if (past_keepalive && !connection_get_outbuf_len(conn)) {
     /* send a padding cell */
     log_fn(LOG_DEBUG,LD_OR,"Sending keepalive to (%s:%d)",
-           conn->address, conn->port);
-    cell_t *cell = tor_malloc_zero(sizeof(cell_t));
-    //memset(&cell,0,sizeof(cell_t));
-    cell->command = CELL_PADDING;
-    connection_or_write_cell_to_buf(cell, or_conn);
+           fmt_and_decorate_addr(&conn->addr), conn->port);
+    memset(&cell,0,sizeof(cell_t));
+    cell.command = CELL_PADDING;
+    connection_or_write_cell_to_buf(&cell, or_conn);
   } else {
     channelpadding_decide_to_pad_channel(chan);
   }
@@ -1369,6 +1292,7 @@ signewnym_impl(time_t now)
   circuit_mark_all_dirty_circs_as_unusable();
   addressmap_clear_transient();
   hs_client_purge_state();
+  purge_vanguards_lite();
   time_of_last_signewnym = now;
   signewnym_is_pending = 0;
 
@@ -1423,9 +1347,11 @@ get_signewnym_epoch(void)
 static int periodic_events_initialized = 0;
 
 /* Declare all the timer callback functions... */
+#ifndef COCCI
 #undef CALLBACK
 #define CALLBACK(name) \
   static int name ## _callback(time_t, const or_options_t *)
+
 CALLBACK(add_entropy);
 CALLBACK(check_expired_networkstatus);
 CALLBACK(clean_caches);
@@ -1444,13 +1370,15 @@ CALLBACK(save_state);
 CALLBACK(write_stats_file);
 CALLBACK(control_per_second_events);
 CALLBACK(second_elapsed);
+CALLBACK(manage_vglite);
 
 #undef CALLBACK
 
 /* Now we declare an array of periodic_event_item_t for each periodic event */
-#define CALLBACK(name, r, f) \
+#define CALLBACK(name, r, f)                            \
   PERIODIC_EVENT(name, PERIODIC_EVENT_ROLE_ ## r, f)
 #define FL(name) (PERIODIC_EVENT_FLAG_ ## name)
+#endif /* !defined(COCCI) */
 
 STATIC periodic_event_item_t mainloop_periodic_events[] = {
 
@@ -1464,6 +1392,9 @@ STATIC periodic_event_item_t mainloop_periodic_events[] = {
    * we are online and active. */
   CALLBACK(second_elapsed, NET_PARTICIPANT,
            FL(RUN_ON_DISABLE)),
+
+  /* Update vanguards-lite once per hour, if we have networking */
+  CALLBACK(manage_vglite, NET_PARTICIPANT, FL(NEED_NET)),
 
   /* XXXX Do we have a reason to do this on a callback? Does it do any good at
    * all?  For now, if we're dormant, we can let our listeners decay. */
@@ -1501,8 +1432,10 @@ STATIC periodic_event_item_t mainloop_periodic_events[] = {
 
   END_OF_PERIODIC_EVENTS
 };
+#ifndef COCCI
 #undef CALLBACK
 #undef FL
+#endif
 
 /* These are pointers to members of periodic_events[] that are used to
  * implement particular callbacks.  We keep them separate here so that we
@@ -1537,14 +1470,13 @@ get_my_roles(const or_options_t *options)
   int is_relay = server_mode(options);
   int is_dirauth = authdir_mode_v3(options);
   int is_bridgeauth = authdir_mode_bridge(options);
-  int is_hidden_service = !!hs_service_get_num_services() ||
-                          !!rend_num_services();
+  int is_hidden_service = !!hs_service_get_num_services();
   int is_dirserver = dir_server_mode(options);
   int sending_control_events = control_any_per_second_event_enabled();
 
   /* We also consider tor to have the role of a client if the ControlPort is
    * set because a lot of things can be done over the control port which
-   * requires tor to have basic functionnalities. */
+   * requires tor to have basic functionalities. */
   int is_client = options_any_client_port_set(options) ||
                   options->ControlPort_set ||
                   options->OwningControllerFD != UINT64_MAX;
@@ -1601,8 +1533,10 @@ initialize_periodic_events(void)
 
   /* Set up all periodic events. We'll launch them by roles. */
 
+#ifndef COCCI
 #define NAMED_CALLBACK(name) \
   STMT_BEGIN name ## _event = periodic_events_find( #name ); STMT_END
+#endif
 
   NAMED_CALLBACK(prune_old_routers);
   NAMED_CALLBACK(fetch_networkstatus);
@@ -1730,6 +1664,21 @@ mainloop_schedule_shutdown(int delay_sec)
     scheduled_shutdown_ev = mainloop_event_new(scheduled_shutdown_cb, NULL);
   }
   mainloop_event_schedule(scheduled_shutdown_ev, &delay_tv);
+}
+
+/**
+ * Update vanguards-lite layer2 nodes, once every 15 minutes
+ */
+static int
+manage_vglite_callback(time_t now, const or_options_t *options)
+{
+ (void)now;
+ (void)options;
+#define VANGUARDS_LITE_INTERVAL (15*60)
+
+  maintain_layer2_guards();
+
+  return VANGUARDS_LITE_INTERVAL;
 }
 
 /** Perform regular maintenance tasks.  This function gets run once per
@@ -1890,10 +1839,16 @@ check_network_participation_callback(time_t now, const or_options_t *options)
     goto found_activity;
   }
 
+  /* If we aren't allowed to become dormant, then participation doesn't
+     matter */
+  if (! options->DormantTimeoutEnabled) {
+    goto found_activity;
+  }
+
   /* If we're running an onion service, we can't become dormant. */
   /* XXXX this would be nice to change, so that we can be dormant with a
    * service. */
-  if (hs_service_get_num_services() || rend_num_services()) {
+  if (hs_service_get_num_services()) {
     goto found_activity;
   }
 
@@ -2004,7 +1959,11 @@ write_stats_file_callback(time_t now, const or_options_t *options)
       next_time_to_write_stats_files = next_write;
   }
   if (options->HiddenServiceStatistics) {
-    time_t next_write = rep_hist_hs_stats_write(now);
+    time_t next_write = rep_hist_hs_stats_write(now, false);
+    if (next_write && next_write < next_time_to_write_stats_files)
+      next_time_to_write_stats_files = next_write;
+
+    next_write = rep_hist_hs_stats_write(now, true);
     if (next_write && next_write < next_time_to_write_stats_files)
       next_time_to_write_stats_files = next_write;
   }
@@ -2014,7 +1973,7 @@ write_stats_file_callback(time_t now, const or_options_t *options)
       next_time_to_write_stats_files = next_write;
   }
   if (options->ConnDirectionStatistics) {
-    time_t next_write = rep_hist_conn_stats_write(now);
+    time_t next_write = conn_stats_save(now);
     if (next_write && next_write < next_time_to_write_stats_files)
       next_time_to_write_stats_files = next_write;
   }
@@ -2076,7 +2035,6 @@ clean_caches_callback(time_t now, const or_options_t *options)
 {
   /* Remove old information from rephist and the rend cache. */
   rep_history_clean(now - options->RephistTrackTime);
-  rend_cache_clean(now, REND_CACHE_TYPE_SERVICE);
   hs_cache_clean_as_client(now);
   hs_cache_clean_as_dir(now);
   microdesc_cache_rebuild(NULL, 0);
@@ -2095,7 +2053,6 @@ rend_cache_failure_clean_callback(time_t now, const or_options_t *options)
   /* We don't keep entries that are more than five minutes old so we try to
    * clean it as soon as we can since we want to make sure the client waits
    * as little as possible for reachability reasons. */
-  rend_cache_failure_clean(now);
   hs_cache_client_intro_state_clean(now);
   return 30;
 }
@@ -2132,7 +2089,7 @@ fetch_networkstatus_callback(time_t now, const or_options_t *options)
    * documents? */
   const int we_are_bootstrapping = networkstatus_consensus_is_bootstrapping(
                                                                         now);
-  const int prefer_mirrors = !directory_fetches_from_authorities(
+  const int prefer_mirrors = !dirclient_fetches_from_authorities(
                                                               get_options());
   int networkstatus_dl_check_interval = 60;
   /* check more often when testing, or when bootstrapping from mirrors
@@ -2218,7 +2175,8 @@ hs_service_callback(time_t now, const or_options_t *options)
   /* We need to at least be able to build circuits and that we actually have
    * a working network. */
   if (!have_completed_a_circuit() || net_is_disabled() ||
-      networkstatus_get_live_consensus(now) == NULL) {
+      !networkstatus_get_reasonably_live_consensus(now,
+                                         usable_consensus_flavor())) {
     goto end;
   }
 
@@ -2336,18 +2294,23 @@ systemd_watchdog_callback(periodic_timer_t *timer, void *arg)
 
 #define UPTIME_CUTOFF_FOR_NEW_BANDWIDTH_TEST (6*60*60)
 
-/** Called when our IP address seems to have changed. <b>at_interface</b>
- * should be true if we detected a change in our interface, and false if we
- * detected a change in our published address. */
+/** Called when our IP address seems to have changed. <b>on_client_conn</b>
+ * should be true if:
+ *   - we detected a change in our interface address, using an outbound
+ *     connection, and therefore
+ *   - our client TLS keys need to be rotated.
+ * Otherwise, it should be false, and:
+ *   - we detected a change in our published address
+ *     (using some other method), and therefore
+ *   - the published addresses in our descriptor need to change.
+ */
 void
-ip_address_changed(int at_interface)
+ip_address_changed(int on_client_conn)
 {
   const or_options_t *options = get_options();
   int server = server_mode(options);
-  int exit_reject_interfaces = (server && options->ExitRelay
-                                && options->ExitPolicyRejectLocalInterfaces);
 
-  if (at_interface) {
+  if (on_client_conn) {
     if (! server) {
       /* Okay, change our keys. */
       if (init_keys_client() < 0)
@@ -2359,13 +2322,12 @@ ip_address_changed(int at_interface)
         reset_bandwidth_test();
       reset_uptime();
       router_reset_reachability();
+      /* All relays include their IP addresses as their ORPort addresses in
+       * their descriptor.
+       * Exit relays also incorporate interface addresses in their exit
+       * policies, when ExitPolicyRejectLocalInterfaces is set. */
+      mark_my_descriptor_dirty("IP address changed");
     }
-  }
-
-  /* Exit relays incorporate interface addresses in their exit policies when
-   * ExitPolicyRejectLocalInterfaces is set */
-  if (exit_reject_interfaces || (server && !at_interface)) {
-    mark_my_descriptor_dirty("IP address changed");
   }
 
   dns_servers_relaunch_checks();
@@ -2398,41 +2360,6 @@ initialize_mainloop_events(void)
   }
 }
 
-static void
-init_event_registry(void)
-{
-  tor_assert(event_registry == NULL);
-  event_registry = event_registry_new();
-
-  safe_or_conn_register_events(event_registry);
-  or_conn_register_events(event_registry);
-}
-
-static void
-tor_eventloop_thread(void)
-{
-  log_debug(LD_GENERAL, "Starting eventloop thread.");
-
-  struct event_base *base = tor_libevent_get_base();
-  local_replyqueue_init(base);
-
-  init_thread_throughput_logging(get_local_eventloop_index());
-
-  int loop_result = 0;
-  while (loop_result == 0 && other_eventloops_should_exit == 0) {
-    loop_result = event_base_loop(base, EVLOOP_NO_EXIT_ON_EMPTY);
-  }
-  log_debug(LD_GENERAL, "Done eventloop thread.");
-
-  destroy_thread_throughput_logging();
-
-  if (other_eventloops_should_exit == 0) {
-    log_err(LD_GENERAL, "Eventloop thread stopped unexpectedly. (loop_result:%d, \
-                         other_eventloops_should_exit:%d)",
-            loop_result, other_eventloops_should_exit);
-  }
-}
-
 /** Tor main loop. */
 int
 do_main_loop(void)
@@ -2443,17 +2370,7 @@ do_main_loop(void)
   tor_assert(periodic_events_initialized);
   initialize_mainloop_events();
 
-  init_event_registry();
-
   periodic_events_connect_all();
-
-  bool logging_throughput = (get_options()->ThroughputLogFile != NULL &&
-                             strlen(get_options()->ThroughputLogFile) != 0);
-
-  if (logging_throughput) {
-    init_throughput_logging(get_num_eventloops());
-    init_thread_throughput_logging(0);
-  }
 
   struct timeval one_second = { 1, 0 };
   initialize_periodic_events_event = tor_evtimer_new(
@@ -2507,23 +2424,7 @@ do_main_loop(void)
   }
 #endif /* defined(ENABLE_RESTART_DEBUGGING) */
 
-  /* Start our eventloop threads, then start the main eventloop. */
-  other_eventloops_should_exit = 0;
-  start_eventloop_threads(tor_eventloop_thread, start_tor_thread);
-  int rv = run_main_loop_until_done();
-
-  /* Stop our eventloops in other threads. */
-  other_eventloops_should_exit = 1;
-  rescan_eventloops();
-  join_eventloop_threads();
-
-  if (logging_throughput) {
-    destroy_thread_throughput_logging();
-    write_throughput_log(get_options()->ThroughputLogFile);
-    destroy_throughput_logging();
-  }
-
-  return rv;
+  return run_main_loop_until_done();
 }
 
 #ifndef _WIN32
@@ -2686,7 +2587,6 @@ tor_mainloop_free_all(void)
   called_loop_once = 0;
   main_loop_should_exit = 0;
   main_loop_exit_value = 0;
-  other_eventloops_should_exit = 0;
   can_complete_circuits = 0;
   quiet_level = 0;
   should_init_bridge_stats = 1;

@@ -1,6 +1,6 @@
 /* Copyright (c) 2003-2004, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2019, The Tor Project, Inc. */
+ * Copyright (c) 2007-2021, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -11,6 +11,7 @@
 #ifndef TOR_UTIL_MALLOC_H
 #define TOR_UTIL_MALLOC_H
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include "lib/cc/compat_compiler.h"
@@ -45,6 +46,9 @@ void tor_free_(void *mem);
 #ifdef __GNUC__
 #define tor_free(p) STMT_BEGIN                                 \
     typeof(&(p)) tor_free__tmpvar = &(p);                      \
+    _Static_assert(!__builtin_types_compatible_p(typeof(*tor_free__tmpvar), \
+                                                 struct event *), \
+                   "use tor_event_free for struct event *");   \
     raw_free(*tor_free__tmpvar);                               \
     *tor_free__tmpvar=NULL;                                    \
   STMT_END

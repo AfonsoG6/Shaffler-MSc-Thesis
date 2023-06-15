@@ -1,6 +1,6 @@
 /* Copyright (c) 2003, Roger Dingledine
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2019, The Tor Project, Inc. */
+ * Copyright (c) 2007-2021, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #ifndef TOR_TORTLS_H
@@ -81,6 +81,7 @@ void tor_tls_free_all(void);
 void tor_tls_init(void);
 void tls_log_errors(tor_tls_t *tls, int severity, int domain,
                     const char *doing);
+const char *tor_tls_get_last_error_msg(const tor_tls_t *tls);
 int tor_tls_context_init(unsigned flags,
                          crypto_pk_t *client_identity,
                          crypto_pk_t *server_identity,
@@ -90,9 +91,9 @@ void tor_tls_context_decref(tor_tls_context_t *ctx);
 tor_tls_context_t *tor_tls_context_get(int is_server);
 tor_tls_t *tor_tls_new(tor_socket_t sock, int is_server);
 void tor_tls_set_logged_address(tor_tls_t *tls, const char *address);
-//void tor_tls_set_renegotiate_callback(tor_tls_t *tls,
-//                                      void (*cb)(tor_tls_t *, void *arg),
-//                                      void *arg);
+void tor_tls_set_renegotiate_callback(tor_tls_t *tls,
+                                      void (*cb)(tor_tls_t *, void *arg),
+                                      void *arg);
 int tor_tls_is_server(tor_tls_t *tls);
 void tor_tls_release_socket(tor_tls_t *tls);
 void tor_tls_free_(tor_tls_t *tls);
@@ -107,7 +108,6 @@ int tor_tls_handshake(tor_tls_t *tls);
 int tor_tls_finish_handshake(tor_tls_t *tls);
 void tor_tls_unblock_renegotiation(tor_tls_t *tls);
 void tor_tls_block_renegotiation(tor_tls_t *tls);
-void tor_tls_assert_renegotiation_unblocked(tor_tls_t *tls);
 int tor_tls_get_pending_bytes(tor_tls_t *tls);
 size_t tor_tls_get_forced_write_size(tor_tls_t *tls);
 
@@ -120,10 +120,10 @@ int tor_tls_get_buffer_sizes(tor_tls_t *tls,
 
 MOCK_DECL(double, tls_get_write_overhead_ratio, (void));
 
-//int tor_tls_used_v1_handshake(tor_tls_t *tls);
+int tor_tls_used_v1_handshake(tor_tls_t *tls);
 int tor_tls_get_num_server_handshakes(tor_tls_t *tls);
 int tor_tls_server_got_renegotiate(tor_tls_t *tls);
-MOCK_DECL(int,tor_tls_cert_matches_key,(const struct tor_x509_cert_t *peer_cert,
+MOCK_DECL(int,tor_tls_cert_matches_key,(const tor_tls_t *tls,
                                         const struct tor_x509_cert_t *cert));
 MOCK_DECL(int,tor_tls_get_tlssecrets,(tor_tls_t *tls, uint8_t *secrets_out));
 #ifdef ENABLE_OPENSSL

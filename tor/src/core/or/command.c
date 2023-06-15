@@ -1,7 +1,7 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2019, The Tor Project, Inc. */
+ * Copyright (c) 2007-2021, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 /**
@@ -54,6 +54,7 @@
 #include "feature/nodelist/describe.h"
 #include "feature/nodelist/nodelist.h"
 #include "feature/nodelist/routerlist.h"
+#include "feature/relay/circuitbuild_relay.h"
 #include "feature/relay/routermode.h"
 #include "feature/stats/rephist.h"
 #include "lib/crypt_ops/crypto_util.h"
@@ -227,23 +228,6 @@ command_process_cell(channel_t *chan, cell_t *cell)
   }
 }
 
-/** Process an incoming var_cell from a channel; in the current protocol all
- * the var_cells are handshake-related and handled below the channel layer,
- * so this just logs a warning and drops the cell.
- */
-
-void
-command_process_var_cell(channel_t *chan, var_cell_t *var_cell)
-{
-  tor_assert(chan);
-  tor_assert(var_cell);
-
-  log_info(LD_PROTOCOL,
-           "Received unexpected var_cell above the channel layer of type %d"
-           "; dropping it.",
-           var_cell->command);
-}
-
 /** Process a 'create' <b>cell</b> that just arrived from <b>chan</b>. Make a
  * new circuit with the p_circ_id specified in cell. Put the circuit in state
  * onionskin_pending, and pass the onionskin to the cpuworker. Circ will get
@@ -278,7 +262,7 @@ command_process_create_cell(cell_t *cell, channel_t *chan)
     log_fn(LOG_PROTOCOL_WARN, LD_PROTOCOL,
            "Received a create cell (type %d) from %s with zero circID; "
            " ignoring.", (int)cell->command,
-           channel_get_actual_remote_descr(chan));
+           channel_describe_peer(chan));
     return;
   }
 
@@ -321,7 +305,7 @@ command_process_create_cell(cell_t *cell, channel_t *chan)
            "Received create cell (type %d) from %s, but we're connected "
            "to it as a client. "
            "Sending back a destroy.",
-           (int)cell->command, channel_get_canonical_remote_descr(chan));
+           (int)cell->command, channel_describe_peer(chan));
     channel_send_destroy(cell->circ_id, chan,
                          END_CIRC_REASON_TORPROTOCOL);
     return;
@@ -357,6 +341,13 @@ command_process_create_cell(cell_t *cell, channel_t *chan)
     return;
   }
 
+  /* Mark whether this circuit used TAP in case we need to use this
+   * information for onion service statistics later on. */
+  if (create_cell->handshake_type == ONION_HANDSHAKE_TYPE_FAST ||
+      create_cell->handshake_type == ONION_HANDSHAKE_TYPE_TAP) {
+    circ->used_legacy_circuit_handshake = true;
+  }
+
   if (!channel_is_client(chan)) {
     /* remember create types we've seen, but don't remember them from
      * clients, to be extra conservative about client statistics. */
@@ -379,15 +370,19 @@ command_process_create_cell(cell_t *cell, channel_t *chan)
     uint8_t rend_circ_nonce[DIGEST_LEN];
     int len;
     created_cell_t created_cell;
+    circuit_params_t params;
 
     memset(&created_cell, 0, sizeof(created_cell));
     len = onion_skin_server_handshake(ONION_HANDSHAKE_TYPE_FAST,
                                        create_cell->onionskin,
                                        create_cell->handshake_len,
                                        NULL,
+                                       NULL,
                                        created_cell.reply,
+                                       sizeof(created_cell.reply),
                                        keys, CPATH_KEY_MATERIAL_LEN,
-                                       rend_circ_nonce);
+                                       rend_circ_nonce,
+                                       &params);
     tor_free(create_cell);
     if (len < 0) {
       log_warn(LD_OR,"Failed to generate key material. Closing.");
@@ -501,7 +496,7 @@ command_process_relay_cell(cell_t *cell, channel_t *chan)
     log_debug(LD_OR,
               "unknown circuit %u on connection from %s. Dropping.",
               (unsigned)cell->circ_id,
-              channel_get_canonical_remote_descr(chan));
+              channel_describe_peer(chan));
     return;
   }
 
@@ -562,7 +557,7 @@ command_process_relay_cell(cell_t *cell, channel_t *chan)
         control_event_circ_bandwidth_used_for_circ(TO_ORIGIN_CIRCUIT(circ));
       } else if (circ->n_chan) {
         log_warn(LD_OR, " upstream=%s",
-                 channel_get_actual_remote_descr(circ->n_chan));
+                 channel_describe_peer(circ->n_chan));
       }
       circuit_mark_for_close(circ, END_CIRC_REASON_TORPROTOCOL);
       return;
@@ -573,7 +568,7 @@ command_process_relay_cell(cell_t *cell, channel_t *chan)
                "Received too many RELAY_EARLY cells on circ %u from %s."
                "  Closing circuit.",
                (unsigned)cell->circ_id,
-               safe_str(channel_get_canonical_remote_descr(chan)));
+               safe_str(channel_describe_peer(chan)));
         circuit_mark_for_close(circ, END_CIRC_REASON_TORPROTOCOL);
         return;
       }
@@ -582,7 +577,7 @@ command_process_relay_cell(cell_t *cell, channel_t *chan)
   }
 
   if ((reason = circuit_receive_relay_cell(cell, circ, direction)) < 0) {
-    log_fn(LOG_PROTOCOL_WARN,LD_PROTOCOL,"circuit_receive_relay_cell "
+    log_fn(LOG_DEBUG,LD_PROTOCOL,"circuit_receive_relay_cell "
            "(%s) failed. Closing.",
            direction==CELL_DIRECTION_OUT?"forward":"backward");
     /* Always emit a bandwidth event for closed circs */
@@ -613,11 +608,27 @@ command_process_relay_cell(cell_t *cell, channel_t *chan)
   }
 
   /* If this is a cell in an RP circuit, count it as part of the
-     hidden service stats */
+     onion service stats */
   if (options->HiddenServiceStatistics &&
       !CIRCUIT_IS_ORIGIN(circ) &&
-      TO_OR_CIRCUIT(circ)->circuit_carries_hs_traffic_stats) {
-    rep_hist_seen_new_rp_cell();
+      CONST_TO_OR_CIRCUIT(circ)->circuit_carries_hs_traffic_stats) {
+    /** We need to figure out of this is a v2 or v3 RP circuit to count it
+     *  appropriately. v2 services always use the TAP legacy handshake to
+     *  connect to the RP; we use this feature to distinguish between v2/v3. */
+    bool is_v2 = false;
+    if (CONST_TO_OR_CIRCUIT(circ)->used_legacy_circuit_handshake) {
+      is_v2 = true;
+    } else if (CONST_TO_OR_CIRCUIT(circ)->rend_splice) {
+      /* If this is a client->RP circuit we need to check the spliced circuit
+       * (which is the service->RP circuit) to see if it was using TAP and
+       * hence if it's a v2 circuit. That's because client->RP circuits can
+       * still use ntor even on v2; but service->RP will always use TAP. */
+      const or_circuit_t *splice = CONST_TO_OR_CIRCUIT(circ)->rend_splice;
+      if (splice->used_legacy_circuit_handshake) {
+        is_v2 = true;
+      }
+    }
+    rep_hist_seen_new_rp_cell(is_v2);
   }
 }
 
@@ -644,7 +655,7 @@ command_process_destroy_cell(cell_t *cell, channel_t *chan)
   if (!circ) {
     log_info(LD_OR,"unknown circuit %u on connection from %s. Dropping.",
              (unsigned)cell->circ_id,
-             channel_get_canonical_remote_descr(chan));
+             channel_describe_peer(chan));
     return;
   }
   log_debug(LD_OR,"Received for circID %u.",(unsigned)cell->circ_id);
@@ -655,19 +666,22 @@ command_process_destroy_cell(cell_t *cell, channel_t *chan)
   if (!CIRCUIT_IS_ORIGIN(circ) &&
       chan == TO_OR_CIRCUIT(circ)->p_chan &&
       cell->circ_id == TO_OR_CIRCUIT(circ)->p_circ_id) {
-    /* the destroy came from behind */
+    /* The destroy came from behind so nullify its p_chan. Close the circuit
+     * with a DESTROYED reason so we don't propagate along the path forward the
+     * reason which could be used as a side channel. */
     circuit_set_p_circid_chan(TO_OR_CIRCUIT(circ), 0, NULL);
-    circuit_mark_for_close(circ, reason|END_CIRC_REASON_FLAG_REMOTE);
+    circuit_mark_for_close(circ, END_CIRC_REASON_DESTROYED);
   } else { /* the destroy came from ahead */
     circuit_set_n_circid_chan(circ, 0, NULL);
     if (CIRCUIT_IS_ORIGIN(circ)) {
       circuit_mark_for_close(circ, reason|END_CIRC_REASON_FLAG_REMOTE);
     } else {
-      char payload[1];
-      log_debug(LD_OR, "Delivering 'truncated' back.");
-      payload[0] = (char)reason;
-      relay_send_command_from_edge(0, circ, RELAY_COMMAND_TRUNCATED,
-                                   payload, sizeof(payload), NULL);
+      /* Close the circuit so we stop queuing cells for it and propagate the
+       * DESTROY cell down the circuit so relays can stop queuing in-flight
+       * cells for this circuit which helps with memory pressure. We do NOT
+       * propagate the remote reason so not to create a side channel. */
+      log_debug(LD_OR, "Received DESTROY cell from n_chan, closing circuit.");
+      circuit_mark_for_close(circ, END_CIRC_REASON_DESTROYED);
     }
   }
 }
@@ -695,8 +709,7 @@ command_setup_channel(channel_t *chan)
   tor_assert(chan);
 
   channel_set_cell_handlers(chan,
-                            command_process_cell,
-                            command_process_var_cell);
+                            command_process_cell);
 }
 
 /** Given a listener, install the right handler to process incoming

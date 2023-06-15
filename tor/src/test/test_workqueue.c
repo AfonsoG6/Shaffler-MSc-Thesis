@@ -1,6 +1,6 @@
 /* Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2019, The Tor Project, Inc. */
+ * Copyright (c) 2007-2021, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
 #include "core/or/or.h"
@@ -13,11 +13,6 @@
 #include "lib/evloop/compat_libevent.h"
 #include "lib/intmath/weakrng.h"
 #include "lib/crypt_ops/crypto_init.h"
-
-#include "lib/subsys/subsys.h"
-#include "lib/net/network_sys.h"
-#include "lib/thread/thread_sys.h"
-#include "lib/evloop/evloop_sys.h"
 
 #include <stdio.h>
 
@@ -37,7 +32,7 @@ int handled_len;
 bitarray_t *handled;
 #endif
 
-typedef struct state_s {
+typedef struct state_t {
   int magic;
   int n_handled;
   crypto_pk_t *rsa;
@@ -45,13 +40,13 @@ typedef struct state_s {
   int is_shutdown;
 } state_t;
 
-typedef struct rsa_work_s {
+typedef struct rsa_work_t {
   int serial;
   uint8_t msg[128];
   uint8_t msglen;
 } rsa_work_t;
 
-typedef struct ecdh_work_s {
+typedef struct ecdh_work_t {
   int serial;
   union {
     curve25519_public_key_t pk;
@@ -175,10 +170,8 @@ bitarray_t *received;
 #endif
 
 static void
-handle_reply(void *arg, workqueue_reply_t reply_status)
+handle_reply(void *arg)
 {
-  (void)reply_status;
-
 #ifdef TRACK_RESPONSES
   rsa_work_t *rw = arg; /* Naughty cast, but only looking at serial. */
   tor_assert(! bitarray_is_set(received, rw->serial));
@@ -191,15 +184,14 @@ handle_reply(void *arg, workqueue_reply_t reply_status)
 
 /* This should never get called. */
 static void
-handle_reply_shutdown(void *arg, workqueue_reply_t reply_status)
+handle_reply_shutdown(void *arg)
 {
   (void)arg;
-  (void)reply_status;
   no_shutdown = 1;
 }
 
 static workqueue_entry_t *
-add_work(threadpool_t *tp, replyqueue_t *rq)
+add_work(threadpool_t *tp)
 {
   int add_rsa =
     opt_ratio_rsa == 0 ||
@@ -211,15 +203,16 @@ add_work(threadpool_t *tp, replyqueue_t *rq)
     crypto_rand((char*)w->msg, 20);
     w->msglen = 20;
     ++rsa_sent;
-    return threadpool_queue_work_priority(tp, WQ_PRI_MED, workqueue_do_rsa,
-                                          handle_reply, rq, w);
+    return threadpool_queue_work_priority(tp,
+                                          WQ_PRI_MED,
+                                          workqueue_do_rsa, handle_reply, w);
   } else {
     ecdh_work_t *w = tor_malloc_zero(sizeof(*w));
     w->serial = n_sent++;
     /* Not strictly right, but this is just for benchmarks. */
     crypto_rand((char*)w->u.pk.public_key, 32);
     ++ecdh_sent;
-    return threadpool_queue_work(tp, workqueue_do_ecdh, handle_reply, rq, w);
+    return threadpool_queue_work(tp, workqueue_do_ecdh, handle_reply, w);
   }
 }
 
@@ -227,7 +220,7 @@ static int n_failed_cancel = 0;
 static int n_successful_cancel = 0;
 
 static int
-add_n_work_items(threadpool_t *tp, replyqueue_t *rq, int n)
+add_n_work_items(threadpool_t *tp, int n)
 {
   int n_queued = 0;
   int n_try_cancel = 0, i;
@@ -238,7 +231,7 @@ add_n_work_items(threadpool_t *tp, replyqueue_t *rq, int n)
   to_cancel = tor_calloc(opt_n_cancel, sizeof(workqueue_entry_t*));
 
   while (n_queued++ < n) {
-    ent = add_work(tp, rq);
+    ent = add_work(tp);
     if (! ent) {
       puts("Z");
       tor_libevent_exit_loop_after_delay(tor_libevent_get_base(), NULL);
@@ -272,7 +265,7 @@ add_n_work_items(threadpool_t *tp, replyqueue_t *rq, int n)
 static int shutting_down = 0;
 
 static void
-replysock_readable_cb(threadpool_t *tp, replyqueue_t *rq)
+replysock_readable_cb(threadpool_t *tp)
 {
   if (n_received_previously == n_received)
     return;
@@ -304,7 +297,7 @@ replysock_readable_cb(threadpool_t *tp, replyqueue_t *rq)
     int n_to_send = n_received + opt_n_inflight - n_sent;
     if (n_to_send > opt_n_items - n_sent)
       n_to_send = opt_n_items - n_sent;
-    add_n_work_items(tp, rq, n_to_send);
+    add_n_work_items(tp, n_to_send);
   }
 
   if (shutting_down == 0 &&
@@ -315,7 +308,7 @@ replysock_readable_cb(threadpool_t *tp, replyqueue_t *rq)
                              workqueue_do_shutdown, NULL, NULL);
     // Anything we add after starting the shutdown must not be executed.
     threadpool_queue_work(tp, workqueue_shutdown_error,
-                          handle_reply_shutdown, rq, NULL);
+                          handle_reply_shutdown, NULL);
     {
       struct timeval limit = { 2, 0 };
       tor_libevent_exit_loop_after_delay(tor_libevent_get_base(), &limit);
@@ -346,7 +339,7 @@ main(int argc, char **argv)
   replyqueue_t *rq;
   threadpool_t *tp;
   int i;
-  tor_libevent_cfg evcfg;
+  tor_libevent_cfg_t evcfg;
   uint32_t as_flags = 0;
 
   for (i = 1; i < argc; ++i) {
@@ -396,18 +389,7 @@ main(int argc, char **argv)
   }
 
   init_logging(1);
-  if (sys_network.initialize()) {
-    printf("Couldn't initialize network subsystem; exiting.\n");
-    return 1;
-  }
-  if (sys_threads.initialize()) {
-    printf("Couldn't initialize threads subsystem; exiting.\n");
-    return 1;
-  }
-  if (sys_evloop.initialize()) {
-    printf("Couldn't initialize evloop subsystem; exiting.\n");
-    return 1;
-  }
+  network_init();
   if (crypto_global_init(1, NULL, NULL) < 0) {
     printf("Couldn't initialize crypto subsystem; exiting.\n");
     return 1;
@@ -417,25 +399,23 @@ main(int argc, char **argv)
     return 1;
   }
 
-  tp = threadpool_new(opt_n_threads,
-                      new_state, free_state, NULL, spawn_func);
-  tor_assert(tp);
-  threadpool_set_reply_cb(tp, replysock_readable_cb);
-
-  rq = replyqueue_new(as_flags, tp);
+  rq = replyqueue_new(as_flags);
   if (as_flags && rq == NULL)
     return 77; // 77 means "skipped".
 
   tor_assert(rq);
+  tp = threadpool_new(opt_n_threads,
+                      rq, new_state, free_state, NULL);
+  tor_assert(tp);
 
   crypto_seed_weak_rng(&weak_rng);
 
   memset(&evcfg, 0, sizeof(evcfg));
-  tor_libevent_initialize(&evcfg, 0);
+  tor_libevent_initialize(&evcfg);
 
   {
-    struct event_base *base = tor_libevent_get_base();
-    int r = replyqueue_register_reply_event(rq, base);
+    int r = threadpool_register_reply_event(tp,
+                                            replysock_readable_cb);
     tor_assert(r == 0);
   }
 
@@ -447,7 +427,7 @@ main(int argc, char **argv)
 #endif /* defined(TRACK_RESPONSES) */
 
   for (i = 0; i < opt_n_inflight; ++i) {
-    if (! add_work(tp, rq)) {
+    if (! add_work(tp)) {
       puts("Couldn't add work.");
       return 1;
     }
@@ -459,8 +439,6 @@ main(int argc, char **argv)
   }
 
   tor_libevent_run_event_loop(tor_libevent_get_base(), 0);
-
-  threadpool_shutdown(tp);
 
   if (n_sent != opt_n_items || n_received+n_successful_cancel != n_sent) {
     printf("%d vs %d\n", n_sent, opt_n_items);

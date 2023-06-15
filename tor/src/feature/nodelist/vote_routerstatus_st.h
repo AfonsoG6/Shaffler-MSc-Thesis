@@ -1,9 +1,13 @@
 /* Copyright (c) 2001 Matej Pfajfar.
  * Copyright (c) 2001-2004, Roger Dingledine.
  * Copyright (c) 2004-2006, Roger Dingledine, Nick Mathewson.
- * Copyright (c) 2007-2019, The Tor Project, Inc. */
+ * Copyright (c) 2007-2021, The Tor Project, Inc. */
 /* See LICENSE for licensing information */
 
+/**
+ * @file vote_routerstatus_st.h
+ * @brief Routerstatus (vote entry) structure
+ **/
 #ifndef VOTE_ROUTERSTATUS_ST_H
 #define VOTE_ROUTERSTATUS_ST_H
 
@@ -14,6 +18,7 @@
 struct vote_routerstatus_t {
   routerstatus_t status; /**< Underlying 'status' object for this router.
                           * Flags are redundant. */
+  time_t published_on; /**< When was this router published? */
   /** How many known-flags are allowed in a vote? This is the width of
    * the flags field of vote_routerstatus_t */
 #define MAX_KNOWN_FLAGS_IN_VOTE 64
