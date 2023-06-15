@@ -4092,7 +4092,7 @@ get_delay_timespec(circuit_t *circ, int direction)
   do {
     if (direction == CELL_DIRECTION_IN) microsec = scale*get_delay_microseconds_in(circ);
     else microsec = scale*get_delay_microseconds_out(circ);
-  } while (microsec > scale*2e6);
+  } while (microsec > scale*0.5e6);
   ts.tv_sec = (time_t)(microsec / 1e6);
   ts.tv_nsec = (time_t)((microsec - ts.tv_sec * 1e6) * 1e3);
   return ts;
