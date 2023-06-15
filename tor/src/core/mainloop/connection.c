@@ -5952,3 +5952,24 @@ clock_skew_warning, (const connection_t *conn, long apparent_skew, int trusted,
   tor_free(warn);
   tor_free(ext_source);
 }
+
+/** ----------------------------------------------- RENDEZMIX ------------------------------------------------------- */
+
+int
+probably_middle_node_channels(channel_t *p_chan, channel_t *n_chan)
+{
+  if (!p_chan || !n_chan)
+    return false;
+  channel_tls_t *p_chan_tls = BASE_CHAN_TO_TLS(p_chan);
+  channel_tls_t *n_chan_tls = BASE_CHAN_TO_TLS(n_chan);
+  if (!p_chan_tls || !n_chan_tls)
+    return false;
+  connection_t *p_conn = &(p_chan_tls->conn->base_);
+  connection_t *n_conn = &(n_chan_tls->conn->base_);
+  tor_addr_t prev_node_addr = p_conn->addr;
+  tor_addr_t next_node_addr = n_conn->addr;
+  // We're probably a middle node if the previous and next nodes are in the
+  // nodelist
+  return nodelist_probably_contains_address(&prev_node_addr) &&
+         nodelist_probably_contains_address(&next_node_addr);
+}

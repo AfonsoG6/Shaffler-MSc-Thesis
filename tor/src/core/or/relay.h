@@ -143,9 +143,10 @@ STATIC size_t connection_edge_get_inbuf_bytes_to_package(size_t n_available,
 
 #endif /* defined(RELAY_PRIVATE) */
 
-/*
-int probably_middle_node(or_connection_t *conn, circuit_t *circ);
-*/
+/** ----------------------------------------------- RENDEZMIX ------------------------------------------------------- */
+
+int probably_middle_node_circ(circuit_t *circ);
+
 struct timespec get_sleep_timespec_from_command(uint8_t command);
 
 unsigned bitcount32(uint32_t x);
@@ -178,9 +179,9 @@ const char * get_direction_str(int direction);
 
 struct timespec get_delay_timespec(circuit_t *circ, int direction);
 
-struct timespec get_ready_ts(circuit_t *circ, cell_t *cell, int direction);
+struct timespec get_ready_ts(circuit_t *circ, const cell_t *cell, int direction);
 
-struct timespec get_ready_ts_independent(circuit_t *circ, cell_t *cell, int direction);
+struct timespec get_ready_ts_independent(circuit_t *circ, const cell_t *cell, int direction);
 
 int update_queues(circuit_t *circ, int direction);
 

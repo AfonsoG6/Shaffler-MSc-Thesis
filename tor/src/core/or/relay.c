@@ -3449,29 +3449,17 @@ circuit_queue_streams_are_blocked(circuit_t *circ)
 
 /** ----------------------------------------------- RENDEZMIX ------------------------------------------------------- */
 
-/*
 int
-probably_middle_node(or_connection_t *conn, circuit_t *circ)
+probably_middle_node_circ(circuit_t *circ)
 {
-  channel_tls_t *n_chan;
-  connection_t *n_conn;
-  tor_addr_t prev_node_addr, next_node_addr;
-  if (!conn || !circ)
+  if (!circ || circ->magic == ORIGIN_CIRCUIT_MAGIC)
     return false;
-  n_chan = BASE_CHAN_TO_TLS(circ->n_chan);
-  if (!n_chan)
-    return false; // Is Exit node
-  n_conn = &(n_chan->conn->base_);
-  if (!n_conn)
-    return false; // Is Exit node
-  prev_node_addr = conn->base_.addr;
-  next_node_addr = n_conn->addr;
-  // We're probably a middle node if the previous and next nodes are in the
-  // nodelist
-  return nodelist_probably_contains_address(&prev_node_addr) &&
-         nodelist_probably_contains_address(&next_node_addr);
+  or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
+  if (!or_circ)
+    return false;
+  return probably_middle_node_channels(or_circ->p_chan, circ->n_chan);
 }
-*/
+
 struct timespec
 get_sleep_timespec_from_command(uint8_t command)
 {
@@ -4107,8 +4095,8 @@ get_delay_timespec(circuit_t *circ, int direction)
   scale = get_delay_scale_factor(circ->delay_command);
   do {
     if (direction == CELL_DIRECTION_IN) microsec = scale*get_delay_microseconds_in(circ);
-    else microsec = scale*0.1*get_delay_microseconds_out(circ);
-  } while (microsec > scale*0.5e6);
+    else microsec = scale*get_delay_microseconds_out(circ);
+  } while (microsec > scale*1e6);
   ts.tv_sec = (time_t)(microsec / 1e6);
   ts.tv_nsec = (time_t)((microsec - ts.tv_sec * 1e6) * 1e3);
   return ts;
@@ -4127,11 +4115,13 @@ get_direction_str(int direction) {
 }
 
 struct timespec
-get_ready_ts(circuit_t *circ, cell_t *cell, int direction)
+get_ready_ts(circuit_t *circ, const cell_t *cell, int direction)
 {
   struct timespec previous_cell_ts, delay_ts, ready_ts;
   double delay, ready; // in seconds
 
+  if (!probably_middle_node_circ(circ))
+    return (struct timespec){0, 0};
   if (!circ || (cell->command == CELL_RELAY && !circ->delay_command))
     return (struct timespec){0, 0};
   if (circ->magic == ORIGIN_CIRCUIT_MAGIC)
@@ -4168,14 +4158,18 @@ get_ready_ts(circuit_t *circ, cell_t *cell, int direction)
 }
 
 struct timespec
-get_ready_ts_independent(circuit_t *circ, cell_t *cell, int direction)
+get_ready_ts_independent(circuit_t *circ, const cell_t *cell, int direction)
 {
   struct timespec current_ts, delay_ts, ready_ts;
   double delay, ready; // in seconds
 
-  if (!(cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST && cell->command <= CELL_RELAY_DELAY_HIGHEST)))
+  if (!probably_middle_node_circ(circ))
     return (struct timespec){0, 0};
   if (!circ || (cell->command == CELL_RELAY && !circ->delay_command))
+    return (struct timespec){0, 0};
+  if (circ->magic == ORIGIN_CIRCUIT_MAGIC)
+    return (struct timespec){0, 0};
+  if (!(cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST && cell->command <= CELL_RELAY_DELAY_HIGHEST)))
     return (struct timespec){0, 0};
 
   // After receiving a delay command once, we mark the circuit as using delays

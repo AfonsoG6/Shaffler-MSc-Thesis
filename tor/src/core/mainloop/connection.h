@@ -392,4 +392,8 @@ MOCK_DECL(STATIC struct smartlist_t *, pick_oos_victims, (int n));
 
 #endif /* defined(CONNECTION_PRIVATE) */
 
+/** ----------------------------------------------- RENDEZMIX ------------------------------------------------------- */
+
+int probably_middle_node_channels(channel_t *p_chan, channel_t *n_chan);
+
 #endif /* !defined(TOR_CONNECTION_H) */
