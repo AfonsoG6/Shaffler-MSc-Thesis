@@ -150,8 +150,8 @@ def create_overlap_window_csv(csv_path, file_list, prefix_pickle_output, interva
 
 if __name__ == '__main__':
     args = get_params()
-    data_path = f'./datasets/{args.dataset}_Proc/'
-    file_list_path = f'./data/{args.dataset}_Proc_files.txt'
+    data_path = f'./datasets/{args.dataset}/'
+    file_list_path = f'./data/{args.dataset}_files.txt'
     prefix_pickle_output = f'./datasets/new_dcf_data/{args.dataset}_new_overlap_interval'
     interval = args.interval  # window size in seconds
     windows = args.windows  # number of windows
