@@ -5,7 +5,7 @@ import os
 import re
 
 info_clients: dict = {} # {client_name: [{timestamp, circuit_idx, site_idx}]}
-info_servers: list = [] # [{timestamp, port, circuit_idx, site_idx}]
+info_servers: dict = {} # {port: [{timestamp, port, circuit_idx, site_idx}]}
 site_counter: int = 0
 
 def find_clients(hosts_path: str) -> list:
@@ -25,11 +25,13 @@ def get_client_flows(hostname: str, hosts_path: str) -> None:
     global info_clients, info_servers, site_counter
 
     host_path = os.path.join(hosts_path, hostname)
+    circuit_idx: int = int(hostname[len("customclient"):])
+    port: int = 10000 + circuit_idx
 
     if hostname not in info_clients.keys():
         info_clients[hostname] = []
-    circuit_idx: int = int(hostname[len("customclient"):])
-    port: int = 10000 + circuit_idx
+    if port not in info_servers.keys():
+        info_servers[port] = []
     
     for file in os.listdir(host_path):
         if file.endswith(".tgenrc.graphml"):
@@ -42,10 +44,9 @@ def get_client_flows(hostname: str, hosts_path: str) -> None:
                 "circuit_idx": circuit_idx,
                 "site_idx": site_idx
             })
-            info_servers.append({
+            info_servers[port].append({
                 "timestamp": timestamp,
                 "duration": 30,
-                "port": port,
                 "circuit_idx": circuit_idx,
                 "site_idx": site_idx
             })
@@ -70,14 +71,18 @@ def main():
     for client in clients:
         get_client_flows(client, hosts_path)
 
+    # Sort info_clients by timestamp
+    for hostname in info_clients.keys():
+        info_clients[hostname].sort(key=lambda x: x["timestamp"])
+    
+    # Sort info_servers by timestamp
+    for port in info_servers.keys():
+        info_servers[port].sort(key=lambda x: x["timestamp"])
+
     with open(os.path.join("stage", f"info_clients.pickle"), "wb") as file:
         pickle.dump(info_clients, file)
     with open(os.path.join("stage", f"info_clients.json"), "w") as file:
         json.dump(info_clients, file, indent=4)
-    
-    # Sort info_servers by timestamp
-    info_servers.sort(key=lambda x: x["timestamp"])
-
     with open(os.path.join("stage", f"info_servers.pickle"), "wb") as file:
         pickle.dump(info_servers, file)
     with open(os.path.join("stage", f"info_servers.json"), "w") as file:
