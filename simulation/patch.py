@@ -73,8 +73,8 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
     new_host["network_node_id"] = netnodeid
     tgen_proc_template = new_host["processes"][3]
     new_host["processes"] = new_host["processes"][:3]
-    for flow_start in range(300 + random.randint(0, 60), duration, 60):
-        if flow_start + 30 >= duration:
+    for flow_start in range(300 + random.randint(0, 90), duration, 90):
+        if flow_start + 60 >= duration:
             break
         with open(os.path.join(templates_path, "tgenrc.graphml"), "r") as f:
             data = f.read()
@@ -86,7 +86,7 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
         tgen_proc = deepcopy(tgen_proc_template)
         tgen_proc["args"] = f"t{flow_start}.tgenrc.graphml"
         tgen_proc["start_time"] = flow_start
-        tgen_proc["shutdown_time"] = flow_start + 30
+        tgen_proc["shutdown_time"] = flow_start + 60
         new_host["processes"].append(tgen_proc)
     hosts[newhostname] = new_host
     print(f"Added {newhostname} to shadow.config.yaml")
