@@ -101,8 +101,8 @@ def create_overlap_window_csv(
 if __name__ == "__main__":
     args = get_params()
 
-    data_path = f"./datasets/{args.dataset}_Proc/"
-    out_file_path = f"./data/{args.dataset}_Proc_files.txt"
+    data_path = f"./datasets/{args.dataset}/"
+    out_file_path = f"./data/{args.dataset}_files.txt"
     # min number of packets per window in both ends, used  30 for 500
     threshold = args.threshold
     interval = args.interval  # window size in seconds
