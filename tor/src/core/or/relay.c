@@ -2673,13 +2673,15 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
       add_circ_to_update(circ, exitward);
   }
   else {
+    /*
     // Keep order of cells
     if (exitward && circ->n_chan_delayed_cells.n > 0)
       cell_queue_append(&circ->n_chan_delayed_cells, copy);
     else if (!exitward && TO_OR_CIRCUIT(circ)->p_chan_delayed_cells.n > 0)
       cell_queue_append(&TO_OR_CIRCUIT(circ)->p_chan_delayed_cells, copy);
     else
-      cell_queue_append(queue, copy);
+    */
+    cell_queue_append(queue, copy);
   }
 }
 
@@ -4105,7 +4107,7 @@ get_delay_timespec(circuit_t *circ, int direction)
   scale = get_delay_scale_factor(circ->delay_command);
   do {
     if (direction == CELL_DIRECTION_IN) microsec = scale*get_delay_microseconds_in(circ);
-    else microsec = scale*get_delay_microseconds_out(circ);
+    else microsec = scale*0.1*get_delay_microseconds_out(circ);
   } while (microsec > scale*0.5e6);
   ts.tv_sec = (time_t)(microsec / 1e6);
   ts.tv_nsec = (time_t)((microsec - ts.tv_sec * 1e6) * 1e3);

@@ -699,8 +699,9 @@ circuitmux_num_cells, (circuitmux_t *cmux))
   struct monotime_t now;
   tor_assert(cmux);
 
+  /* RENDEZMIX */
   monotime_get(&now);
-  if (monotime_diff_usec(&now, &cmux->last_update) > 1) {
+  if (monotime_diff_nsec(&now, &cmux->last_update) > 100) {
     update_cmux_all_queues(cmux);
     cmux->last_update = now;
   }
