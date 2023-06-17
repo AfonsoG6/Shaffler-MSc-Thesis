@@ -4223,6 +4223,7 @@ update_queues(circuit_t *circ, int direction)
     cell = cell_queue_pop(delay_queue);
     cell_queue_append(queue, cell);
     n++;
+    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] ready=%fs", get_direction_str(direction), (cell->ready_ts.tv_sec + cell->ready_ts.tv_nsec / 1e9));
   }
   return n;
 }
