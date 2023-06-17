@@ -700,6 +700,8 @@ circuitmux_num_cells, (circuitmux_t *cmux))
 {
   tor_assert(cmux);
 
+  update_cmux_all_queues(cmux);
+
   return cmux->n_cells + cmux->destroy_cell_queue.n;
 }
 
