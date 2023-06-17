@@ -1311,9 +1311,6 @@ add_circ_to_update(circuit_t *circ, int exitward)
     cmux = TO_OR_CIRCUIT(circ)->p_chan->cmux;
     smartlist_add(cmux->in_circs_to_update, circ);
   }
-  if (smartlist_len(cmux->out_circs_to_update)+smartlist_len(cmux->in_circs_to_update) == 1) {
-    smartlist_add(get_cmuxs_to_update(), cmux);
-  }
 }
 
 void
@@ -1373,5 +1370,13 @@ update_all_cmuxs_all_queues(smartlist_t *cmuxs) {
       smartlist_del(cmuxs, idx);
       idx--; // smartlist_del replaces the idx'th element with the last one
     }
+  }
+}
+
+void
+add_cmux_to_update(smartlist_t *sl, circuitmux_t *cmux)
+{
+  if (smartlist_len(cmux->out_circs_to_update) + smartlist_len(cmux->in_circs_to_update) == 1) {
+    smartlist_add(sl, cmux);
   }
 }

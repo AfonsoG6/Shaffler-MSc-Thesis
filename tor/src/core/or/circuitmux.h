@@ -227,5 +227,7 @@ void update_cmux_all_queues(circuitmux_t *cmux);
 
 void update_all_cmuxs_all_queues(smartlist_t *cmuxs);
 
+void add_cmux_to_update(smartlist_t *sl, circuitmux_t *cmux);
+
 #endif /* !defined(TOR_CIRCUITMUX_H) */
 
