@@ -1324,6 +1324,7 @@ update_cmux_all_queues(circuitmux_t *cmux) {
 
   if (!(cmux->last_update_ts.tv_sec == 0 && cmux->last_update_ts.tv_nsec == 0) &&
       !(now_us - last_us > 1)) {
+    log_info(LD_GENERAL, "[RENDEZMIX][update_cmux_all_queues] last_us: %f, now_us: %f, diff: %f", last_us, now_us, now_us - last_us);
     return;
   }
 
