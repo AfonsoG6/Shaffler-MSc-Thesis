@@ -4199,16 +4199,19 @@ update_queues(circuit_t *circ, int direction)
   struct timespec now_ts;
   or_circuit_t *or_circ;
   packed_cell_t *cell;
+  circuitmux_t *cmux;
   int i, n = 0;
 
   if (direction == CELL_DIRECTION_OUT) {
     delay_queue = &circ->n_chan_delayed_cells;
     queue = &circ->n_chan_cells;
+    cmux = circ->n_chan->cmux;
   }
   else {
     or_circ = TO_OR_CIRCUIT(circ);
     delay_queue = &or_circ->p_chan_delayed_cells;
     queue = &or_circ->p_chan_cells;
+    cmux = or_circ->p_chan->cmux;
   }
 
   clock_gettime(CLOCK_REALTIME, &now_ts);
@@ -4224,7 +4227,7 @@ update_queues(circuit_t *circ, int direction)
     cell = cell_queue_pop(delay_queue);
     cell_queue_append(queue, cell);
     n++;
-    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] sec:(now=%ld, ready=%ld) nsec:(now=%ld, ready=%ld)", get_direction_str(direction), now_ts.tv_sec, cell->ready_ts.tv_sec, now_ts.tv_nsec, cell->ready_ts.tv_nsec);
+    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] cmux:0x%p sec:(now=%ld, ready=%ld) nsec:(now=%ld, ready=%ld)", get_direction_str(direction), cmux, now_ts.tv_sec, cell->ready_ts.tv_sec, now_ts.tv_nsec, cell->ready_ts.tv_nsec);
   }
   return n;
 }
