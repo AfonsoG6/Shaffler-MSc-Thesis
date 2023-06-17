@@ -69,6 +69,8 @@
  *     made to attach all existing circuits to the new policy.
  **/
 
+#include "lib/time/compat_time.h"
+#include <stdint.h>
 #define CIRCUITMUX_PRIVATE
 
 #include "core/or/or.h"
@@ -697,11 +699,14 @@ MOCK_IMPL(unsigned int,
 circuitmux_num_cells, (circuitmux_t *cmux))
 {
   struct monotime_t now;
+  int64_t diff;
   tor_assert(cmux);
 
   /* RENDEZMIX */
   monotime_get(&now);
-  if (monotime_diff_nsec(&now, &cmux->last_update) > 100) {
+  diff = monotime_diff_nsec(&now, &cmux->last_update);
+  log_info(LD_GENERAL, "[RENDEZMIX][circuitmux_num_cells] diff: %ld now: %u last_update: %u", diff, monotime_coarse_to_stamp(&now), monotime_coarse_to_stamp(&cmux->last_update));
+  if (diff > 100) {
     update_cmux_all_queues(cmux);
     cmux->last_update = now;
   }
