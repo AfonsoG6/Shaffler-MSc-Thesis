@@ -73,8 +73,6 @@ vanilla_scheduler_run(void)
       continue;
     }
 
-    update_cmux_all_queues(chan->cmux);
-
     /* Figure out how many cells we can write */
     n_cells = channel_num_cells_writeable(chan);
     if (n_cells > 0) {
