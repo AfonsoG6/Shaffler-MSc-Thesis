@@ -212,7 +212,7 @@ struct circuitmux_t {
   circuitmux_policy_data_t *policy_data;
 
   /* RENDEZMIX */
-  monotime_t last_update;
+  struct timespec last_update_ts;
   smartlist_t *out_circs_to_update;
   smartlist_t *in_circs_to_update;
 };

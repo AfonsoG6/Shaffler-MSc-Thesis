@@ -698,17 +698,21 @@ circuitmux_num_cells_for_circuit(circuitmux_t *cmux, circuit_t *circ)
 MOCK_IMPL(unsigned int,
 circuitmux_num_cells, (circuitmux_t *cmux))
 {
-  struct monotime_t now;
-  int64_t diff;
+  struct timespec now_ts;
+  double now_us, last_us;
   tor_assert(cmux);
 
   /* RENDEZMIX */
-  monotime_get(&now);
-  diff = monotime_diff_nsec(&now, &cmux->last_update);
-  log_info(LD_GENERAL, "[RENDEZMIX][circuitmux_num_cells] diff: %ld now: %u last_update: %u", diff, monotime_coarse_to_stamp(&now), monotime_coarse_to_stamp(&cmux->last_update));
-  if (diff > 100) {
+  clock_gettime(CLOCK_REALTIME, &now_ts);
+  now_us =  (double)now_ts.tv_sec * 1e6 +
+            (double)now_ts.tv_nsec / 1e3;
+  last_us = (double)cmux->last_update_ts.tv_sec * 1e6 +
+            (double)cmux->last_update_ts.tv_nsec / 1e3;
+
+  if ((cmux->last_update_ts.tv_sec == 0 && cmux->last_update_ts.tv_nsec == 0) ||
+      (now_us - last_us > 1)) {
     update_cmux_all_queues(cmux);
-    cmux->last_update = now;
+    cmux->last_update_ts = now_ts;
   }
 
   return cmux->n_cells + cmux->destroy_cell_queue.n;
