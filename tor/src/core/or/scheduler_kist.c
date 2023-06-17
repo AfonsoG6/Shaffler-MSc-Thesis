@@ -615,8 +615,8 @@ kist_scheduler_run(void)
             smartlist_len(cp));
 
   /* The main scheduling loop. Loop until there are no more pending channels */
+  update_all_cmuxs_all_queues(get_cmuxs_to_update()); // RENDEZMIX
   while (smartlist_len(cp) > 0) {
-    update_all_cmuxs_all_queues(get_cmuxs_to_update()); // RENDEZMIX
     /* get best channel */
     chan = smartlist_pqueue_pop(cp, scheduler_compare_channels,
                                 offsetof(channel_t, sched_heap_idx));
@@ -733,6 +733,7 @@ kist_scheduler_run(void)
                              offsetof(channel_t, sched_heap_idx), chan);
       }
     }
+    update_all_cmuxs_all_queues(get_cmuxs_to_update()); // RENDEZMIX
   } /* End of main scheduling loop */
 
   /* Write the outbuf of any channels that still have data */

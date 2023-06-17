@@ -1334,7 +1334,7 @@ update_cmux_all_queues(circuitmux_t *cmux) {
   smartlist_t *outlst = cmux->out_circs_to_update;
   smartlist_t *inlst = cmux->in_circs_to_update;
 
-  log_info(LD_GENERAL, "[RENDEZMIX][update_cmux_all_queues] Updating queues for %d circuits", smartlist_len(outlst) + smartlist_len(inlst));
+  //log_info(LD_GENERAL, "[RENDEZMIX][update_cmux_all_queues] Updating queues for %d circuits", smartlist_len(outlst) + smartlist_len(inlst));
   for (idx = 0; idx < smartlist_len(outlst); ++idx) {
     circuit_t *circ = smartlist_get(outlst, idx);
     if (update_queues(circ, CELL_DIRECTION_OUT)) {
@@ -1364,7 +1364,7 @@ void
 update_all_cmuxs_all_queues(smartlist_t *cmuxs) {
   int idx;
 
-  log_info(LD_GENERAL, "[RENDEZMIX][CMUXS] Updating queues for %d cmuxs", smartlist_len(cmuxs));
+  //log_info(LD_GENERAL, "[RENDEZMIX][update_all_cmuxs_all_queues] Updating queues for %d cmuxs", smartlist_len(cmuxs));
   for (idx = 0; idx < smartlist_len(cmuxs); ++idx) {
     circuitmux_t *cmux = smartlist_get(cmuxs, idx);
     update_cmux_all_queues(cmux);
@@ -1373,7 +1373,7 @@ update_all_cmuxs_all_queues(smartlist_t *cmuxs) {
       idx--; // smartlist_del replaces the idx'th element with the last one
     }
   }
-  log_info(LD_GENERAL, "[RENDEZMIX][CMUXS] Only %d cmuxs left to update", smartlist_len(cmuxs));
+  //log_info(LD_GENERAL, "[RENDEZMIX][update_all_cmuxs_all_queues] Only %d cmuxs left to update", smartlist_len(cmuxs));
 }
 
 void
