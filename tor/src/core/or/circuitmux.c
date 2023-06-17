@@ -1363,6 +1363,8 @@ update_cmux_all_queues(circuitmux_t *cmux) {
 void
 update_all_cmuxs_all_queues(smartlist_t *cmuxs) {
   int idx;
+
+  log_info(LD_GENERAL, "[RENDEZMIX][update_all_cmuxs_all_queues] Updating queues for %d cmuxs", smartlist_len(cmuxs));
   for (idx = 0; idx < smartlist_len(cmuxs); ++idx) {
     circuitmux_t *cmux = smartlist_get(cmuxs, idx);
     update_cmux_all_queues(cmux);
