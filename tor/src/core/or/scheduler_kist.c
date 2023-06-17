@@ -616,10 +616,10 @@ kist_scheduler_run(void)
 
   /* The main scheduling loop. Loop until there are no more pending channels */
   while (smartlist_len(cp) > 0) {
+    update_all_cmuxs_all_queues(get_cmuxs_to_update()); // RENDEZMIX
     /* get best channel */
     chan = smartlist_pqueue_pop(cp, scheduler_compare_channels,
                                 offsetof(channel_t, sched_heap_idx));
-    update_cmux_all_queues(chan->cmux);
     if (SCHED_BUG(!chan, NULL)) {
       /* Some-freaking-how a NULL got into the channels_pending. That should
        * never happen, but it should be harmless to ignore it and keep looping.

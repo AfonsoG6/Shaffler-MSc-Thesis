@@ -1303,10 +1303,16 @@ circuitmux_compare_muxes, (circuitmux_t *cmux_1, circuitmux_t *cmux_2))
 void
 add_circ_to_update(circuit_t *circ, int exitward)
 {
+  circuitmux_t *cmux;
   if (exitward) {
-    smartlist_add(circ->n_chan->cmux->out_circs_to_update, circ);
+    cmux = circ->n_chan->cmux;
+    smartlist_add(cmux->out_circs_to_update, circ);
   } else {
-    smartlist_add(TO_OR_CIRCUIT(circ)->p_chan->cmux->in_circs_to_update, circ);
+    cmux = TO_OR_CIRCUIT(circ)->p_chan->cmux;
+    smartlist_add(cmux->in_circs_to_update, circ);
+  }
+  if (smartlist_len(cmux->out_circs_to_update)+smartlist_len(cmux->in_circs_to_update) == 1) {
+    smartlist_add(get_cmuxs_to_update(), cmux);
   }
 }
 
@@ -1323,7 +1329,7 @@ update_cmux_all_queues(circuitmux_t *cmux) {
             (double)cmux->last_update_ts.tv_nsec / 1e3;
 
   if (!(cmux->last_update_ts.tv_sec == 0 && cmux->last_update_ts.tv_nsec == 0) &&
-      !(now_us - last_us > 1)) {
+      !(now_us - last_us > 100)) {
     return;
   }
 
@@ -1355,4 +1361,17 @@ update_cmux_all_queues(circuitmux_t *cmux) {
   }
 
   cmux->last_update_ts = now_ts;
+}
+
+void
+update_all_cmuxs_all_queues(smartlist_t *cmuxs) {
+  int idx;
+  for (idx = 0; idx < smartlist_len(cmuxs); ++idx) {
+    circuitmux_t *cmux = smartlist_get(cmuxs, idx);
+    update_cmux_all_queues(cmux);
+    if (smartlist_len(cmux->out_circs_to_update) == 0 && smartlist_len(cmux->in_circs_to_update) == 0) {
+      smartlist_del(cmuxs, idx);
+      idx--; // smartlist_del replaces the idx'th element with the last one
+    }
+  }
 }

@@ -4229,5 +4229,13 @@ update_queues(circuit_t *circ, int direction)
     n++;
     log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] cmux:%p sec:(now=%ld, ready=%ld) nsec:(now=%ld, ready=%ld)", get_direction_str(direction), cmux, now_ts.tv_sec, cell->ready_ts.tv_sec, now_ts.tv_nsec, cell->ready_ts.tv_nsec);
   }
+  if (n > 0) {
+    if (direction == CELL_DIRECTION_OUT) {
+      scheduler_channel_has_waiting_cells(circ->n_chan);
+    }
+    else {
+      scheduler_channel_has_waiting_cells(or_circ->p_chan);
+    }
+  }
   return n;
 }
