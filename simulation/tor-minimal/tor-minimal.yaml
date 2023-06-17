@@ -26,7 +26,8 @@ hosts:
     processes:
     - path: tgen
       # See https://shadow.github.io/docs/guide/compatibility_notes.html#libopenblas
-      environment: OPENBLAS_NUM_THREADS=1
+      environment:
+        OPENBLAS_NUM_THREADS: '1'
       args: ../../../conf/tgen.server.graphml.xml
       start_time: 1 sec
   4uthority:
@@ -75,7 +76,8 @@ hosts:
     processes:
     - path: tgen
       # See https://shadow.github.io/docs/guide/compatibility_notes.html#libopenblas
-      environment: OPENBLAS_NUM_THREADS=1
+      environment:
+        OPENBLAS_NUM_THREADS: '1'
       args: ../../../conf/tgen.client.graphml.xml
       start_time: 5 min
   torclient:
@@ -86,18 +88,12 @@ hosts:
       args: --Address torclient --Nickname torclient
             --defaults-torrc torrc-defaults -f torrc
       start_time: 10 min
+    - path: oniontrace
+      args: Mode=log TorControlPort=9051 LogLevel=info Events=CIRC,STREAM
+      start_time: 11 min
     - path: tgen
       # See https://shadow.github.io/docs/guide/compatibility_notes.html#libopenblas
-      environment: OPENBLAS_NUM_THREADS=1
+      environment:
+        OPENBLAS_NUM_THREADS: '1'
       args: ../../../conf/tgen.torclient.graphml.xml
       start_time: 20 min
-    - path: tor
-      args: --Address torclientloop --Nickname torclientloop
-            --defaults-torrc torrc-defaults -f torrc
-            --SocksPort 127.0.0.1:9090
-            --ControlPort 127.0.0.1:9091
-            --DataDirectory ./loop
-      start_time: 10 min
-    - path: python3
-      args: main.py -svh 11.0.0.100 -svp 29000 -cp1 9001 -sp2 9090 -cp2 9091
-      start_time: 11 min
