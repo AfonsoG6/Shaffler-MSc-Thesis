@@ -698,22 +698,7 @@ circuitmux_num_cells_for_circuit(circuitmux_t *cmux, circuit_t *circ)
 MOCK_IMPL(unsigned int,
 circuitmux_num_cells, (circuitmux_t *cmux))
 {
-  struct timespec now_ts;
-  double now_us, last_us;
   tor_assert(cmux);
-
-  /* RENDEZMIX */
-  clock_gettime(CLOCK_REALTIME, &now_ts);
-  now_us =  (double)now_ts.tv_sec * 1e6 +
-            (double)now_ts.tv_nsec / 1e3;
-  last_us = (double)cmux->last_update_ts.tv_sec * 1e6 +
-            (double)cmux->last_update_ts.tv_nsec / 1e3;
-
-  if ((cmux->last_update_ts.tv_sec == 0 && cmux->last_update_ts.tv_nsec == 0) ||
-      (now_us - last_us > 1)) {
-    update_cmux_all_queues(cmux);
-    cmux->last_update_ts = now_ts;
-  }
 
   return cmux->n_cells + cmux->destroy_cell_queue.n;
 }
@@ -1327,6 +1312,21 @@ add_circ_to_update(circuit_t *circ, int exitward)
 
 void
 update_cmux_all_queues(circuitmux_t *cmux) {
+  struct timespec now_ts;
+  double now_us, last_us;
+
+  /* RENDEZMIX */
+  clock_gettime(CLOCK_REALTIME, &now_ts);
+  now_us =  (double)now_ts.tv_sec * 1e6 +
+            (double)now_ts.tv_nsec / 1e3;
+  last_us = (double)cmux->last_update_ts.tv_sec * 1e6 +
+            (double)cmux->last_update_ts.tv_nsec / 1e3;
+
+  if (!(cmux->last_update_ts.tv_sec == 0 && cmux->last_update_ts.tv_nsec == 0) &&
+      !(now_us - last_us > 1)) {
+    return;
+  }
+
   int idx;
   smartlist_t *outlst = cmux->out_circs_to_update;
   smartlist_t *inlst = cmux->in_circs_to_update;
@@ -1353,4 +1353,6 @@ update_cmux_all_queues(circuitmux_t *cmux) {
       }
     }
   }
+
+  cmux->last_update_ts = now_ts;
 }
