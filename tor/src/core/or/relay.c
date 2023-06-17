@@ -3284,7 +3284,7 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
                              streamid_t fromstream)
 {
   or_circuit_t *orcirc = NULL;
-  cell_queue_t *queue;
+  cell_queue_t *queue, *delay_queue;
   int32_t max_queue_size;
   int streams_blocked;
   int exitward;
@@ -3294,11 +3294,13 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
   exitward = (direction == CELL_DIRECTION_OUT);
   if (exitward) {
     queue = &circ->n_chan_cells;
+    delay_queue = &circ->n_chan_delayed_cells;
     streams_blocked = circ->streams_blocked_on_n_chan;
     max_queue_size = max_circuit_cell_queue_size_out;
   } else {
     orcirc = TO_OR_CIRCUIT(circ);
     queue = &orcirc->p_chan_cells;
+    delay_queue = &orcirc->p_chan_delayed_cells;
     streams_blocked = circ->streams_blocked_on_p_chan;
     max_queue_size = max_circuit_cell_queue_size;
   }
@@ -3334,7 +3336,7 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
 
   /* If we have too many cells on the circuit, we should stop reading from
    * the edge streams for a while. */
-  if (!streams_blocked && queue->n >= cell_queue_highwatermark())
+  if (!streams_blocked && queue->n+delay_queue->n >= cell_queue_highwatermark())
     set_streams_blocked_on_circ(circ, chan, 1, 0); /* block streams */
 
   if (streams_blocked && fromstream) {
@@ -4122,7 +4124,7 @@ get_direction_str(int direction) {
 struct timespec
 get_ready_ts(circuit_t *circ, const cell_t *cell, int direction)
 {
-  struct timespec previous_cell_ts, delay_ts, ready_ts;
+  struct timespec previous_cell_ts, now_ts, delay_ts, ready_ts;
   double delay, ready; // in seconds
 
   if (!probably_middle_node_circ(circ))
@@ -4141,9 +4143,10 @@ get_ready_ts(circuit_t *circ, const cell_t *cell, int direction)
   if (direction == CELL_DIRECTION_IN) previous_cell_ts = circ->previous_cell_ts_in;
   else previous_cell_ts = circ->previous_cell_ts_out;
 
-  // If no previous_cell_ts, set it to now, meaning this packet will be delayed fully
-  if (previous_cell_ts.tv_sec == 0 && previous_cell_ts.tv_nsec == 0) {
-    clock_gettime(CLOCK_REALTIME, &previous_cell_ts);
+  // If previous_cell_ts is too old, set it to now
+  clock_gettime(CLOCK_REALTIME, &now_ts);
+  if (previous_cell_ts.tv_sec < now_ts.tv_sec || (previous_cell_ts.tv_sec == now_ts.tv_sec && previous_cell_ts.tv_nsec < now_ts.tv_nsec)) {
+    previous_cell_ts = now_ts;
   }
 
   // Get delay
@@ -4236,10 +4239,10 @@ update_queues(circuit_t *circ, int direction)
         get_direction_str(direction),
         cmux,
         cell->ready_ts.tv_sec,
-        (cell->ready_ts.tv_sec < now_ts.tv_sec)? "<": "==",
+        (cell->ready_ts.tv_sec < now_ts.tv_sec)? "<": (cell->ready_ts.tv_sec == now_ts.tv_sec)? "==": ">",
         now_ts.tv_sec,
         cell->ready_ts.tv_nsec,
-        (cell->ready_ts.tv_nsec < now_ts.tv_nsec)? "<": "==",
+        (cell->ready_ts.tv_nsec < now_ts.tv_nsec)? "<": (cell->ready_ts.tv_nsec == now_ts.tv_nsec)? "==": ">",
         now_ts.tv_nsec
     );
   }
