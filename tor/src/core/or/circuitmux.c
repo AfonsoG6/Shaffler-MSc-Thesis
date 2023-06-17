@@ -1322,6 +1322,7 @@ update_cmux_all_queues(circuitmux_t *cmux) {
   smartlist_t *outlst = cmux->out_circs_to_update;
   smartlist_t *inlst = cmux->in_circs_to_update;
 
+  log_info(LD_GENERAL, "[RENDEZMIX][update_cmux_all_queues] Updating queues for %d circuits", smartlist_len(outlst) + smartlist_len(inlst));
   for (idx = 0; idx < smartlist_len(outlst); ++idx) {
     circuit_t *circ = smartlist_get(outlst, idx);
     if (update_queues(circ, CELL_DIRECTION_OUT)) {
