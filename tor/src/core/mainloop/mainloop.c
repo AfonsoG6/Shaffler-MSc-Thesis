@@ -113,6 +113,10 @@
 #include "feature/nodelist/routerinfo_st.h"
 #include "core/or/socks_request_st.h"
 
+/* RENDEZMIX */
+#include "core/or/circuitmux.h"
+#include "core/or/scheduler.h"
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -2462,6 +2466,8 @@ run_main_loop_once(void)
 
   /* Make sure we know (about) what time it is. */
   update_approx_time(time(NULL));
+
+  update_all_cmuxs_all_queues(get_cmuxs_to_update());
 
   /* Here it is: the main loop.  Here we tell Libevent to poll until we have
    * an event, or the second ends, or until we have some active linked
