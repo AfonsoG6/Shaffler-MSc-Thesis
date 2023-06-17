@@ -4213,6 +4213,8 @@ update_queues(circuit_t *circ, int direction)
 
   clock_gettime(CLOCK_REALTIME, &now_ts);
 
+  log_info(LD_GENERAL, "[RENDEZMIX][update_queues()] delay_queue->n=%d", delay_queue->n);
+
   for (i=0; i<delay_queue->n; i++) {
     cell = TOR_SIMPLEQ_FIRST(&delay_queue->head);
     if (!cell) break;
