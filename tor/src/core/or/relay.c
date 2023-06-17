@@ -4224,7 +4224,7 @@ update_queues(circuit_t *circ, int direction)
     cell = cell_queue_pop(delay_queue);
     cell_queue_append(queue, cell);
     n++;
-    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] now=%fus ready=%fus", get_direction_str(direction), (now_ts.tv_sec*1e6 + now_ts.tv_nsec/1e3), (cell->ready_ts.tv_sec*1e6 + cell->ready_ts.tv_nsec/1e3));
+    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] sec:(now=%ld, ready=%ld) nsec:(now=%ld, ready=%ld)", get_direction_str(direction), now_ts.tv_sec, cell->ready_ts.tv_sec, now_ts.tv_nsec, cell->ready_ts.tv_nsec);
   }
   return n;
 }
