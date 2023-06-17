@@ -4213,8 +4213,7 @@ update_queues(circuit_t *circ, int direction)
 
   clock_gettime(CLOCK_REALTIME, &now_ts);
 
-  log_info(LD_GENERAL, "[RENDEZMIX][update_queues()] delay_queue->n=%d", delay_queue->n);
-
+  //log_info(LD_GENERAL, "[RENDEZMIX][update_queues()] delay_queue->n=%d", delay_queue->n);
   for (i=0; i<delay_queue->n; i++) {
     cell = TOR_SIMPLEQ_FIRST(&delay_queue->head);
     if (!cell) break;
@@ -4225,7 +4224,7 @@ update_queues(circuit_t *circ, int direction)
     cell = cell_queue_pop(delay_queue);
     cell_queue_append(queue, cell);
     n++;
-    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] ready=%fs", get_direction_str(direction), (cell->ready_ts.tv_sec + cell->ready_ts.tv_nsec / 1e9));
+    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] now=%fus ready=%fus", get_direction_str(direction), (now_ts.tv_sec*1e6 + now_ts.tv_nsec/1e3), (cell->ready_ts.tv_sec*1e6 + cell->ready_ts.tv_nsec/1e3));
   }
   return n;
 }
