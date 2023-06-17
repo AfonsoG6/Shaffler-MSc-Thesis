@@ -2650,6 +2650,7 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
                               int wide_circ_ids, int use_stats)
 {
   packed_cell_t *copy = packed_cell_copy(cell, wide_circ_ids);
+  circuitmux_t *cmux;
   int prev_n;
   (void)circ;
   (void)exitward;
@@ -2663,14 +2664,18 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
     if (exitward) {
       prev_n = circ->n_chan_delayed_cells.n;
       cell_queue_append(&circ->n_chan_delayed_cells, copy);
+      cmux = circ->n_chan->cmux;
     }
     else {
       prev_n = TO_OR_CIRCUIT(circ)->p_chan_delayed_cells.n;
       cell_queue_append(&TO_OR_CIRCUIT(circ)->p_chan_delayed_cells, copy);
+      cmux = TO_OR_CIRCUIT(circ)->p_chan->cmux;
     }
 
-    if (prev_n == 0)
+    if (prev_n == 0) {
       add_circ_to_update(circ, exitward);
+      add_cmux_to_update(get_cmuxs_to_update(), cmux);
+    }
   }
   else {
     /*
