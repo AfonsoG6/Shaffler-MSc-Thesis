@@ -310,6 +310,7 @@ timer_schedule(tor_timer_t *t, const struct timeval *tv)
   timeout_t to = timeouts_timeout(global_timeouts);
 
   timeouts_add(global_timeouts, t, delay);
+  log_info(LD_GENERAL, "[RENDEZMIX][TIMER] timer_schedule: %lu", delay);
 
   /* Should we update the libevent timer? */
   if (to <= delay) {
