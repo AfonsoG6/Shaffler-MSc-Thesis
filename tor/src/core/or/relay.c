@@ -639,7 +639,7 @@ relay_send_command_from_edge_,(streamid_t stream_id, circuit_t *circ,
     cell.circ_id = circ->n_circ_id;
     cell_direction = CELL_DIRECTION_OUT;
     /* RENDEZMIX Set cell.command */
-    if (circ->purpose == CIRCUIT_PURPOSE_C_GENERAL && circ->state == CIRCUIT_STATE_OPEN && payload_len == RELAY_PAYLOAD_SIZE) {
+    if (circ->purpose == CIRCUIT_PURPOSE_C_GENERAL && circ->state == CIRCUIT_STATE_OPEN) {
       cell.command = CELL_RELAY_DELAY_HIGHEST; // Delay scale factor [13, 127]
       log_info(LD_GENERAL, "[RENDEZMIX] Sending cell with delay command. payload_len: %lu", payload_len);
     }
@@ -4150,15 +4150,11 @@ get_ready_timeval_independent(circuit_t *circ, const cell_t *cell, int direction
 
 void
 delay_or_append_cell(const cell_t *cell, packed_cell_t *copy, circuit_t *circ, cell_queue_t *queue, int direction) {
-  if ((!probably_middle_node_circ(circ)) ||
-      (!circ) ||
-      (cell->command == CELL_RELAY && !circ->delay_command) ||
-      !(circ->magic == OR_CIRCUIT_MAGIC) ||
-      !(circ->purpose == CIRCUIT_PURPOSE_OR) ||
-      !(cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST && cell->command <= CELL_RELAY_DELAY_HIGHEST))) {
-    cell_queue_append(queue, copy);
-  }
-  else {
+  if ((probably_middle_node_circ(circ)) &&
+      (circ) &&
+      (circ->magic == OR_CIRCUIT_MAGIC) &&
+      (circ->purpose == CIRCUIT_PURPOSE_OR) &&
+      (circ->delay_command || (cell->command >= CELL_RELAY_DELAY_LOWEST && cell->command <= CELL_RELAY_DELAY_HIGHEST))) {
     delay_info_t *info = tor_malloc_zero(sizeof(delay_info_t));
     info->cell = copy;
     info->circ = circ;
@@ -4174,6 +4170,9 @@ delay_or_append_cell(const cell_t *cell, packed_cell_t *copy, circuit_t *circ, c
 
     tor_timer_t *timer = timer_new(cell_ready_callback, info);
     timer_schedule(timer, &delay_tv);
+  }
+  else {
+    cell_queue_append(queue, copy);
   }
 }
 
