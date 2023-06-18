@@ -89,11 +89,11 @@ hosts:
             --defaults-torrc torrc-defaults -f torrc
       start_time: 10 min
     - path: oniontrace
-      args: Mode=log TorControlPort=9051 LogLevel=info Events=CIRC,STREAM
+      args: Mode=log TorControlPort=9001 LogLevel=info Events=CIRC,STREAM
       start_time: 11 min
     - path: tgen
       # See https://shadow.github.io/docs/guide/compatibility_notes.html#libopenblas
       environment:
         OPENBLAS_NUM_THREADS: '1'
       args: ../../../conf/tgen.torclient.graphml.xml
-      start_time: 20 min
+      start_time: 15 min
