@@ -45,6 +45,7 @@
  * types of relay cells, launching requests or transmitting data as needed.
  **/
 
+#include <stdint.h>
 #define RELAY_PRIVATE
 #include "core/or/or.h"
 #include "feature/client/addressmap.h"
@@ -3259,6 +3260,7 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
   int32_t max_queue_size;
   int streams_blocked;
   int exitward;
+  uint16_t delay_n;
   if (circ->marked_for_close)
     return;
 
@@ -3267,11 +3269,13 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
     queue = &circ->n_chan_cells;
     streams_blocked = circ->streams_blocked_on_n_chan;
     max_queue_size = max_circuit_cell_queue_size_out;
+    delay_n = circ->delay_count_out;
   } else {
     orcirc = TO_OR_CIRCUIT(circ);
     queue = &orcirc->p_chan_cells;
     streams_blocked = circ->streams_blocked_on_p_chan;
     max_queue_size = max_circuit_cell_queue_size;
+    delay_n = circ->delay_count_in;
   }
 
   if (PREDICT_UNLIKELY(queue->n >= max_queue_size)) {
@@ -3305,7 +3309,7 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
 
   /* If we have too many cells on the circuit, we should stop reading from
    * the edge streams for a while. */
-  if (!streams_blocked && queue->n >= cell_queue_highwatermark())
+  if (!streams_blocked && queue->n + delay_n >= cell_queue_highwatermark())
     set_streams_blocked_on_circ(circ, chan, 1, 0); /* block streams */
 
   if (streams_blocked && fromstream) {
@@ -4156,6 +4160,9 @@ delay_or_append_cell(const cell_t *cell, packed_cell_t *copy, circuit_t *circ, c
     info->circ = circ;
     info->direction = direction;
 
+    if (direction == CELL_DIRECTION_OUT) circ->delay_count_out++;
+    else circ->delay_count_in++;
+
     copy->ready_tv = get_ready_timeval(circ, cell, direction);
     struct timeval delay_tv, now_tv;
     gettimeofday(&now_tv, NULL);
@@ -4189,9 +4196,11 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
   }
 
   if (direction == CELL_DIRECTION_OUT) {
+    circ->delay_count_out--;
     queue = &circ->n_chan_cells;
   }
   else {
+    circ->delay_count_in--;
     or_circ = TO_OR_CIRCUIT(circ);
     queue = &or_circ->p_chan_cells;
   }
