@@ -1001,7 +1001,6 @@ init_circuit_base(circuit_t *circ)
   circ->deliver_window = CIRCWINDOW_START;
   circuit_reset_sendme_randomness(circ);
   cell_queue_init(&circ->n_chan_cells);
-  cell_queue_init(&circ->n_chan_delayed_cells);
 
   smartlist_add(circuit_get_global_list(), circ);
   circ->global_circuitlist_idx = smartlist_len(circuit_get_global_list()) - 1;
@@ -1104,7 +1103,6 @@ or_circuit_new(circid_t p_circ_id, channel_t *p_chan)
 
   circ->remaining_relay_early_cells = MAX_RELAY_EARLY_CELLS_PER_CIRCUIT;
   cell_queue_init(&circ->p_chan_cells);
-  cell_queue_init(&circ->p_chan_delayed_cells);
 
   init_circuit_base(TO_CIRCUIT(circ));
 
