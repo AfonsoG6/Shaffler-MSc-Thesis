@@ -633,13 +633,14 @@ relay_send_command_from_edge_,(streamid_t stream_id, circuit_t *circ,
 
   memset(&cell, 0, sizeof(cell_t));
   cell.command = CELL_RELAY;
-  if (ALL_SENDERS_DECIDE_DELAYS || cpath_layer != NULL) {
-    cell.command = CELL_RELAY_DELAY_HIGHEST; // Delay scale factor [13, 127] (RENDEZMIX)
-  }
   if (CIRCUIT_IS_ORIGIN(circ)) {
     tor_assert(cpath_layer);
     cell.circ_id = circ->n_circ_id;
     cell_direction = CELL_DIRECTION_OUT;
+    /* RENDEZMIX Set cell.command */
+    if (circ->purpose == CIRCUIT_PURPOSE_C_GENERAL) {
+      cell.command = CELL_RELAY_DELAY_HIGHEST; // Delay scale factor [13, 127]
+    }
   } else {
     tor_assert(! cpath_layer);
     cell.circ_id = TO_OR_CIRCUIT(circ)->p_circ_id;
@@ -4151,6 +4152,7 @@ delay_or_append_cell(const cell_t *cell, packed_cell_t *copy, circuit_t *circ, c
       (!circ) ||
       (cell->command == CELL_RELAY && !circ->delay_command) ||
       (circ->magic == ORIGIN_CIRCUIT_MAGIC) ||
+      !(circ->purpose == CIRCUIT_PURPOSE_OR) ||
       !(cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST && cell->command <= CELL_RELAY_DELAY_HIGHEST))) {
     cell_queue_append(queue, copy);
   }
@@ -4194,7 +4196,7 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
     circ->delay_count_out--;
     queue = &circ->n_chan_cells;
     if (!circ->n_chan) {
-      log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] n_chan is NULL, dropping cell (%u)", get_direction_str(direction), circ->purpose);
+      log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] n_chan is NULL, dropping cell (%u)", get_direction_str(direction), circ->purpose);
       packed_cell_free(cell);
       return;
     }
@@ -4204,14 +4206,14 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
     or_circ = TO_OR_CIRCUIT(circ);
     queue = &or_circ->p_chan_cells;
     if (!or_circ->p_chan) {
-      log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] p_chan is NULL, dropping cell (%u)", get_direction_str(direction), circ->purpose);
+      log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] p_chan is NULL, dropping cell (%u)", get_direction_str(direction), circ->purpose);
       packed_cell_free(cell);
       return;
     }
   }
 
   if (circ->marked_for_close) {
-    log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] circuit is closed, dropping cell (%u)", get_direction_str(direction), circ->purpose);
+    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] circuit is closed, dropping cell (%u)", get_direction_str(direction), circ->purpose);
     packed_cell_free(cell);
     return;
   }
