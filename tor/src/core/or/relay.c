@@ -3255,7 +3255,7 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
                              streamid_t fromstream)
 {
   or_circuit_t *orcirc = NULL;
-  cell_queue_t *queue, *delay_queue;
+  cell_queue_t *queue;
   int32_t max_queue_size;
   int streams_blocked;
   int exitward;
@@ -4182,12 +4182,11 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
   cell_queue_t *queue;
   struct timeval now_tv;
 
-  if (circ->marked_for_close) {
+  if (circ->marked_for_close || circ->n_chan == NULL || circ->p_chan == NULL) {
     log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] circuit is closed, dropping cell", get_direction_str(direction));
     packed_cell_free(cell);
     return;
   }
-  log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] survived circuit check", get_direction_str(direction));
 
   if (direction == CELL_DIRECTION_OUT) {
     queue = &circ->n_chan_cells;
