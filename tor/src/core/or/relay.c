@@ -4182,7 +4182,7 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
   cell_queue_t *queue;
   struct timeval now_tv;
 
-  if (circ->marked_for_close || circ->n_chan == NULL || circ->p_chan == NULL) {
+  if (circ->marked_for_close || circ->n_chan == NULL) {
     log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] circuit is closed, dropping cell", get_direction_str(direction));
     packed_cell_free(cell);
     return;
