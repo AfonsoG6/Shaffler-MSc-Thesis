@@ -4189,20 +4189,31 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
   cell_queue_t *queue;
   struct timeval now_tv;
 
-  if (circ->marked_for_close || circ->n_chan == NULL) {
-    log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] circuit is closed, dropping cell", get_direction_str(direction));
-    packed_cell_free(cell);
-    return;
-  }
 
   if (direction == CELL_DIRECTION_OUT) {
     circ->delay_count_out--;
     queue = &circ->n_chan_cells;
+    if (!circ->n_chan) {
+      log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] n_chan is NULL, dropping cell", get_direction_str(direction));
+      packed_cell_free(cell);
+      return;
+    }
   }
   else {
     circ->delay_count_in--;
     or_circ = TO_OR_CIRCUIT(circ);
     queue = &or_circ->p_chan_cells;
+    if (!or_circ->p_chan) {
+      log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] p_chan is NULL, dropping cell", get_direction_str(direction));
+      packed_cell_free(cell);
+      return;
+    }
+  }
+
+  if (circ->marked_for_close) {
+    log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] circuit is closed, dropping cell", get_direction_str(direction));
+    packed_cell_free(cell);
+    return;
   }
 
   gettimeofday(&now_tv, NULL);
