@@ -238,7 +238,7 @@ static struct timeouts *timeouts_init(struct timeouts *T, timeout_t hz) {
 	}
 
 	T->curtime = 0;
-	T->hertz = (hz)? hz : TIMEOUT_mHZ;
+	T->hertz = (hz)? hz : TIMEOUT_HZ;
 
 	return T;
 } /* timeouts_init() */
