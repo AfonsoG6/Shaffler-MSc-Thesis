@@ -14,6 +14,9 @@
 
 #include "lib/evloop/token_bucket.h"
 
+/* RENDEZMIX includes */
+#include "lib/evloop/timers.h"
+
 struct onion_queue_t;
 
 /** An or_circuit_t holds information needed to implement a circuit at an
@@ -94,6 +97,10 @@ struct or_circuit_t {
    * used if this is a service introduction circuit at the intro point
    * (purpose = CIRCUIT_PURPOSE_INTRO_POINT). */
   token_bucket_ctr_t introduce2_bucket;
+
+  /** RENDEZMIX */
+  cell_queue_t p_delay_queue;
+  tor_timer_t *p_delay_timer;
 };
 
 #endif /* !defined(OR_CIRCUIT_ST_H) */

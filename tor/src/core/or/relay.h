@@ -149,7 +149,6 @@ STATIC size_t connection_edge_get_inbuf_bytes_to_package(size_t n_available,
 /** ----------------------------------------------- RENDEZMIX ------------------------------------------------------- */
 
 struct delay_info_t {
-  packed_cell_t *cell;
   circuit_t *circ;
   int direction;
 };
@@ -193,6 +192,8 @@ struct timeval get_ready_timeval(circuit_t *circ, const cell_t *cell, int direct
 struct timeval get_ready_timeval_independent(circuit_t *circ, const cell_t *cell, int direction);
 
 void delay_or_append_cell(const cell_t *cell, packed_cell_t *copy, circuit_t *circ, cell_queue_t *queue, int direction);
+
+void schedule_delay_timer(circuit_t *circ, int direction);
 
 void cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *time);
 
