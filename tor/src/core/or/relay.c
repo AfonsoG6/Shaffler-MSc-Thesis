@@ -45,6 +45,7 @@
  * types of relay cells, launching requests or transmitting data as needed.
  **/
 
+#include "core/or/circuit_st.h"
 #include <stdint.h>
 #define RELAY_PRIVATE
 #include "core/or/or.h"
@@ -4152,7 +4153,7 @@ delay_or_append_cell(const cell_t *cell, packed_cell_t *copy, circuit_t *circ, c
   if ((!probably_middle_node_circ(circ)) ||
       (!circ) ||
       (cell->command == CELL_RELAY && !circ->delay_command) ||
-      (circ->magic == ORIGIN_CIRCUIT_MAGIC) ||
+      !(circ->magic == OR_CIRCUIT_MAGIC) ||
       !(circ->purpose == CIRCUIT_PURPOSE_OR) ||
       !(cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST && cell->command <= CELL_RELAY_DELAY_HIGHEST))) {
     cell_queue_append(queue, copy);
