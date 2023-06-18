@@ -90,7 +90,7 @@ hosts:
       start_time: 10 min
     - path: oniontrace
       args: Mode=log TorControlPort=9001 LogLevel=info Events=CIRC,STREAM
-      start_time: 11 min
+      start_time: 602
     - path: tgen
       # See https://shadow.github.io/docs/guide/compatibility_notes.html#libopenblas
       environment:
