@@ -4183,7 +4183,6 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
   circuit_t *circ = info->circ;
   int direction = info->direction;
 
-  timer_disable(timer);
   timer_free(timer);
   tor_free(info);
   (void)time;
