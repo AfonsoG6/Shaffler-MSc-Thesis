@@ -4106,7 +4106,7 @@ get_ready_timeval(circuit_t *circ, const cell_t *cell, int direction)
   // Get delay
   delay_tv = get_delay_timeval(circ, direction);
   delay_s = delay_tv.tv_sec + delay_tv.tv_usec / 1e6;
-  delay_tv.tv_usec = (delay_tv.tv_usec / 100) * 100; // round to nearest 100 microseconds
+  delay_tv.tv_usec = (delay_tv.tv_usec / 1000) * 1000; // round to nearest 100 microseconds
 
   // Calculate ready time
   ready_tv.tv_sec = previous_cell_tv.tv_sec + delay_tv.tv_sec;
@@ -4135,7 +4135,7 @@ get_ready_timeval_independent(circuit_t *circ, const cell_t *cell, int direction
   // Get delay
   delay_tv = get_delay_timeval(circ, direction);
   delay = delay_tv.tv_sec + delay_tv.tv_usec / 1e6;
-  delay_tv.tv_usec = (delay_tv.tv_usec / 100) * 100; // round to nearest 100 microseconds
+  delay_tv.tv_usec = (delay_tv.tv_usec / 1000) * 1000; // round to nearest 100 microseconds
 
   // Calculate ready time
   ready_tv.tv_sec = now_tv.tv_sec + delay_tv.tv_sec;
