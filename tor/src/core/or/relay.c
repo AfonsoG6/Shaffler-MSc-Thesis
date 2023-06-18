@@ -4194,7 +4194,7 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
     circ->delay_count_out--;
     queue = &circ->n_chan_cells;
     if (!circ->n_chan) {
-      log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] n_chan is NULL, dropping cell", get_direction_str(direction));
+      log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] n_chan is NULL, dropping cell (%u)", get_direction_str(direction), circ->purpose);
       packed_cell_free(cell);
       return;
     }
@@ -4204,27 +4204,28 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
     or_circ = TO_OR_CIRCUIT(circ);
     queue = &or_circ->p_chan_cells;
     if (!or_circ->p_chan) {
-      log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] p_chan is NULL, dropping cell", get_direction_str(direction));
+      log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] p_chan is NULL, dropping cell (%u)", get_direction_str(direction), circ->purpose);
       packed_cell_free(cell);
       return;
     }
   }
 
   if (circ->marked_for_close) {
-    log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] circuit is closed, dropping cell", get_direction_str(direction));
+    log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] circuit is closed, dropping cell (%u)", get_direction_str(direction), circ->purpose);
     packed_cell_free(cell);
     return;
   }
 
   gettimeofday(&now_tv, NULL);
-  log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] sec:(%ld %s %ld) usec:(%ld %s %ld)",
+  log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] sec:(%ld %s %ld) usec:(%ld %s %ld) (%u)",
       get_direction_str(direction),
       cell->ready_tv.tv_sec,
       (cell->ready_tv.tv_sec < now_tv.tv_sec)? "<": (cell->ready_tv.tv_sec == now_tv.tv_sec)? "==": ">",
       now_tv.tv_sec,
       cell->ready_tv.tv_usec,
       (cell->ready_tv.tv_usec < now_tv.tv_usec)? "<": (cell->ready_tv.tv_usec == now_tv.tv_usec)? "==": ">",
-      now_tv.tv_usec
+      now_tv.tv_usec,
+      circ->purpose
   );
 
   cell_queue_append(queue, cell);
