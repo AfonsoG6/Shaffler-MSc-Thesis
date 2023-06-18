@@ -430,7 +430,6 @@ typedef enum {
 
 #define CELL_RELAY_DELAY_LOWEST 13
 #define CELL_RELAY_DELAY_HIGHEST 127
-#define ALL_SENDERS_DECIDE_DELAYS false // Set to true to allow all senders to decide delays (Useful for testing)
 
 #define CELL_COMMAND_MAX_ 133
 
