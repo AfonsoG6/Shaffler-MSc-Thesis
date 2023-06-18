@@ -4235,7 +4235,7 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
 
 
   if (circ->marked_for_close) {
-    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] circuit is closed, dropping cell (%u)", get_direction_str(direction), circ->purpose);
+    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] circuit is closed, dropping cell", get_direction_str(direction));
     return;
   }
   if (direction == CELL_DIRECTION_OUT) {
@@ -4243,7 +4243,7 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
     queue = &circ->n_chan_cells;
     delay_queue = &circ->n_delay_queue;
     if (!circ->n_chan) {
-      log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] n_chan is NULL, dropping cell (%u)", get_direction_str(direction), circ->purpose);
+      log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] n_chan is NULL, dropping cell", get_direction_str(direction));
       return;
     }
   }
@@ -4253,7 +4253,7 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
     queue = &or_circ->p_chan_cells;
     delay_queue = &or_circ->p_delay_queue;
     if (!or_circ->p_chan) {
-      log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] p_chan is NULL, dropping cell (%u)", get_direction_str(direction), circ->purpose);
+      log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] p_chan is NULL, dropping cell", get_direction_str(direction));
       return;
     }
   }
@@ -4265,22 +4265,22 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
     if (!cell) break;
 
     // Always send at least the first cell in the queue, the rest are only sent if they are ready
-    if (i != 0 && (cell->ready_tv.tv_sec > now_tv.tv_sec || (cell->ready_tv.tv_sec == now_tv.tv_sec && cell->ready_tv.tv_usec > now_tv.tv_usec))) {
-      break;
-    }
-
-    cell = cell_queue_pop(delay_queue);
-    cell_queue_append(queue, cell);
-    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] sec:(%ld %s %ld) usec:(%ld %s %ld) (%u)",
+    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] sec:(%ld %s %ld) usec:(%ld %s %ld)",
         get_direction_str(direction),
         cell->ready_tv.tv_sec,
         (cell->ready_tv.tv_sec < now_tv.tv_sec)? "<": (cell->ready_tv.tv_sec == now_tv.tv_sec)? "==": ">",
         now_tv.tv_sec,
         cell->ready_tv.tv_usec,
         (cell->ready_tv.tv_usec < now_tv.tv_usec)? "<": (cell->ready_tv.tv_usec == now_tv.tv_usec)? "==": ">",
-        now_tv.tv_usec,
-        circ->purpose
+        now_tv.tv_usec
     );
+    if (i != 0 && (cell->ready_tv.tv_sec > now_tv.tv_sec || (cell->ready_tv.tv_sec == now_tv.tv_sec && cell->ready_tv.tv_usec > now_tv.tv_usec))) {
+      log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] cell not ready, breaking", get_direction_str(direction));
+      break;
+    }
+
+    cell = cell_queue_pop(delay_queue);
+    cell_queue_append(queue, cell);
     n++;
   }
 
