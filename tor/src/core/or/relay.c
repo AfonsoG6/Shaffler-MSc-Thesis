@@ -4173,13 +4173,21 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
   circuit_t *circ = info->circ;
   int direction = info->direction;
 
-  timer_free_(timer);
+  timer_disable(timer);
+  timer_free(timer);
   tor_free(info);
-  tor_assert(time);
+  (void)time;
 
   or_circuit_t *or_circ;
   cell_queue_t *queue;
   struct timeval now_tv;
+
+  if (circ->marked_for_close) {
+    log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] circuit is closed, dropping cell", get_direction_str(direction));
+    packed_cell_free(cell);
+    return;
+  }
+  log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] survived circuit check", get_direction_str(direction));
 
   if (direction == CELL_DIRECTION_OUT) {
     queue = &circ->n_chan_cells;
