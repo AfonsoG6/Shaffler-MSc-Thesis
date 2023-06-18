@@ -4211,6 +4211,7 @@ schedule_delay_timer(circuit_t *circ, int direction) {
   else {
     or_circ->p_delay_timer = timer;
   }
+  log_info(LD_GENERAL, "[RENDEZMIX][TIMER][%s] timer scheduled with delay: %fs (sec: %ld, usec: %ld)", get_direction_str(direction), delay_tv.tv_sec + delay_tv.tv_usec / 1e6, delay_tv.tv_sec, delay_tv.tv_usec);
 }
 
 void
