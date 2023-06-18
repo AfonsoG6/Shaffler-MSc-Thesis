@@ -638,9 +638,9 @@ relay_send_command_from_edge_,(streamid_t stream_id, circuit_t *circ,
     cell.circ_id = circ->n_circ_id;
     cell_direction = CELL_DIRECTION_OUT;
     /* RENDEZMIX Set cell.command */
-    if (circ->purpose == CIRCUIT_PURPOSE_C_GENERAL) {
-      log_info(LD_GENERAL, "[RENDEZMIX] Sending cell with command %d", relay_command);
+    if (circ->purpose == CIRCUIT_PURPOSE_C_GENERAL && relay_command == RELAY_COMMAND_DATA) {
       cell.command = CELL_RELAY_DELAY_HIGHEST; // Delay scale factor [13, 127]
+      log_info(LD_GENERAL, "[RENDEZMIX] Sending cell with delay command.");
     }
   } else {
     tor_assert(! cpath_layer);
