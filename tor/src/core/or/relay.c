@@ -4149,8 +4149,7 @@ delay_or_append_cell(const cell_t *cell, packed_cell_t *copy, circuit_t *circ, c
       (!circ) ||
       (cell->command == CELL_RELAY && !circ->delay_command) ||
       (circ->magic == ORIGIN_CIRCUIT_MAGIC) ||
-      !(cell->command == CELL_RELAY) ||
-      (cell->command >= CELL_RELAY_DELAY_LOWEST && cell->command <= CELL_RELAY_DELAY_HIGHEST)) {
+      !(cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST && cell->command <= CELL_RELAY_DELAY_HIGHEST))) {
     cell_queue_append(queue, copy);
   }
   else {
