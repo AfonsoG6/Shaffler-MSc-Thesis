@@ -4106,7 +4106,6 @@ get_ready_timeval(circuit_t *circ, const cell_t *cell, int direction)
   // Get delay
   delay_tv = get_delay_timeval(circ, direction);
   delay_s = delay_tv.tv_sec + delay_tv.tv_usec / 1e6;
-  delay_tv.tv_usec = (delay_tv.tv_usec / 1000) * 1000; // round to nearest 100 microseconds
 
   // Calculate ready time
   ready_tv.tv_sec = previous_cell_tv.tv_sec + delay_tv.tv_sec;
@@ -4135,7 +4134,6 @@ get_ready_timeval_independent(circuit_t *circ, const cell_t *cell, int direction
   // Get delay
   delay_tv = get_delay_timeval(circ, direction);
   delay = delay_tv.tv_sec + delay_tv.tv_usec / 1e6;
-  delay_tv.tv_usec = (delay_tv.tv_usec / 1000) * 1000; // round to nearest 100 microseconds
 
   // Calculate ready time
   ready_tv.tv_sec = now_tv.tv_sec + delay_tv.tv_sec;
@@ -4204,7 +4202,7 @@ schedule_delay_timer(circuit_t *circ, int direction) {
   timersub(&cell->ready_tv, &now_tv, &delay_tv);
 
   if (delay_tv.tv_sec < 0 || delay_tv.tv_usec < 0) {
-    log_warn(LD_GENERAL, "[RENDEZMIX][TIMER][%s] delay timer scheduled in the past: %fs (sec: %ld, usec: %ld)", get_direction_str(direction), delay_tv.tv_sec + delay_tv.tv_usec / 1e6, delay_tv.tv_sec, delay_tv.tv_usec);
+    //log_warn(LD_GENERAL, "[RENDEZMIX][TIMER][%s] delay timer scheduled in the past: %fs (sec: %ld, usec: %ld)", get_direction_str(direction), delay_tv.tv_sec + delay_tv.tv_usec / 1e6, delay_tv.tv_sec, delay_tv.tv_usec);
     delay_tv.tv_sec = 0;
     delay_tv.tv_usec = 0;
   }
