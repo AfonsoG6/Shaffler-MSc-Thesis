@@ -3265,13 +3265,11 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
   exitward = (direction == CELL_DIRECTION_OUT);
   if (exitward) {
     queue = &circ->n_chan_cells;
-    delay_queue = &circ->n_chan_delayed_cells;
     streams_blocked = circ->streams_blocked_on_n_chan;
     max_queue_size = max_circuit_cell_queue_size_out;
   } else {
     orcirc = TO_OR_CIRCUIT(circ);
     queue = &orcirc->p_chan_cells;
-    delay_queue = &orcirc->p_chan_delayed_cells;
     streams_blocked = circ->streams_blocked_on_p_chan;
     max_queue_size = max_circuit_cell_queue_size;
   }
@@ -3307,7 +3305,7 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
 
   /* If we have too many cells on the circuit, we should stop reading from
    * the edge streams for a while. */
-  if (!streams_blocked && queue->n+delay_queue->n >= cell_queue_highwatermark())
+  if (!streams_blocked && queue->n >= cell_queue_highwatermark())
     set_streams_blocked_on_circ(circ, chan, 1, 0); /* block streams */
 
   if (streams_blocked && fromstream) {
@@ -4181,23 +4179,19 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
 
   or_circuit_t *or_circ;
   cell_queue_t *queue;
-  circuitmux_t *cmux;
   struct timeval now_tv;
 
   if (direction == CELL_DIRECTION_OUT) {
     queue = &circ->n_chan_cells;
-    cmux = circ->n_chan->cmux;
   }
   else {
     or_circ = TO_OR_CIRCUIT(circ);
     queue = &or_circ->p_chan_cells;
-    cmux = or_circ->p_chan->cmux;
   }
 
   gettimeofday(&now_tv, NULL);
-  log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] cmux:%p sec:(%ld %s %ld) nsec:(%ld %s %ld)",
+  log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] sec:(%ld %s %ld) usec:(%ld %s %ld)",
       get_direction_str(direction),
-      cmux,
       cell->ready_tv.tv_sec,
       (cell->ready_tv.tv_sec < now_tv.tv_sec)? "<": (cell->ready_tv.tv_sec == now_tv.tv_sec)? "==": ">",
       now_tv.tv_sec,

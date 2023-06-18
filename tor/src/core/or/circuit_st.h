@@ -255,7 +255,6 @@ struct circuit_t {
   short delay_state_out;
   struct timeval previous_cell_tv_in;
   struct timeval previous_cell_tv_out;
-  cell_queue_t n_chan_delayed_cells;
 };
 
 #endif /* !defined(CIRCUIT_ST_H) */
