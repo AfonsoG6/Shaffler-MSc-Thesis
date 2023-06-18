@@ -45,8 +45,6 @@
  * types of relay cells, launching requests or transmitting data as needed.
  **/
 
-#include "core/or/circuit_st.h"
-#include <stdint.h>
 #define RELAY_PRIVATE
 #include "core/or/or.h"
 #include "feature/client/addressmap.h"
@@ -3259,26 +3257,25 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
                              streamid_t fromstream)
 {
   or_circuit_t *orcirc = NULL;
-  cell_queue_t *queue;
+  cell_queue_t *queue, *delay_queue;
   int32_t max_queue_size;
   int streams_blocked;
   int exitward;
-  uint16_t delay_n;
   if (circ->marked_for_close)
     return;
 
   exitward = (direction == CELL_DIRECTION_OUT);
   if (exitward) {
     queue = &circ->n_chan_cells;
+    delay_queue = &circ->n_delay_queue; // RENDEZMIX
     streams_blocked = circ->streams_blocked_on_n_chan;
     max_queue_size = max_circuit_cell_queue_size_out;
-    delay_n = circ->delay_count_out;
   } else {
     orcirc = TO_OR_CIRCUIT(circ);
     queue = &orcirc->p_chan_cells;
+    delay_queue = &orcirc->p_delay_queue; // RENDEZMIX
     streams_blocked = circ->streams_blocked_on_p_chan;
     max_queue_size = max_circuit_cell_queue_size;
-    delay_n = circ->delay_count_in;
   }
 
   if (PREDICT_UNLIKELY(queue->n >= max_queue_size)) {
@@ -3312,7 +3309,7 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
 
   /* If we have too many cells on the circuit, we should stop reading from
    * the edge streams for a while. */
-  if (!streams_blocked && queue->n + delay_n >= cell_queue_highwatermark())
+  if (!streams_blocked && queue->n + delay_queue->n >= cell_queue_highwatermark())
     set_streams_blocked_on_circ(circ, chan, 1, 0); /* block streams */
 
   if (streams_blocked && fromstream) {
@@ -4155,21 +4152,26 @@ delay_or_append_cell(const cell_t *cell, packed_cell_t *copy, circuit_t *circ, c
       (circ->magic == OR_CIRCUIT_MAGIC) &&
       (circ->purpose == CIRCUIT_PURPOSE_OR) &&
       (circ->delay_command || (cell->command >= CELL_RELAY_DELAY_LOWEST && cell->command <= CELL_RELAY_DELAY_HIGHEST))) {
-    delay_info_t *info = tor_malloc_zero(sizeof(delay_info_t));
-    info->cell = copy;
-    info->circ = circ;
-    info->direction = direction;
-
-    if (direction == CELL_DIRECTION_OUT) circ->delay_count_out++;
-    else circ->delay_count_in++;
-
     copy->ready_tv = get_ready_timeval(circ, cell, direction);
-    struct timeval delay_tv, now_tv;
-    gettimeofday(&now_tv, NULL);
-    timersub(&copy->ready_tv, &now_tv, &delay_tv);
 
-    tor_timer_t *timer = timer_new(cell_ready_callback, info);
-    timer_schedule(timer, &delay_tv);
+    or_circuit_t *or_circ;
+    cell_queue_t *delay_queue;
+    tor_timer_t *timer;
+    if (direction == CELL_DIRECTION_OUT) {
+      delay_queue = &circ->n_delay_queue;
+      timer = circ->n_delay_timer;
+    }
+    else {
+      or_circ = TO_OR_CIRCUIT(circ);
+      delay_queue = &or_circ->p_delay_queue;
+      timer = or_circ->p_delay_timer;
+    }
+    cell_queue_append(delay_queue, copy);
+
+    // If no timer is already set to update the delayed cells, set one up
+    if (timer == NULL) {
+      schedule_delay_timer(circ, direction);
+    }
   }
   else {
     cell_queue_append(queue, copy);
@@ -4177,9 +4179,46 @@ delay_or_append_cell(const cell_t *cell, packed_cell_t *copy, circuit_t *circ, c
 }
 
 void
+schedule_delay_timer(circuit_t *circ, int direction) {
+  struct timeval delay_tv, now_tv;
+  tor_timer_t *timer;
+  delay_info_t *info;
+  packed_cell_t *cell;
+  or_circuit_t *or_circ;
+
+  if (direction == CELL_DIRECTION_OUT) {
+    cell = TOR_SIMPLEQ_FIRST(&circ->n_delay_queue.head);
+  }
+  else {
+    or_circ = TO_OR_CIRCUIT(circ);
+    cell = TOR_SIMPLEQ_FIRST(&or_circ->p_delay_queue.head);
+  }
+
+  info = tor_malloc_zero(sizeof(delay_info_t));
+  info->circ = circ;
+  info->direction = direction;
+
+  gettimeofday(&now_tv, NULL);
+  timersub(&cell->ready_tv, &now_tv, &delay_tv);
+
+  timer = timer_new(cell_ready_callback, info);
+  timer_schedule(timer, &delay_tv);
+  if (direction == CELL_DIRECTION_OUT) {
+    circ->n_delay_timer = timer;
+  }
+  else {
+    or_circ->p_delay_timer = timer;
+  }
+}
+
+void
 cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *time) {
+  cell_queue_t *queue, *delay_queue;
+  or_circuit_t *or_circ;
+  struct timeval now_tv;
+  int i, n;
+  packed_cell_t *cell;
   delay_info_t *info = (delay_info_t *)args;
-  packed_cell_t *cell = info->cell;
   circuit_t *circ = info->circ;
   int direction = info->direction;
 
@@ -4187,50 +4226,56 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
   tor_free(info);
   (void)time;
 
-  or_circuit_t *or_circ;
-  cell_queue_t *queue;
-  struct timeval now_tv;
 
   if (circ->marked_for_close) {
     log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] circuit is closed, dropping cell (%u)", get_direction_str(direction), circ->purpose);
-    packed_cell_free(cell);
     return;
   }
-
   if (direction == CELL_DIRECTION_OUT) {
-    circ->delay_count_out--;
+    circ->n_delay_timer = NULL;
     queue = &circ->n_chan_cells;
+    delay_queue = &circ->n_delay_queue;
     if (!circ->n_chan) {
       log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] n_chan is NULL, dropping cell (%u)", get_direction_str(direction), circ->purpose);
-      packed_cell_free(cell);
       return;
     }
   }
   else {
-    circ->delay_count_in--;
     or_circ = TO_OR_CIRCUIT(circ);
+    or_circ->p_delay_timer = NULL;
     queue = &or_circ->p_chan_cells;
+    delay_queue = &or_circ->p_delay_queue;
     if (!or_circ->p_chan) {
       log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] p_chan is NULL, dropping cell (%u)", get_direction_str(direction), circ->purpose);
-      packed_cell_free(cell);
       return;
     }
   }
 
-
+  n = 0;
   gettimeofday(&now_tv, NULL);
-  log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] sec:(%ld %s %ld) usec:(%ld %s %ld) (%u)",
-      get_direction_str(direction),
-      cell->ready_tv.tv_sec,
-      (cell->ready_tv.tv_sec < now_tv.tv_sec)? "<": (cell->ready_tv.tv_sec == now_tv.tv_sec)? "==": ">",
-      now_tv.tv_sec,
-      cell->ready_tv.tv_usec,
-      (cell->ready_tv.tv_usec < now_tv.tv_usec)? "<": (cell->ready_tv.tv_usec == now_tv.tv_usec)? "==": ">",
-      now_tv.tv_usec,
-      circ->purpose
-  );
+  for (i=0; i<delay_queue->n; i++) {
+    cell = TOR_SIMPLEQ_FIRST(&delay_queue->head);
+    if (!cell) break;
 
-  cell_queue_append(queue, cell);
+    // Always send at least the first cell in the queue, the rest are only sent if they are ready
+    if (i != 0 && (cell->ready_tv.tv_sec > now_tv.tv_sec || (cell->ready_tv.tv_sec == now_tv.tv_sec && cell->ready_tv.tv_usec > now_tv.tv_usec))) {
+      break;
+    }
+
+    cell = cell_queue_pop(delay_queue);
+    cell_queue_append(queue, cell);
+    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] sec:(%ld %s %ld) usec:(%ld %s %ld) (%u)",
+        get_direction_str(direction),
+        cell->ready_tv.tv_sec,
+        (cell->ready_tv.tv_sec < now_tv.tv_sec)? "<": (cell->ready_tv.tv_sec == now_tv.tv_sec)? "==": ">",
+        now_tv.tv_sec,
+        cell->ready_tv.tv_usec,
+        (cell->ready_tv.tv_usec < now_tv.tv_usec)? "<": (cell->ready_tv.tv_usec == now_tv.tv_usec)? "==": ">",
+        now_tv.tv_usec,
+        circ->purpose
+    );
+    n++;
+  }
 
   update_circuit_on_cmux(circ, direction);
   if (direction == CELL_DIRECTION_OUT) {
@@ -4239,4 +4284,8 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
   else {
     scheduler_channel_has_waiting_cells(or_circ->p_chan);
   }
+
+  // Reschedule the timer if there are still cells in the queue
+  if (delay_queue->n > 0)
+    schedule_delay_timer(circ, direction);
 }

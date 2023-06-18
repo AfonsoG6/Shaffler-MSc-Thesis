@@ -17,8 +17,10 @@
 #include "lib/container/handles.h"
 
 #include "core/or/cell_queue_st.h"
-#include <stdint.h>
 #include "ext/ht.h"
+
+/* RENDEZMIX includes */
+#include "lib/evloop/timers.h"
 
 struct hs_token_t;
 struct circpad_machine_spec_t;
@@ -256,8 +258,8 @@ struct circuit_t {
   short delay_state_out;
   struct timeval previous_cell_tv_in;
   struct timeval previous_cell_tv_out;
-  uint16_t delay_count_in;
-  uint16_t delay_count_out;
+  cell_queue_t n_delay_queue;
+  tor_timer_t *n_delay_timer;
 };
 
 #endif /* !defined(CIRCUIT_ST_H) */
