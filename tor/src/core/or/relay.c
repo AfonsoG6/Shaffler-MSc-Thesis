@@ -4191,6 +4191,11 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
   cell_queue_t *queue;
   struct timeval now_tv;
 
+  if (circ->marked_for_close) {
+    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] circuit is closed, dropping cell (%u)", get_direction_str(direction), circ->purpose);
+    packed_cell_free(cell);
+    return;
+  }
 
   if (direction == CELL_DIRECTION_OUT) {
     circ->delay_count_out--;
@@ -4212,11 +4217,6 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
     }
   }
 
-  if (circ->marked_for_close) {
-    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] circuit is closed, dropping cell (%u)", get_direction_str(direction), circ->purpose);
-    packed_cell_free(cell);
-    return;
-  }
 
   gettimeofday(&now_tv, NULL);
   log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] sec:(%ld %s %ld) usec:(%ld %s %ld) (%u)",
