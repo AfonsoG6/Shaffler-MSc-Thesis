@@ -98,7 +98,7 @@ static monotime_t start_of_time;
  * and windows select), simply can't support sub-millisecond resolution,
  * do this is optimistic for a lot of users.
  */
-#define USEC_PER_TICK 1
+#define USEC_PER_TICK 100
 
 /** One million microseconds in a second */
 #define USEC_PER_SEC 1000000
