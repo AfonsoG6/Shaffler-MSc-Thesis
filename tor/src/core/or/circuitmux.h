@@ -210,24 +210,9 @@ struct circuitmux_t {
 
   /* Policy-specific data */
   circuitmux_policy_data_t *policy_data;
-
-  /* RENDEZMIX */
-  struct timespec last_update_ts;
-  smartlist_t *out_circs_to_update;
-  smartlist_t *in_circs_to_update;
 };
 
 #endif /* defined(CIRCUITMUX_PRIVATE) */
-
-/** ----------------------------------------------- RENDEZMIX ------------------------------------------------------- */
-
-void add_circ_to_update(circuit_t *circ, int exitward);
-
-void update_cmux_all_queues(circuitmux_t *cmux);
-
-void update_all_cmuxs_all_queues(smartlist_t *cmuxs);
-
-void add_cmux_to_update(smartlist_t *sl, circuitmux_t *cmux);
 
 #endif /* !defined(TOR_CIRCUITMUX_H) */
 
