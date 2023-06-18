@@ -4203,6 +4203,12 @@ schedule_delay_timer(circuit_t *circ, int direction) {
   gettimeofday(&now_tv, NULL);
   timersub(&cell->ready_tv, &now_tv, &delay_tv);
 
+  if (delay_tv.tv_sec < 0 || delay_tv.tv_usec < 0) {
+    log_warn(LD_GENERAL, "[RENDEZMIX][TIMER][%s] delay timer scheduled in the past: %fs (sec: %ld, usec: %ld)", get_direction_str(direction), delay_tv.tv_sec + delay_tv.tv_usec / 1e6, delay_tv.tv_sec, delay_tv.tv_usec);
+    delay_tv.tv_sec = 0;
+    delay_tv.tv_usec = 0;
+  }
+
   timer = timer_new(cell_ready_callback, info);
   timer_schedule(timer, &delay_tv);
   if (direction == CELL_DIRECTION_OUT) {
