@@ -104,6 +104,7 @@
 #include <math.h>
 #include <src/ext/siphash.h>
 #include "core/or/circuitmux.h"
+#include "lib/evloop/timers.h"
 
 static edge_connection_t *relay_lookup_conn(circuit_t *circ, cell_t *cell,
                                             cell_direction_t cell_direction,
@@ -2650,8 +2651,6 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
                               int wide_circ_ids, int use_stats)
 {
   packed_cell_t *copy = packed_cell_copy(cell, wide_circ_ids);
-  circuitmux_t *cmux;
-  int prev_n;
   (void)circ;
   (void)exitward;
   (void)use_stats;
@@ -2659,35 +2658,7 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
   copy->inserted_timestamp = monotime_coarse_get_stamp();
 
   // RENDEZMIX
-  copy->ready_ts = get_ready_ts(circ, cell, (exitward)? CELL_DIRECTION_OUT:CELL_DIRECTION_IN);
-  if (copy->ready_ts.tv_sec > 0 || copy->ready_ts.tv_nsec > 0) {
-    if (exitward) {
-      prev_n = circ->n_chan_delayed_cells.n;
-      cell_queue_append(&circ->n_chan_delayed_cells, copy);
-      cmux = circ->n_chan->cmux;
-    }
-    else {
-      prev_n = TO_OR_CIRCUIT(circ)->p_chan_delayed_cells.n;
-      cell_queue_append(&TO_OR_CIRCUIT(circ)->p_chan_delayed_cells, copy);
-      cmux = TO_OR_CIRCUIT(circ)->p_chan->cmux;
-    }
-
-    if (prev_n == 0) {
-      add_circ_to_update(circ, exitward);
-      add_cmux_to_update(get_cmuxs_to_update(), cmux);
-    }
-  }
-  else {
-    /*
-    // Keep order of cells
-    if (exitward && circ->n_chan_delayed_cells.n > 0)
-      cell_queue_append(&circ->n_chan_delayed_cells, copy);
-    else if (!exitward && TO_OR_CIRCUIT(circ)->p_chan_delayed_cells.n > 0)
-      cell_queue_append(&TO_OR_CIRCUIT(circ)->p_chan_delayed_cells, copy);
-    else
-    */
-    cell_queue_append(queue, copy);
-  }
+  delay_or_append_cell(cell, copy, circ, queue, (exitward ? CELL_DIRECTION_OUT : CELL_DIRECTION_IN));
 }
 
 /** Initialize <b>queue</b> as an empty cell queue. */
@@ -3467,16 +3438,6 @@ probably_middle_node_circ(circuit_t *circ)
   return probably_middle_node_channels(or_circ->p_chan, circ->n_chan);
 }
 
-struct timespec
-get_sleep_timespec_from_command(uint8_t command)
-{
-  int i = command - CELL_RELAY_DELAY_LOWEST;
-  if (command == CELL_RELAY)
-    return (struct timespec){0, 0};
-  else
-    return (struct timespec){0, i * 100000};
-}
-
 /**
  * Count number of one bits in 32-bit word.
  */
@@ -4094,18 +4055,18 @@ get_delay_scale_factor(uint8_t command)
          (CELL_RELAY_DELAY_HIGHEST - CELL_RELAY_DELAY_LOWEST);
 }
 
-struct timespec
-get_delay_timespec(circuit_t *circ, int direction)
+struct timeval
+get_delay_timeval(circuit_t *circ, int direction)
 {
   double microsec, scale;
-  struct timespec ts;
+  struct timeval ts;
   scale = get_delay_scale_factor(circ->delay_command);
   do {
     if (direction == CELL_DIRECTION_IN) microsec = scale*get_delay_microseconds_in(circ);
     else microsec = scale*get_delay_microseconds_out(circ);
   } while (microsec > scale*1e6);
   ts.tv_sec = (time_t)(microsec / 1e6);
-  ts.tv_nsec = (time_t)((microsec - ts.tv_sec * 1e6) * 1e3);
+  ts.tv_usec = (suseconds_t)(microsec - ts.tv_sec*1e6);
   return ts;
 }
 
@@ -4121,138 +4082,138 @@ get_direction_str(int direction) {
   }
 }
 
-struct timespec
-get_ready_ts(circuit_t *circ, const cell_t *cell, int direction)
+struct timeval
+get_ready_timeval(circuit_t *circ, const cell_t *cell, int direction)
 {
-  struct timespec previous_cell_ts, now_ts, delay_ts, ready_ts;
-  double delay, ready; // in seconds
-
-  if (!probably_middle_node_circ(circ))
-    return (struct timespec){0, 0};
-  if (!circ || (cell->command == CELL_RELAY && !circ->delay_command))
-    return (struct timespec){0, 0};
-  if (circ->magic == ORIGIN_CIRCUIT_MAGIC)
-    return (struct timespec){0, 0};
-  if (!(cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST && cell->command <= CELL_RELAY_DELAY_HIGHEST)))
-    return (struct timespec){0, 0};
+  struct timeval previous_cell_tv, now_tv, delay_tv, ready_tv;
+  double delay_s, ready; // in seconds
 
   // After receiving a delay command once, we mark the circuit as using delays
   circ->delay_command = (cell->command == CELL_RELAY)? CELL_RELAY_DELAY_HIGHEST : cell->command;
 
   // Get last packet time
-  if (direction == CELL_DIRECTION_IN) previous_cell_ts = circ->previous_cell_ts_in;
-  else previous_cell_ts = circ->previous_cell_ts_out;
+  if (direction == CELL_DIRECTION_IN) previous_cell_tv = circ->previous_cell_tv_in;
+  else previous_cell_tv = circ->previous_cell_tv_out;
 
-  // If previous_cell_ts is too old, set it to now
-  clock_gettime(CLOCK_REALTIME, &now_ts);
-  if (previous_cell_ts.tv_sec < now_ts.tv_sec || (previous_cell_ts.tv_sec == now_ts.tv_sec && previous_cell_ts.tv_nsec < now_ts.tv_nsec)) {
-    previous_cell_ts = now_ts;
+  // If previous_cell_tv is too old, set it to now
+  gettimeofday(&now_tv, NULL);
+  if (previous_cell_tv.tv_sec < now_tv.tv_sec || (previous_cell_tv.tv_sec == now_tv.tv_sec && previous_cell_tv.tv_usec < now_tv.tv_usec)) {
+    previous_cell_tv = now_tv;
   }
 
   // Get delay
-  delay_ts = get_delay_timespec(circ, direction);
-  delay = delay_ts.tv_sec + delay_ts.tv_nsec / 1e9;
+  delay_tv = get_delay_timeval(circ, direction);
+  delay_s = delay_tv.tv_sec + delay_tv.tv_usec / 1e6;
 
   // Calculate ready time
-  ready_ts.tv_sec = previous_cell_ts.tv_sec + delay_ts.tv_sec;
-  ready_ts.tv_nsec = previous_cell_ts.tv_nsec + delay_ts.tv_nsec;
-  ready = ready_ts.tv_sec + ready_ts.tv_nsec / 1e9;
+  ready_tv.tv_sec = previous_cell_tv.tv_sec + delay_tv.tv_sec;
+  ready_tv.tv_usec = previous_cell_tv.tv_usec + delay_tv.tv_usec;
+  ready = ready_tv.tv_sec + ready_tv.tv_usec / 1e6;
 
-  if (direction == CELL_DIRECTION_IN) circ->previous_cell_ts_in = ready_ts;
-  else circ->previous_cell_ts_out = ready_ts;
+  if (direction == CELL_DIRECTION_IN) circ->previous_cell_tv_in = ready_tv;
+  else circ->previous_cell_tv_out = ready_tv;
 
-  log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] delay=%fs ready=%fs states=%d<-->%d", get_direction_str(direction), delay, ready, circ->delay_state_in, circ->delay_state_out);
-  return ready_ts;
+  log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] delay=%fs ready=%fs states=%d<-->%d", get_direction_str(direction), delay_s, ready, circ->delay_state_in, circ->delay_state_out);
+  return ready_tv;
 }
 
-struct timespec
-get_ready_ts_independent(circuit_t *circ, const cell_t *cell, int direction)
+struct timeval
+get_ready_timeval_independent(circuit_t *circ, const cell_t *cell, int direction)
 {
-  struct timespec current_ts, delay_ts, ready_ts;
+  struct timeval now_tv, delay_tv, ready_tv;
   double delay, ready; // in seconds
-
-  if (!probably_middle_node_circ(circ))
-    return (struct timespec){0, 0};
-  if (!circ || (cell->command == CELL_RELAY && !circ->delay_command))
-    return (struct timespec){0, 0};
-  if (circ->magic == ORIGIN_CIRCUIT_MAGIC)
-    return (struct timespec){0, 0};
-  if (!(cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST && cell->command <= CELL_RELAY_DELAY_HIGHEST)))
-    return (struct timespec){0, 0};
 
   // After receiving a delay command once, we mark the circuit as using delays
   circ->delay_command = (cell->command == CELL_RELAY)? CELL_RELAY_DELAY_HIGHEST : cell->command;
 
   // Get current time
-  clock_gettime(CLOCK_REALTIME, &current_ts);
+  gettimeofday(&now_tv, NULL);
 
   // Get delay
-  delay_ts = get_delay_timespec(circ, direction);
-  delay = delay_ts.tv_sec + delay_ts.tv_nsec / 1e9;
+  delay_tv = get_delay_timeval(circ, direction);
+  delay = delay_tv.tv_sec + delay_tv.tv_usec / 1e6;
 
   // Calculate ready time
-  ready_ts.tv_sec = current_ts.tv_sec + delay_ts.tv_sec;
-  ready_ts.tv_nsec = current_ts.tv_nsec + delay_ts.tv_nsec;
-  ready = ready_ts.tv_sec + ready_ts.tv_nsec / 1e9;
+  ready_tv.tv_sec = now_tv.tv_sec + delay_tv.tv_sec;
+  ready_tv.tv_usec = now_tv.tv_usec + delay_tv.tv_usec;
+  ready = ready_tv.tv_sec + ready_tv.tv_usec / 1e6;
 
 
   log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] delay=%fs ready=%fs states=%d<-->%d", get_direction_str(direction), delay, ready, circ->delay_state_in, circ->delay_state_out);
-  return ready_ts;
+  return ready_tv;
 }
 
-int
-update_queues(circuit_t *circ, int direction)
-{
-  cell_queue_t *delay_queue, *queue;
-  struct timespec now_ts;
+void
+delay_or_append_cell(const cell_t *cell, packed_cell_t *copy, circuit_t *circ, cell_queue_t *queue, int direction) {
+  if ((!probably_middle_node_circ(circ)) ||
+      (!circ) ||
+      (cell->command == CELL_RELAY && !circ->delay_command) ||
+      (circ->magic == ORIGIN_CIRCUIT_MAGIC) ||
+      !(cell->command == CELL_RELAY) ||
+      (cell->command >= CELL_RELAY_DELAY_LOWEST && cell->command <= CELL_RELAY_DELAY_HIGHEST)) {
+    cell_queue_append(queue, copy);
+  }
+  else {
+    delay_info_t *info = tor_malloc_zero(sizeof(delay_info_t));
+    info->cell = copy;
+    info->circ = circ;
+    info->direction = direction;
+
+    copy->ready_tv = get_ready_timeval(circ, cell, direction);
+    struct timeval delay_tv, now_tv;
+    gettimeofday(&now_tv, NULL);
+    timersub(&copy->ready_tv, &now_tv, &delay_tv);
+
+    tor_timer_t *timer = timer_new(cell_ready_callback, info);
+    timer_schedule(timer, &delay_tv);
+  }
+}
+
+void
+cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *time) {
+  delay_info_t *info = (delay_info_t *)args;
+  packed_cell_t *cell = info->cell;
+  circuit_t *circ = info->circ;
+  int direction = info->direction;
+
+  timer_free_(timer);
+  tor_free(info);
+  tor_assert(time);
+
   or_circuit_t *or_circ;
-  packed_cell_t *cell;
+  cell_queue_t *queue;
   circuitmux_t *cmux;
-  int i, n = 0;
+  struct timeval now_tv;
 
   if (direction == CELL_DIRECTION_OUT) {
-    delay_queue = &circ->n_chan_delayed_cells;
     queue = &circ->n_chan_cells;
     cmux = circ->n_chan->cmux;
   }
   else {
     or_circ = TO_OR_CIRCUIT(circ);
-    delay_queue = &or_circ->p_chan_delayed_cells;
     queue = &or_circ->p_chan_cells;
     cmux = or_circ->p_chan->cmux;
   }
 
-  clock_gettime(CLOCK_REALTIME, &now_ts);
+  gettimeofday(&now_tv, NULL);
+  log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] cmux:%p sec:(%ld %s %ld) nsec:(%ld %s %ld)",
+      get_direction_str(direction),
+      cmux,
+      cell->ready_tv.tv_sec,
+      (cell->ready_tv.tv_sec < now_tv.tv_sec)? "<": (cell->ready_tv.tv_sec == now_tv.tv_sec)? "==": ">",
+      now_tv.tv_sec,
+      cell->ready_tv.tv_usec,
+      (cell->ready_tv.tv_usec < now_tv.tv_usec)? "<": (cell->ready_tv.tv_usec == now_tv.tv_usec)? "==": ">",
+      now_tv.tv_usec
+  );
 
-  //log_info(LD_GENERAL, "[RENDEZMIX][update_queues()] delay_queue->n=%d", delay_queue->n);
-  for (i=0; i<delay_queue->n; i++) {
-    cell = TOR_SIMPLEQ_FIRST(&delay_queue->head);
-    if (!cell) break;
-    if (cell->ready_ts.tv_sec > now_ts.tv_sec || (cell->ready_ts.tv_sec == now_ts.tv_sec && cell->ready_ts.tv_nsec > now_ts.tv_nsec)) {
-      break;
-    }
+  cell_queue_append(queue, cell);
 
-    cell = cell_queue_pop(delay_queue);
-    cell_queue_append(queue, cell);
-    n++;
-    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] cmux:%p sec:(%ld %s %ld) nsec:(%ld %s %ld)",
-        get_direction_str(direction),
-        cmux,
-        cell->ready_ts.tv_sec,
-        (cell->ready_ts.tv_sec < now_ts.tv_sec)? "<": (cell->ready_ts.tv_sec == now_ts.tv_sec)? "==": ">",
-        now_ts.tv_sec,
-        cell->ready_ts.tv_nsec,
-        (cell->ready_ts.tv_nsec < now_ts.tv_nsec)? "<": (cell->ready_ts.tv_nsec == now_ts.tv_nsec)? "==": ">",
-        now_ts.tv_nsec
-    );
+  update_circuit_on_cmux(circ, direction);
+  if (direction == CELL_DIRECTION_OUT) {
+    scheduler_channel_has_waiting_cells(circ->n_chan);
   }
-  if (n > 0) {
-    if (direction == CELL_DIRECTION_OUT) {
-      scheduler_channel_has_waiting_cells(circ->n_chan);
-    }
-    else {
-      scheduler_channel_has_waiting_cells(or_circ->p_chan);
-    }
+  else {
+    scheduler_channel_has_waiting_cells(or_circ->p_chan);
   }
-  return n;
 }

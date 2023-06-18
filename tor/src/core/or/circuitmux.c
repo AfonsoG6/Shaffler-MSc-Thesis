@@ -83,9 +83,6 @@
 
 #include "lib/crypt_ops/crypto_util.h"
 
-/* RENDEZMIX includes */
-#include "lib/smartlist_core/smartlist_core.h"
-
 /*
  * Private typedefs for circuitmux.c
  */
@@ -204,10 +201,6 @@ circuitmux_alloc(void)
   rv->chanid_circid_map = tor_malloc_zero(sizeof(*( rv->chanid_circid_map)));
   HT_INIT(chanid_circid_muxinfo_map, rv->chanid_circid_map);
   destroy_cell_queue_init(&rv->destroy_cell_queue);
-
-  /* RENDEZMIX */
-  rv->out_circs_to_update = smartlist_new();
-  rv->in_circs_to_update = smartlist_new();
 
   return rv;
 }
@@ -1295,91 +1288,5 @@ circuitmux_compare_muxes, (circuitmux_t *cmux_1, circuitmux_t *cmux_2))
   } else {
     /* Equivalent because one or both are missing a policy */
     return 0;
-  }
-}
-
-/** ----------------------------------------------- RENDEZMIX ------------------------------------------------------- */
-
-void
-add_circ_to_update(circuit_t *circ, int exitward)
-{
-  circuitmux_t *cmux;
-  if (exitward) {
-    cmux = circ->n_chan->cmux;
-    smartlist_add(cmux->out_circs_to_update, circ);
-  } else {
-    cmux = TO_OR_CIRCUIT(circ)->p_chan->cmux;
-    smartlist_add(cmux->in_circs_to_update, circ);
-  }
-}
-
-void
-update_cmux_all_queues(circuitmux_t *cmux) {
-  struct timespec now_ts;
-  double now_us, last_us;
-
-  /* RENDEZMIX */
-  clock_gettime(CLOCK_REALTIME, &now_ts);
-  now_us =  (double)now_ts.tv_sec * 1e6 +
-            (double)now_ts.tv_nsec / 1e3;
-  last_us = (double)cmux->last_update_ts.tv_sec * 1e6 +
-            (double)cmux->last_update_ts.tv_nsec / 1e3;
-
-  if (!(cmux->last_update_ts.tv_sec == 0 && cmux->last_update_ts.tv_nsec == 0) &&
-      !(now_us - last_us > 100)) {
-    return;
-  }
-
-  int idx;
-  smartlist_t *outlst = cmux->out_circs_to_update;
-  smartlist_t *inlst = cmux->in_circs_to_update;
-
-  //log_info(LD_GENERAL, "[RENDEZMIX][update_cmux_all_queues] Updating queues for %d circuits", smartlist_len(outlst) + smartlist_len(inlst));
-  for (idx = 0; idx < smartlist_len(outlst); ++idx) {
-    circuit_t *circ = smartlist_get(outlst, idx);
-    if (update_queues(circ, CELL_DIRECTION_OUT)) {
-      update_circuit_on_cmux(circ, CELL_DIRECTION_OUT);
-      if (circ->n_chan_delayed_cells.n == 0) {
-        smartlist_del(outlst, idx);
-        idx--; // smartlist_del replaces the idx'th element with the last one
-      }
-    }
-  }
-
-  for (idx = 0; idx < smartlist_len(inlst); ++idx) {
-    circuit_t *circ = smartlist_get(inlst, idx);
-    if (update_queues(circ, CELL_DIRECTION_IN)) {
-      update_circuit_on_cmux(circ, CELL_DIRECTION_IN);
-      if (TO_OR_CIRCUIT(circ)->p_chan_delayed_cells.n == 0) {
-        smartlist_del(inlst, idx);
-        idx--; // smartlist_del replaces the idx'th element with the last one
-      }
-    }
-  }
-
-  cmux->last_update_ts = now_ts;
-}
-
-void
-update_all_cmuxs_all_queues(smartlist_t *cmuxs) {
-  int idx;
-
-  //log_info(LD_GENERAL, "[RENDEZMIX][update_all_cmuxs_all_queues] Updating queues for %d cmuxs", smartlist_len(cmuxs));
-  for (idx = 0; idx < smartlist_len(cmuxs); ++idx) {
-    circuitmux_t *cmux = smartlist_get(cmuxs, idx);
-    update_cmux_all_queues(cmux);
-    if (smartlist_len(cmux->out_circs_to_update) == 0 && smartlist_len(cmux->in_circs_to_update) == 0) {
-      smartlist_del(cmuxs, idx);
-      idx--; // smartlist_del replaces the idx'th element with the last one
-    }
-  }
-  //log_info(LD_GENERAL, "[RENDEZMIX][update_all_cmuxs_all_queues] Only %d cmuxs left to update", smartlist_len(cmuxs));
-}
-
-void
-add_cmux_to_update(smartlist_t *sl, circuitmux_t *cmux)
-{
-  if (smartlist_len(cmux->out_circs_to_update) + smartlist_len(cmux->in_circs_to_update) == 1) {
-    smartlist_add(sl, cmux);
   }
 }

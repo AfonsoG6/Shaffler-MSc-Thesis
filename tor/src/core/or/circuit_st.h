@@ -253,8 +253,8 @@ struct circuit_t {
   uint8_t delay_command;
   short delay_state_in;
   short delay_state_out;
-  struct timespec previous_cell_ts_in;
-  struct timespec previous_cell_ts_out;
+  struct timeval previous_cell_tv_in;
+  struct timeval previous_cell_tv_out;
   cell_queue_t n_chan_delayed_cells;
 };
 

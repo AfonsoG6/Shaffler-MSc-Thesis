@@ -165,9 +165,6 @@ STATIC const scheduler_t *the_scheduler;
  */
 STATIC smartlist_t *channels_pending = NULL;
 
-/* RENDEZMIX */
-STATIC smartlist_t *cmuxs_to_update = NULL;
-
 /**
  * This event runs the scheduler from its callback, and is manually
  * activated whenever a channel enters open for writes/cells to send.
@@ -499,13 +496,6 @@ scheduler_free_all(void)
     channels_pending = NULL;
   }
 
-  /* RENDEZMIX */
-  if (cmuxs_to_update) {
-    /* We don't have ownership of the objects in this list. */
-    smartlist_free(cmuxs_to_update);
-    cmuxs_to_update = NULL;
-  }
-
   if (the_scheduler && the_scheduler->free_all) {
     the_scheduler->free_all();
   }
@@ -630,7 +620,6 @@ scheduler_init(void)
   }
   run_sched_ev = mainloop_event_new(scheduler_evt_callback, NULL);
   channels_pending = smartlist_new();
-  cmuxs_to_update = smartlist_new(); // RENDEZMIX
 
   set_scheduler();
 }
@@ -779,11 +768,3 @@ scheduler_touch_channel(channel_t *chan)
 }
 
 #endif /* defined(TOR_UNIT_TESTS) */
-
-
-/* RENDEZMIX */
-smartlist_t *
-get_cmuxs_to_update(void)
-{
-  return cmuxs_to_update;
-}

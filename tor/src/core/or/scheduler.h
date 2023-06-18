@@ -216,6 +216,4 @@ scheduler_t *get_vanilla_scheduler(void);
 
 #endif /* defined(SCHEDULER_PRIVATE) */
 
-smartlist_t *get_cmuxs_to_update(void);
-
 #endif /* !defined(TOR_SCHEDULER_H) */

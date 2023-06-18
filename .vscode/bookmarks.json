@@ -1,0 +1,39 @@
+{
+	"files": [
+		{
+			"path": "tor/src/core/mainloop/mainloop.c",
+			"bookmarks": [
+				{
+					"line": 1687,
+					"column": 64,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "tor/src/feature/hibernate/hibernate.c",
+			"bookmarks": [
+				{
+					"line": 1016,
+					"column": 60,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "tor/src/lib/evloop/timers.c",
+			"bookmarks": [
+				{
+					"line": 249,
+					"column": 38,
+					"label": ""
+				},
+				{
+					"line": 300,
+					"column": 56,
+					"label": ""
+				}
+			]
+		}
+	]
+}

@@ -12,6 +12,9 @@
 #ifndef TOR_RELAY_H
 #define TOR_RELAY_H
 
+/* RENDEZMIX includes */
+#include "lib/evloop/timers.h"
+
 extern uint64_t stats_n_relay_cells_relayed;
 extern uint64_t stats_n_relay_cells_delivered;
 extern uint64_t stats_n_circ_max_cell_reached;
@@ -145,9 +148,15 @@ STATIC size_t connection_edge_get_inbuf_bytes_to_package(size_t n_available,
 
 /** ----------------------------------------------- RENDEZMIX ------------------------------------------------------- */
 
-int probably_middle_node_circ(circuit_t *circ);
+struct delay_info_t {
+  packed_cell_t *cell;
+  circuit_t *circ;
+  int direction;
+};
 
-struct timespec get_sleep_timespec_from_command(uint8_t command);
+typedef struct delay_info_t delay_info_t;
+
+int probably_middle_node_circ(circuit_t *circ);
 
 unsigned bitcount32(uint32_t x);
 
@@ -177,12 +186,14 @@ double get_delay_scale_factor(uint8_t command);
 
 const char * get_direction_str(int direction);
 
-struct timespec get_delay_timespec(circuit_t *circ, int direction);
+struct timeval get_delay_timeval(circuit_t *circ, int direction);
 
-struct timespec get_ready_ts(circuit_t *circ, const cell_t *cell, int direction);
+struct timeval get_ready_timeval(circuit_t *circ, const cell_t *cell, int direction);
 
-struct timespec get_ready_ts_independent(circuit_t *circ, const cell_t *cell, int direction);
+struct timeval get_ready_timeval_independent(circuit_t *circ, const cell_t *cell, int direction);
 
-int update_queues(circuit_t *circ, int direction);
+void delay_or_append_cell(const cell_t *cell, packed_cell_t *copy, circuit_t *circ, cell_queue_t *queue, int direction);
+
+void cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *time);
 
 #endif /* !defined(TOR_RELAY_H) */
