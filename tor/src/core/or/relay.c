@@ -4108,8 +4108,7 @@ get_ready_timeval(circuit_t *circ, const cell_t *cell, int direction)
   delay_s = delay_tv.tv_sec + delay_tv.tv_usec / 1e6;
 
   // Calculate ready time
-  ready_tv.tv_sec = previous_cell_tv.tv_sec + delay_tv.tv_sec;
-  ready_tv.tv_usec = previous_cell_tv.tv_usec + delay_tv.tv_usec;
+  timeradd(&previous_cell_tv, &delay_tv, &ready_tv);
   ready = ready_tv.tv_sec + ready_tv.tv_usec / 1e6;
 
   if (direction == CELL_DIRECTION_IN) circ->previous_cell_tv_in = ready_tv;
@@ -4136,8 +4135,7 @@ get_ready_timeval_independent(circuit_t *circ, const cell_t *cell, int direction
   delay = delay_tv.tv_sec + delay_tv.tv_usec / 1e6;
 
   // Calculate ready time
-  ready_tv.tv_sec = now_tv.tv_sec + delay_tv.tv_sec;
-  ready_tv.tv_usec = now_tv.tv_usec + delay_tv.tv_usec;
+  timeradd(&now_tv, &delay_tv, &ready_tv);
   ready = ready_tv.tv_sec + ready_tv.tv_usec / 1e6;
 
 
