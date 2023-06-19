@@ -4056,7 +4056,7 @@ get_delay_microseconds_normal(void)
   double value;
   do {
     // Approximately: [0, 1s]
-    value = gen_normal_value(0.05, 0.012);
+    value = gen_normal_value(0.5*1e5, 0.12*1e5);
   } while (value < 0);
   return value;
 }
