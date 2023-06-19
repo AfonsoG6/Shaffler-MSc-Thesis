@@ -4047,7 +4047,7 @@ double
 get_delay_microseconds_uniform(void)
 {
   // Between: [0, 1s]
-  return gen_uniform_value(0, 1e6);
+  return gen_uniform_value(0, 1e5);
 }
 
 double
