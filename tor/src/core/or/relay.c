@@ -4078,7 +4078,7 @@ get_delay_timeval(circuit_t *circ, int direction)
   do {
     //if (direction == CELL_DIRECTION_IN) microsec = scale*get_delay_microseconds_in(circ);
     //else microsec = scale*get_delay_microseconds_out(circ);
-    microsec = scale*get_delay_microseconds_uniform();
+    microsec = scale*get_delay_microseconds_normal();
   } while (microsec > scale*1e6);
   ts.tv_sec = (time_t)(microsec / 1e6);
   ts.tv_usec = (suseconds_t)(microsec - ts.tv_sec*1e6);
