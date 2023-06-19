@@ -181,6 +181,8 @@ double get_delay_microseconds_out(circuit_t *circ);
 
 double get_delay_microseconds_uniform(void);
 
+double get_delay_microseconds_normal(void);
+
 double get_delay_scale_factor(uint8_t command);
 
 const char * get_direction_str(int direction);

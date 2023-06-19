@@ -4046,7 +4046,19 @@ get_delay_microseconds_out(circuit_t *circ)
 double
 get_delay_microseconds_uniform(void)
 {
+  // Between: [0, 1s]
   return gen_uniform_value(0, 1e6);
+}
+
+double
+get_delay_microseconds_normal(void)
+{
+  double value;
+  do {
+    // Approximately: [0, 1s]
+    value = gen_normal_value(0.5, 0.12);
+  } while (value < 0);
+  return value;
 }
 
 double
@@ -4064,8 +4076,9 @@ get_delay_timeval(circuit_t *circ, int direction)
   struct timeval ts;
   scale = get_delay_scale_factor(circ->delay_command);
   do {
-    if (direction == CELL_DIRECTION_IN) microsec = scale*get_delay_microseconds_in(circ);
-    else microsec = scale*get_delay_microseconds_out(circ);
+    //if (direction == CELL_DIRECTION_IN) microsec = scale*get_delay_microseconds_in(circ);
+    //else microsec = scale*get_delay_microseconds_out(circ);
+    microsec = scale*get_delay_microseconds_uniform();
   } while (microsec > scale*1e6);
   ts.tv_sec = (time_t)(microsec / 1e6);
   ts.tv_usec = (suseconds_t)(microsec - ts.tv_sec*1e6);
