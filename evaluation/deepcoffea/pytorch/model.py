@@ -290,7 +290,7 @@ if __name__ == "__main__":
     parser.add_argument("--ckpt", default=None, type=str, help="Load path for the checkpoint model.")
     args = parser.parse_args()
     
-    if args.mode == "process":
+    if "process" in args.mode:
         partition_windows(args.delta, args.win_size, args.n_wins, args.threshold, args.data_root)
         preprocess_dcf(args.delta, args.win_size, args.n_wins, args.threshold, args.tor_len, args.exit_len, args.n_test, args.data_root)
     else:
