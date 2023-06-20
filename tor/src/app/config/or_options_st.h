@@ -1091,6 +1091,12 @@ struct or_options_t {
    * in question to get its relevant configuration object.
    */
   struct config_suite_t *subconfigs_;
+
+  /* RENDEZMIX options */
+  int DelayMode;
+  double DelayParam1;
+  double DelayParam2;
+  double DelayMax;
 };
 
 #endif /* !defined(TOR_OR_OPTIONS_ST_H) */

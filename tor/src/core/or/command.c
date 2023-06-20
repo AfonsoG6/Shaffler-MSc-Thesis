@@ -107,9 +107,6 @@ cell_command_to_string(uint8_t command)
     case CELL_AUTHENTICATE: return "authenticate";
     case CELL_AUTHORIZE: return "authorize";
     default:
-      if (command >= CELL_RELAY_DELAY_LOWEST &&
-          command <= CELL_RELAY_DELAY_HIGHEST)
-        return "relay";
       return "unrecognized";
   }
 }
@@ -214,12 +211,6 @@ command_process_cell(channel_t *chan, cell_t *cell)
       PROCESS_CELL(destroy, cell, chan);
       break;
     default:
-      if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
-          cell->command <= CELL_RELAY_DELAY_HIGHEST) {
-        ++stats_n_relay_cells_processed;
-        PROCESS_CELL(relay, cell, chan);
-        break;
-      }
       log_fn(LOG_INFO, LD_PROTOCOL,
              "Cell of unknown or unexpected type (%d) received.  "
              "Dropping.",
@@ -340,6 +331,12 @@ command_process_create_cell(cell_t *cell, channel_t *chan)
     circuit_mark_for_close(TO_CIRCUIT(circ), END_CIRC_REASON_TORPROTOCOL);
     return;
   }
+
+  /* RENDEZMIX Copy delay policy from CREATE_CELL to CIRC */
+  log_info(LD_GENERAL, "[RENDEZMIX][POLICY] Received delay policy (mode=%d, param1=%f, param2=%f, max=%f)",
+           create_cell->delay_policy.mode, create_cell->delay_policy.param1,
+           create_cell->delay_policy.param2, create_cell->delay_policy.max);
+  memcpy(&circ->delay_policy, &create_cell->delay_policy, sizeof(delay_policy_t));
 
   /* Mark whether this circuit used TAP in case we need to use this
    * information for onion service statistics later on. */

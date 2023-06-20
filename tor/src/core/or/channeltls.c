@@ -1154,12 +1154,6 @@ channel_tls_handle_cell(cell_t *cell, or_connection_t *conn)
       channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
       break;
     default:
-      if (cell->command >= CELL_RELAY_DELAY_LOWEST &&
-          cell->command <= CELL_RELAY_DELAY_HIGHEST) {
-        channel_process_cell(TLS_CHAN_TO_BASE(chan), cell);
-        break;
-      }
-
       log_fn(LOG_INFO, LD_PROTOCOL,
             "Cell of unknown type (%d) received in channeltls.c.  "
             "Dropping.",

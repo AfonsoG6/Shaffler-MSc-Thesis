@@ -16,6 +16,7 @@
 
 /* RENDEZMIX includes */
 #include "lib/evloop/timers.h"
+#include "core/or/onion.h"
 
 struct onion_queue_t;
 
@@ -99,7 +100,18 @@ struct or_circuit_t {
   token_bucket_ctr_t introduce2_bucket;
 
   /** RENDEZMIX */
+  delay_policy_t delay_policy;
+
+  short p_delay_state;
+  short n_delay_state;
+
+  struct timeval p_last_ready_tv;
+  struct timeval n_last_ready_tv;
+
+  cell_queue_t n_delay_queue;
   cell_queue_t p_delay_queue;
+
+  tor_timer_t *n_delay_timer;
   tor_timer_t *p_delay_timer;
 };
 

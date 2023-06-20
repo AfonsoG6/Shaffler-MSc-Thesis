@@ -175,25 +175,21 @@ short update_circ_delay_state(short state);
 
 double generate_delay(short delay_state);
 
-double get_delay_microseconds_in(circuit_t *circ);
+double get_delay_microseconds_markov(or_circuit_t *circ, int direction);
 
-double get_delay_microseconds_out(circuit_t *circ);
+double get_delay_microseconds_uniform(double low, double high);
 
-double get_delay_microseconds_uniform(void);
+double get_delay_microseconds_normal(double location, double scale);
 
-double get_delay_microseconds_normal(void);
-
-double get_delay_scale_factor(uint8_t command);
+double get_delay_microseconds_lognormal(double location, double scale);
 
 const char * get_direction_str(int direction);
 
-struct timeval get_delay_timeval(circuit_t *circ, int direction);
+struct timeval get_delay_timeval(or_circuit_t *circ, int direction);
 
-struct timeval get_ready_timeval(circuit_t *circ, const cell_t *cell, int direction);
+struct timeval get_ready_timeval(or_circuit_t *circ, int direction);
 
-struct timeval get_ready_timeval_independent(circuit_t *circ, const cell_t *cell, int direction);
-
-void delay_or_append_cell(const cell_t *cell, packed_cell_t *copy, circuit_t *circ, cell_queue_t *queue, int direction);
+void delay_or_append_cell(packed_cell_t *copy, circuit_t *circ, cell_queue_t *queue, int direction);
 
 void schedule_delay_timer(circuit_t *circ, int direction);
 

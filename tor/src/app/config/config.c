@@ -759,6 +759,11 @@ static const config_var_t option_vars_[] = {
   OBSOLETE("TestingCertMaxDownloadTries"),
   VAR_INVIS("___UsingTestNetworkDefaults", BOOL, UsingTestNetworkDefaults_,
             "0"),
+  /* RENDEZMIX torrc options */
+  V(DelayMode,        INT,         "0"),
+  V(DelayParam1,      DOUBLE,      "0.0"),
+  V(DelayParam2,      DOUBLE,      "0.0"),
+  V(DelayMax,         DOUBLE,      "0.0"),
 
   END_OF_CONFIG_VARS
 };

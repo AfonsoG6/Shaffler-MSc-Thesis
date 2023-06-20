@@ -180,8 +180,7 @@ circuit_update_channel_usage(circuit_t *circ, cell_t *cell)
       return;
 
     if (circ->n_chan->channel_usage == CHANNEL_USED_FOR_FULL_CIRCS &&
-        (cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST &&
-          cell->command <= CELL_RELAY_DELAY_HIGHEST))) {
+        cell->command == CELL_RELAY) {
       circ->n_chan->channel_usage = CHANNEL_USED_FOR_USER_TRAFFIC;
     }
   } else {
@@ -205,8 +204,7 @@ circuit_update_channel_usage(circuit_t *circ, cell_t *cell)
         if (or_circ->p_chan->channel_usage < CHANNEL_USED_FOR_FULL_CIRCS) {
           or_circ->p_chan->channel_usage = CHANNEL_USED_FOR_FULL_CIRCS;
         }
-      } else if (cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST &&
-          cell->command <= CELL_RELAY_DELAY_HIGHEST)) {
+      } else if (cell->command == CELL_RELAY) {
         or_circ->p_chan->channel_usage = CHANNEL_USED_FOR_USER_TRAFFIC;
       }
     }
@@ -636,11 +634,6 @@ relay_send_command_from_edge_,(streamid_t stream_id, circuit_t *circ,
     tor_assert(cpath_layer);
     cell.circ_id = circ->n_circ_id;
     cell_direction = CELL_DIRECTION_OUT;
-    /* RENDEZMIX Set cell.command */
-    if (circ->purpose == CIRCUIT_PURPOSE_C_GENERAL && circ->state == CIRCUIT_STATE_OPEN) {
-      cell.command = CELL_RELAY_DELAY_HIGHEST; // Delay scale factor [13, 127]
-      log_info(LD_GENERAL, "[RENDEZMIX] Sending cell with delay command. payload_len: %lu", payload_len);
-    }
   } else {
     tor_assert(! cpath_layer);
     cell.circ_id = TO_OR_CIRCUIT(circ)->p_circ_id;
@@ -1860,8 +1853,7 @@ handle_relay_cell_command(cell_t *cell, circuit_t *circ,
         static ratelim_t early_warning_limit =
           RATELIM_INIT(EARLY_WARNING_INTERVAL);
         char *m;
-        if (cell->command == CELL_RELAY || (cell->command >= CELL_RELAY_DELAY_LOWEST &&
-          cell->command <= CELL_RELAY_DELAY_HIGHEST)) {
+        if (cell->command == CELL_RELAY) {
           ++total_nonearly;
           if ((m = rate_limit_log(&early_warning_limit, approx_time()))) {
             double percentage = ((double)total_nonearly)/total_n_extend;
@@ -2660,7 +2652,7 @@ cell_queue_append_packed_copy(circuit_t *circ, cell_queue_t *queue,
   copy->inserted_timestamp = monotime_coarse_get_stamp();
 
   // RENDEZMIX
-  delay_or_append_cell(cell, copy, circ, queue, (exitward ? CELL_DIRECTION_OUT : CELL_DIRECTION_IN));
+  delay_or_append_cell(copy, circ, queue, (exitward ? CELL_DIRECTION_OUT : CELL_DIRECTION_IN));
 }
 
 /** Initialize <b>queue</b> as an empty cell queue. */
@@ -3257,7 +3249,8 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
                              streamid_t fromstream)
 {
   or_circuit_t *orcirc = NULL;
-  cell_queue_t *queue, *delay_queue;
+  cell_queue_t *queue;
+  cell_queue_t *delay_queue = NULL; // RENDEZMIX
   int32_t max_queue_size;
   int streams_blocked;
   int exitward;
@@ -3267,7 +3260,11 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
   exitward = (direction == CELL_DIRECTION_OUT);
   if (exitward) {
     queue = &circ->n_chan_cells;
-    delay_queue = &circ->n_delay_queue; // RENDEZMIX
+    // RENDEZMIX
+    if (circ->magic == OR_CIRCUIT_MAGIC) {
+      orcirc = TO_OR_CIRCUIT(circ);
+      delay_queue = &orcirc->n_delay_queue;
+    }
     streams_blocked = circ->streams_blocked_on_n_chan;
     max_queue_size = max_circuit_cell_queue_size_out;
   } else {
@@ -3309,7 +3306,7 @@ append_cell_to_circuit_queue(circuit_t *circ, channel_t *chan,
 
   /* If we have too many cells on the circuit, we should stop reading from
    * the edge streams for a while. */
-  if (!streams_blocked && queue->n + delay_queue->n >= cell_queue_highwatermark())
+  if (!streams_blocked && queue->n + ((delay_queue)? delay_queue->n:0) >= cell_queue_highwatermark())
     set_streams_blocked_on_circ(circ, chan, 1, 0); /* block streams */
 
   if (streams_blocked && fromstream) {
@@ -4024,63 +4021,86 @@ generate_delay(short delay_state)
 }
 
 double
-get_delay_microseconds_in(circuit_t *circ)
+get_delay_microseconds_markov(or_circuit_t *circ, int direction)
 {
+  short *state = (direction == CELL_DIRECTION_OUT) ? &circ->n_delay_state : &circ->p_delay_state;
   do {
-    circ->delay_state_in = update_circ_delay_state(circ->delay_state_in);
-  } while (circ->delay_state_in == 0 || circ->delay_state_in == 7 ||
-            circ->delay_state_in == 10 || circ->delay_state_in == 24);
-  return generate_delay(circ->delay_state_in);
+    *state = update_circ_delay_state(*state);
+  } while (*state == 0 || *state == 7 ||
+            *state == 10 || *state == 24);
+  return generate_delay(*state);
 }
 
 double
-get_delay_microseconds_out(circuit_t *circ)
+get_delay_microseconds_uniform(double low, double high)
 {
-  do {
-    circ->delay_state_out = update_circ_delay_state(circ->delay_state_out);
-  } while (circ->delay_state_out == 0 || circ->delay_state_out == 7 ||
-            circ->delay_state_out == 10 || circ->delay_state_out == 24);
-  return generate_delay(circ->delay_state_out);
+  if (low > high) {
+    double temp = low;
+    low = high;
+    high = temp;
+  }
+  // DEFAULT: Between [0, 1s]
+  if (high == 0.0) high = 1e5;
+  return gen_uniform_value(low, high);
 }
 
 double
-get_delay_microseconds_uniform(void)
-{
-  // Between: [0, 1s]
-  return gen_uniform_value(0, 1e5);
-}
-
-double
-get_delay_microseconds_normal(void)
+get_delay_microseconds_normal(double location, double scale)
 {
   double value;
+  // DEFAULT: Approximately [0, 1s]
+  if (location == 0.0) location = 0.5*1e5;
+  if (scale == 0.0) scale = 0.12*1e5;
   do {
-    // Approximately: [0, 1s]
-    value = gen_normal_value(0.5*1e5, 0.12*1e5);
+    value = gen_normal_value(location, scale);
   } while (value < 0);
   return value;
 }
 
 double
-get_delay_scale_factor(uint8_t command)
+get_delay_microseconds_lognormal(double location, double scale)
 {
-  if (command == CELL_RELAY) return 1.0;
-  return (double)(command - CELL_RELAY_DELAY_LOWEST) /
-         (CELL_RELAY_DELAY_HIGHEST - CELL_RELAY_DELAY_LOWEST);
+  double value;
+  // DEFAULT: Approximately [0, 1s]
+  if (location == 0.0) location = -1.5*1e5;
+  if (scale == 0.0) scale = 0.5*1e5;
+  do {
+    value = gen_lognormal_value(location, scale);
+  } while (value < 0);
+  return value;
 }
 
 struct timeval
-get_delay_timeval(circuit_t *circ, int direction)
+get_delay_timeval(or_circuit_t *circ, int direction)
 {
-  double microsec, scale;
+  double microsec;
   struct timeval ts;
-  scale = get_delay_scale_factor(circ->delay_command);
+  uint8_t mode = circ->delay_policy.mode;
+  double param1 = circ->delay_policy.param1;
+  double param2 = circ->delay_policy.param2;
+  double max = circ->delay_policy.max;
+  if (max == 0.0) max = 1e5;
   do {
-    if (direction == CELL_DIRECTION_IN) microsec = scale*get_delay_microseconds_in(circ);
-    else microsec = scale*get_delay_microseconds_out(circ);
-    //microsec = scale*get_delay_microseconds_normal();
-    //microsec = scale*get_delay_microseconds_uniform();
-  } while (microsec > scale*1e6);
+    switch (mode) {
+      case DELAY_MODE_NORMAL:
+        microsec = get_delay_microseconds_normal(param1, param2);
+        break;
+      case DELAY_MODE_UNIFORM:
+        microsec = get_delay_microseconds_uniform(param1, param2);
+        break;
+      case DELAY_MODE_LOGNORMAL:
+        microsec = get_delay_microseconds_lognormal(param1, param2);
+        break;
+      case DELAY_MODE_MARKOV:
+        microsec = get_delay_microseconds_markov(circ, direction);
+        break;
+      case DELAY_MODE_NONE:
+      default:
+        microsec = 0.0;
+        break;
+    }
+  } while (max > 0 && microsec > max);
+  if (microsec < 0.0) microsec = 0.0;
   ts.tv_sec = (time_t)(microsec / 1e6);
   ts.tv_usec = (suseconds_t)(microsec - ts.tv_sec*1e6);
   return ts;
@@ -4099,17 +4119,14 @@ get_direction_str(int direction) {
 }
 
 struct timeval
-get_ready_timeval(circuit_t *circ, const cell_t *cell, int direction)
+get_ready_timeval(or_circuit_t *circ, int direction)
 {
   struct timeval previous_cell_tv, now_tv, delay_tv, ready_tv;
   double delay_s, ready; // in seconds
 
-  // After receiving a delay command once, we mark the circuit as using delays
-  circ->delay_command = (cell->command == CELL_RELAY)? CELL_RELAY_DELAY_HIGHEST : cell->command;
-
   // Get last packet time
-  if (direction == CELL_DIRECTION_IN) previous_cell_tv = circ->previous_cell_tv_in;
-  else previous_cell_tv = circ->previous_cell_tv_out;
+  if (direction == CELL_DIRECTION_IN) previous_cell_tv = circ->p_last_ready_tv;
+  else previous_cell_tv = circ->n_last_ready_tv;
 
   // If previous_cell_tv is too old, set it to now
   gettimeofday(&now_tv, NULL);
@@ -4125,56 +4142,25 @@ get_ready_timeval(circuit_t *circ, const cell_t *cell, int direction)
   timeradd(&previous_cell_tv, &delay_tv, &ready_tv);
   ready = ready_tv.tv_sec + ready_tv.tv_usec / 1e6;
 
-  if (direction == CELL_DIRECTION_IN) circ->previous_cell_tv_in = ready_tv;
-  else circ->previous_cell_tv_out = ready_tv;
+  if (direction == CELL_DIRECTION_IN) circ->p_last_ready_tv = ready_tv;
+  else circ->n_last_ready_tv = ready_tv;
 
-  log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] delay=%fs ready=%fs states=%d<-->%d", get_direction_str(direction), delay_s, ready, circ->delay_state_in, circ->delay_state_out);
-  return ready_tv;
-}
-
-struct timeval
-get_ready_timeval_independent(circuit_t *circ, const cell_t *cell, int direction)
-{
-  struct timeval now_tv, delay_tv, ready_tv;
-  double delay, ready; // in seconds
-
-  // After receiving a delay command once, we mark the circuit as using delays
-  circ->delay_command = (cell->command == CELL_RELAY)? CELL_RELAY_DELAY_HIGHEST : cell->command;
-
-  // Get current time
-  gettimeofday(&now_tv, NULL);
-
-  // Get delay
-  delay_tv = get_delay_timeval(circ, direction);
-  delay = delay_tv.tv_sec + delay_tv.tv_usec / 1e6;
-
-  // Calculate ready time
-  timeradd(&now_tv, &delay_tv, &ready_tv);
-  ready = ready_tv.tv_sec + ready_tv.tv_usec / 1e6;
-
-
-  log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] delay=%fs ready=%fs states=%d<-->%d", get_direction_str(direction), delay, ready, circ->delay_state_in, circ->delay_state_out);
+  log_info(LD_GENERAL, "[RENDEZMIX][DELAY][%s] delay=%fs ready=%fs states=%d<-->%d", get_direction_str(direction), delay_s, ready, circ->p_delay_state, circ->n_delay_state);
   return ready_tv;
 }
 
 void
-delay_or_append_cell(const cell_t *cell, packed_cell_t *copy, circuit_t *circ, cell_queue_t *queue, int direction) {
-  if ((probably_middle_node_circ(circ)) &&
-      (circ) &&
-      (circ->magic == OR_CIRCUIT_MAGIC) &&
-      (circ->purpose == CIRCUIT_PURPOSE_OR) &&
-      (circ->delay_command || (cell->command >= CELL_RELAY_DELAY_LOWEST && cell->command <= CELL_RELAY_DELAY_HIGHEST))) {
-    copy->ready_tv = get_ready_timeval(circ, cell, direction);
-
-    or_circuit_t *or_circ;
+delay_or_append_cell(packed_cell_t *copy, circuit_t *circ, cell_queue_t *queue, int direction) {
+  if (circ->magic == OR_CIRCUIT_MAGIC && TO_OR_CIRCUIT(circ)->delay_policy.mode != DELAY_MODE_NONE) {
+    or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
     cell_queue_t *delay_queue;
     tor_timer_t *timer;
+    copy->ready_tv = get_ready_timeval(or_circ, direction);
     if (direction == CELL_DIRECTION_OUT) {
-      delay_queue = &circ->n_delay_queue;
-      timer = circ->n_delay_timer;
+      delay_queue = &or_circ->n_delay_queue;
+      timer = or_circ->n_delay_timer;
     }
     else {
-      or_circ = TO_OR_CIRCUIT(circ);
       delay_queue = &or_circ->p_delay_queue;
       timer = or_circ->p_delay_timer;
     }
@@ -4196,13 +4182,11 @@ schedule_delay_timer(circuit_t *circ, int direction) {
   tor_timer_t *timer;
   delay_info_t *info;
   packed_cell_t *cell;
-  or_circuit_t *or_circ;
-
+  or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
   if (direction == CELL_DIRECTION_OUT) {
-    cell = TOR_SIMPLEQ_FIRST(&circ->n_delay_queue.head);
+    cell = TOR_SIMPLEQ_FIRST(&or_circ->n_delay_queue.head);
   }
   else {
-    or_circ = TO_OR_CIRCUIT(circ);
     cell = TOR_SIMPLEQ_FIRST(&or_circ->p_delay_queue.head);
   }
 
@@ -4222,7 +4206,7 @@ schedule_delay_timer(circuit_t *circ, int direction) {
   timer = timer_new(cell_ready_callback, info);
   timer_schedule(timer, &delay_tv);
   if (direction == CELL_DIRECTION_OUT) {
-    circ->n_delay_timer = timer;
+    or_circ->n_delay_timer = timer;
   }
   else {
     or_circ->p_delay_timer = timer;
@@ -4250,17 +4234,17 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
     log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] circuit is closed, dropping cell", get_direction_str(direction));
     return;
   }
+  or_circ = TO_OR_CIRCUIT(circ);
   if (direction == CELL_DIRECTION_OUT) {
-    circ->n_delay_timer = NULL;
+    or_circ->n_delay_timer = NULL;
     queue = &circ->n_chan_cells;
-    delay_queue = &circ->n_delay_queue;
+    delay_queue = &or_circ->n_delay_queue;
     if (!circ->n_chan) {
       log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] n_chan is NULL, dropping cell", get_direction_str(direction));
       return;
     }
   }
   else {
-    or_circ = TO_OR_CIRCUIT(circ);
     or_circ->p_delay_timer = NULL;
     queue = &or_circ->p_chan_cells;
     delay_queue = &or_circ->p_delay_queue;
