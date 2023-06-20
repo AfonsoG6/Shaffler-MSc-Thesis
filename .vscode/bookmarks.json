@@ -34,6 +34,31 @@
 					"label": ""
 				}
 			]
+		},
+		{
+			"path": "tor/src/core/or/circuitbuild.c",
+			"bookmarks": [
+				{
+					"line": 934,
+					"column": 52,
+					"label": ""
+				},
+				{
+					"line": 2482,
+					"column": 42,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "tor/src/core/crypto/relay_crypto.c",
+			"bookmarks": [
+				{
+					"line": 144,
+					"column": 49,
+					"label": ""
+				}
+			]
 		}
 	]
 }
