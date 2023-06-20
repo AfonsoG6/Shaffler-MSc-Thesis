@@ -159,7 +159,8 @@ def main(mode: str,
         elif "CrawlE_Proc" in data_root.name:
             data_name = "deepcoffea"
         else:
-            raise ValueError(f"data: {data_root.name} is not supported.")
+            data_name = data_root.name
+            #raise ValueError(f"data: {data_root.name} is not supported.")
 
         save_dir = pathlib.Path("./experiments") / f"deepcoffea_{data_name}_d{delta}_ws{win_size}_nw{n_wins}_thr{threshold}_tl{tor_len}_el{exit_len}_nt{n_test}_ap{alpha:.0e}_es{emb_size}_lr{lr:.0e}_mep{max_ep}_bs{batch_size}"
         if not save_dir.exists():
