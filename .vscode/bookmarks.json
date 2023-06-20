@@ -44,7 +44,17 @@
 					"label": ""
 				},
 				{
-					"line": 2482,
+					"line": 968,
+					"column": 53,
+					"label": ""
+				},
+				{
+					"line": 1108,
+					"column": 60,
+					"label": ""
+				},
+				{
+					"line": 2489,
 					"column": 42,
 					"label": ""
 				}
@@ -56,6 +66,56 @@
 				{
 					"line": 144,
 					"column": 49,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "tor/src/core/or/command.c",
+			"bookmarks": [
+				{
+					"line": 227,
+					"column": 58,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "tor/src/core/or/onion.c",
+			"bookmarks": [
+				{
+					"line": 106,
+					"column": 60,
+					"label": ""
+				},
+				{
+					"line": 166,
+					"column": 65,
+					"label": ""
+				},
+				{
+					"line": 404,
+					"column": 43,
+					"label": ""
+				},
+				{
+					"line": 529,
+					"column": 71,
+					"label": ""
+				},
+				{
+					"line": 643,
+					"column": 59,
+					"label": ""
+				}
+			]
+		},
+		{
+			"path": "tor/src/feature/relay/circuitbuild_relay.c",
+			"bookmarks": [
+				{
+					"line": 424,
+					"column": 59,
 					"label": ""
 				}
 			]
