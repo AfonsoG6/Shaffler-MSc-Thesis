@@ -13,7 +13,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from sklearn.metrics.pairwise import cosine_similarity
 
-from data_utils import DeepCoffeaDataset, TripletSampler
+from data_utils import DeepCoffeaDataset, TripletSampler, preprocess_dcf, partition_windows
 
 
 class FeatureEmbeddingNetwork(nn.Module):
@@ -289,4 +289,9 @@ if __name__ == "__main__":
     parser.add_argument("--data_root", required=True, type=str, help="Path to preprocessed .npz.")
     parser.add_argument("--ckpt", default=None, type=str, help="Load path for the checkpoint model.")
     args = parser.parse_args()
-    main(args.mode, args.delta, args.win_size, args.n_wins, args.threshold, args.tor_len, args.exit_len, args.n_test, args.alpha, args.emb_size, args.lr, args.ep, args.batch_size, args.data_root, args.ckpt)
+    
+    if args.mode == "process":
+        partition_windows(args.delta, args.win_size, args.n_wins, args.threshold, args.data_root)
+        preprocess_dcf(args.delta, args.win_size, args.n_wins, args.threshold, args.tor_len, args.exit_len, args.n_test, args.data_root)
+    else:
+        main(args.mode, args.delta, args.win_size, args.n_wins, args.threshold, args.tor_len, args.exit_len, args.n_test, args.alpha, args.emb_size, args.lr, args.ep, args.batch_size, args.data_root, args.ckpt)
