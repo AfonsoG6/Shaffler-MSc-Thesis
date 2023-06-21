@@ -30,6 +30,7 @@ hosts:
         OPENBLAS_NUM_THREADS: '1'
       args: ../../../conf/tgen.server.graphml.xml
       start_time: 1 sec
+      expected_final_state: running
   4uthority:
     network_node_id: 0
     ip_addr: 100.0.0.1
@@ -38,6 +39,7 @@ hosts:
       args: --Address 4uthority --Nickname 4uthority
             --defaults-torrc torrc-defaults -f torrc
       start_time: 1 sec
+      expected_final_state: running
   exit1:
     network_node_id: 0
     ip_addr: 11.0.0.21
@@ -46,6 +48,7 @@ hosts:
       args: --Address exit1 --Nickname exit1
             --defaults-torrc torrc-defaults -f torrc
       start_time: 1 min
+      expected_final_state: running
   exit2:
     network_node_id: 0
     ip_addr: 11.0.0.22
@@ -54,6 +57,7 @@ hosts:
       args: --Address exit2 --Nickname exit2
             --defaults-torrc torrc-defaults -f torrc
       start_time: 1 min
+      expected_final_state: running
   relay1:
     network_node_id: 0
     ip_addr: 11.0.0.11
@@ -62,6 +66,7 @@ hosts:
       args: --Address relay1 --Nickname relay1
             --defaults-torrc torrc-defaults -f torrc
       start_time: 1 min
+      expected_final_state: running
   relay2:
     network_node_id: 0
     ip_addr: 11.0.0.12
@@ -70,6 +75,7 @@ hosts:
       args: --Address relay2 --Nickname relay2
             --defaults-torrc torrc-defaults -f torrc
       start_time: 1 min
+      expected_final_state: running
   client:
     network_node_id: 0
     ip_addr: 11.0.0.101
@@ -80,6 +86,7 @@ hosts:
         OPENBLAS_NUM_THREADS: '1'
       args: ../../../conf/tgen.client.graphml.xml
       start_time: 5 min
+      expected_final_state: {exited: 0}
   torclient:
     network_node_id: 0
     ip_addr: 11.0.0.100
@@ -88,12 +95,15 @@ hosts:
       args: --Address torclient --Nickname torclient
             --defaults-torrc torrc-defaults -f torrc
       start_time: 10 min
+      expected_final_state: running
     - path: oniontrace
       args: Mode=log TorControlPort=9001 LogLevel=info Events=CIRC,STREAM
       start_time: 602
+      expected_final_state: running
     - path: tgen
       # See https://shadow.github.io/docs/guide/compatibility_notes.html#libopenblas
       environment:
         OPENBLAS_NUM_THREADS: '1'
       args: ../../../conf/tgen.torclient.graphml.xml
       start_time: 15 min
+      expected_final_state: {exited: 0}
