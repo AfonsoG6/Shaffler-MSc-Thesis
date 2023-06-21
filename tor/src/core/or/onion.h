@@ -23,14 +23,16 @@ struct curve25519_public_key_t;
 /* ------------------------------------------------- RENDEZMIX ------------------------------------------------------ */
 
 #define DELAY_POLICY_MAGIC "DelayPolDelayPol"
+#define DELAY_POLICY_RESPONSE_MAGIC "DelayPolicyResOK"
 #define DELAY_POLICY_OFFSET_ONIONSKIN TAP_ONIONSKIN_CHALLENGE_LEN+DIGEST_LEN
 #define DELAY_POLICY_OFFSET 6+DELAY_POLICY_OFFSET_ONIONSKIN
 
 #define DELAY_MODE_NONE 0
-#define DELAY_MODE_UNIFORM 1
-#define DELAY_MODE_NORMAL 2
-#define DELAY_MODE_LOGNORMAL 3
-#define DELAY_MODE_MARKOV 4
+#define DELAY_MODE_AUTO 1
+#define DELAY_MODE_UNIFORM 2
+#define DELAY_MODE_NORMAL 3
+#define DELAY_MODE_LOGNORMAL 4
+#define DELAY_MODE_MARKOV 5
 
 typedef struct delay_policy_t {
   uint8_t mode;     // 1 byte
@@ -54,6 +56,7 @@ typedef struct create_cell_t {
   /** The client-side message for the circuit creation handshake. */
   uint8_t onionskin[CELL_PAYLOAD_SIZE - 4];
   /* RENDEZMIX Delay Policy for the created circuit to use */
+  uint8_t delay_policy_is_set;
   delay_policy_t delay_policy;
 } create_cell_t;
 
@@ -65,6 +68,8 @@ typedef struct created_cell_t {
   uint16_t handshake_len;
   /** The server-side message for the circuit creation handshake. */
   uint8_t reply[CELL_PAYLOAD_SIZE - 2];
+  /* RENDEZMIX Boolean that defines if a delay policy response magic number should be sent */
+  uint8_t delay_policy_is_set;
 } created_cell_t;
 
 /** A parsed RELAY_EXTEND or RELAY_EXTEND2 cell */

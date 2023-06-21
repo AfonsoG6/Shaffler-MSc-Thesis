@@ -1093,10 +1093,25 @@ struct or_options_t {
   struct config_suite_t *subconfigs_;
 
   /* RENDEZMIX options */
+  /* Boolean: Should we only accept Circuits that support our delay policy? */
+  int EnforceDelayPolicy;
+  /* Integer: Delay mode to use. [0, 5] */
   int DelayMode;
+  /* Double: Parameter to use for the delay mode chosen */
   double DelayParam1;
+  /* Double: Parameter to use for the delay mode chosen */
   double DelayParam2;
+  /* Double: Hard upper limit for delays */
   double DelayMax;
+
+  /* Integer: Delay mode for the OR to use when requested to use the AUTO mode. [0, 5] */
+  int AutoDelayMode;
+  /* Double: Parameter to use when requested to use the AUTO mode. */
+  double AutoDelayParam1;
+  /* Double: Parameter to use when requested to use the AUTO mode. */
+  double AutoDelayParam2;
+  /* Double: Hard upper limit for delays when requested to use the AUTO mode. */
+  double AutoDelayMax;
 };
 
 #endif /* !defined(TOR_OR_OPTIONS_ST_H) */

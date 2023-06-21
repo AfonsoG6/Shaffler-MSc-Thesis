@@ -54,7 +54,7 @@
 					"label": ""
 				},
 				{
-					"line": 2489,
+					"line": 2496,
 					"column": 42,
 					"label": ""
 				}
@@ -77,6 +77,11 @@
 					"line": 227,
 					"column": 58,
 					"label": ""
+				},
+				{
+					"line": 417,
+					"column": 59,
+					"label": ""
 				}
 			]
 		},
@@ -84,28 +89,23 @@
 			"path": "tor/src/core/or/onion.c",
 			"bookmarks": [
 				{
-					"line": 106,
-					"column": 60,
+					"line": 222,
+					"column": 67,
 					"label": ""
 				},
 				{
-					"line": 166,
-					"column": 65,
+					"line": 495,
+					"column": 46,
 					"label": ""
 				},
 				{
-					"line": 404,
-					"column": 43,
+					"line": 616,
+					"column": 68,
 					"label": ""
 				},
 				{
-					"line": 529,
-					"column": 71,
-					"label": ""
-				},
-				{
-					"line": 643,
-					"column": 59,
+					"line": 789,
+					"column": 61,
 					"label": ""
 				}
 			]

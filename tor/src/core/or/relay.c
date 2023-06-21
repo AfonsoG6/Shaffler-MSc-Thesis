@@ -3555,7 +3555,7 @@ gen_uniform_value(double low, double high) {
   return low + ((high - low) * uniform);
 }
 
-short update_circ_delay_state(short state) {
+uint8_t update_circ_delay_state(uint8_t state) {
 	double r = gen_random_uniform_01();
 	if (state == 0) {
 		if (r <= 0.48422233533746367) {
@@ -3868,7 +3868,7 @@ short update_circ_delay_state(short state) {
 }
 
 double
-generate_delay(short delay_state)
+generate_delay(uint8_t delay_state)
 {
   double r = 0; //gen_random_uniform_01();
   if (delay_state == 1) {
@@ -4023,7 +4023,7 @@ generate_delay(short delay_state)
 double
 get_delay_microseconds_markov(or_circuit_t *circ, int direction)
 {
-  short *state = (direction == CELL_DIRECTION_OUT) ? &circ->n_delay_state : &circ->p_delay_state;
+  uint8_t *state = (direction == CELL_DIRECTION_OUT) ? &circ->n_delay_state : &circ->p_delay_state;
   do {
     *state = update_circ_delay_state(*state);
   } while (*state == 0 || *state == 7 ||
@@ -4079,6 +4079,12 @@ get_delay_timeval(or_circuit_t *circ, int direction)
   double param1 = circ->delay_policy.param1;
   double param2 = circ->delay_policy.param2;
   double max = circ->delay_policy.max;
+  if (mode == DELAY_MODE_AUTO) {
+    mode = get_options()->AutoDelayMode;
+    param1 = get_options()->AutoDelayParam1;
+    param2 = get_options()->AutoDelayParam2;
+    max = get_options()->AutoDelayMax;
+  }
   if (max == 0.0) max = 1e5;
   do {
     switch (mode) {
@@ -4151,8 +4157,12 @@ get_ready_timeval(or_circuit_t *circ, int direction)
 
 void
 delay_or_append_cell(packed_cell_t *copy, circuit_t *circ, cell_queue_t *queue, int direction) {
-  if (circ->magic == OR_CIRCUIT_MAGIC && TO_OR_CIRCUIT(circ)->delay_policy.mode != DELAY_MODE_NONE) {
-    or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
+  if (circ->magic != OR_CIRCUIT_MAGIC) {
+    cell_queue_append(queue, copy);
+    return;
+  }
+  or_circuit_t *or_circ = TO_OR_CIRCUIT(circ);
+  if (or_circ->delay_policy_is_set && or_circ->delay_policy.mode != DELAY_MODE_NONE) {
     cell_queue_t *delay_queue;
     tor_timer_t *timer;
     copy->ready_tv = get_ready_timeval(or_circ, direction);

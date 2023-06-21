@@ -171,9 +171,9 @@ double gen_lognormal_value(double location, double scale);
 
 double gen_uniform_value(double low, double high);
 
-short update_circ_delay_state(short state);
+uint8_t update_circ_delay_state(uint8_t state);
 
-double generate_delay(short delay_state);
+double generate_delay(uint8_t delay_state);
 
 double get_delay_microseconds_markov(or_circuit_t *circ, int direction);
 
