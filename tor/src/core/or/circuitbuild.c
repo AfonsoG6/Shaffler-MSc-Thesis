@@ -1281,6 +1281,13 @@ circuit_finish_handshake(origin_circuit_t *circ,
     return -END_CIRC_REASON_TORPROTOCOL;
   }
 
+  /* RENDEZMIX Check if circuit should be closed due to the delay policy failing to be set */
+  if (hop != circ->cpath && hop == circ->cpath->next &&
+      get_options()->EnforceDelayPolicy && !reply->delay_policy_is_set) {
+    log_warn(LD_CIRC, "Expected delay policy to be set by the middle node, but wasn't. Closing.");
+    return -END_CIRC_REASON_TORPROTOCOL;
+  }
+
   if (params.cc_enabled) {
     int circ_len = circuit_get_cpath_len(circ);
 

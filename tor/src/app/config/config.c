@@ -760,10 +760,16 @@ static const config_var_t option_vars_[] = {
   VAR_INVIS("___UsingTestNetworkDefaults", BOOL, UsingTestNetworkDefaults_,
             "0"),
   /* RENDEZMIX torrc options */
-  V(DelayMode,        INT,         "0"),
-  V(DelayParam1,      DOUBLE,      "0.0"),
-  V(DelayParam2,      DOUBLE,      "0.0"),
-  V(DelayMax,         DOUBLE,      "0.0"),
+  V(EnforceDelayPolicy,     BOOL,        "0"),
+  V(DelayMode,              INT,         "0"),
+  V(DelayParam1,            DOUBLE,      "0.0"),
+  V(DelayParam2,            DOUBLE,      "0.0"),
+  V(DelayMax,               DOUBLE,      "0.0"),
+
+  V(AutoDelayMode,          INT,         "3"),
+  V(AutoDelayParam1,        DOUBLE,      "0.5e5"),
+  V(AutoDelayParam2,        DOUBLE,      "0.12e5"),
+  V(AutoDelayMax,           DOUBLE,      "1e5"),
 
   END_OF_CONFIG_VARS
 };

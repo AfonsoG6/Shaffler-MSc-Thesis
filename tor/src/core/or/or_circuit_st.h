@@ -100,10 +100,11 @@ struct or_circuit_t {
   token_bucket_ctr_t introduce2_bucket;
 
   /** RENDEZMIX */
+  uint8_t delay_policy_is_set;
   delay_policy_t delay_policy;
 
-  short p_delay_state;
-  short n_delay_state;
+  uint8_t p_delay_state;
+  uint8_t n_delay_state;
 
   struct timeval p_last_ready_tv;
   struct timeval n_last_ready_tv;

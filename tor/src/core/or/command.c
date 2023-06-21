@@ -333,10 +333,13 @@ command_process_create_cell(cell_t *cell, channel_t *chan)
   }
 
   /* RENDEZMIX Copy delay policy from CREATE_CELL to CIRC */
-  log_info(LD_GENERAL, "[RENDEZMIX][POLICY] Received delay policy (mode=%d, param1=%f, param2=%f, max=%f)",
-           create_cell->delay_policy.mode, create_cell->delay_policy.param1,
-           create_cell->delay_policy.param2, create_cell->delay_policy.max);
-  memcpy(&circ->delay_policy, &create_cell->delay_policy, sizeof(delay_policy_t));
+  if (create_cell->delay_policy_is_set) {
+    log_info(LD_GENERAL, "[RENDEZMIX][POLICY] Received delay policy (mode=%d, param1=%f, param2=%f, max=%f)",
+            create_cell->delay_policy.mode, create_cell->delay_policy.param1,
+            create_cell->delay_policy.param2, create_cell->delay_policy.max);
+    memcpy(&circ->delay_policy, &create_cell->delay_policy, sizeof(delay_policy_t));
+  }
+  circ->delay_policy_is_set = create_cell->delay_policy_is_set;
 
   /* Mark whether this circuit used TAP in case we need to use this
    * information for onion service statistics later on. */
@@ -388,6 +391,9 @@ command_process_create_cell(cell_t *cell, channel_t *chan)
     }
     created_cell.cell_type = CELL_CREATED_FAST;
     created_cell.handshake_len = len;
+
+    /* RENDEZMIX Set DELAY_POLICY_RESPONSE_MAGIC if delay policy is set */
+    created_cell.delay_policy_is_set = circ->delay_policy_is_set;
 
     if (onionskin_answer(circ, &created_cell,
                          (const char *)keys, sizeof(keys),
