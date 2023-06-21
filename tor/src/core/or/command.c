@@ -333,13 +333,13 @@ command_process_create_cell(cell_t *cell, channel_t *chan)
   }
 
   /* RENDEZMIX Copy delay policy from CREATE_CELL to CIRC */
-  if (create_cell->delay_policy_is_set) {
+  circ->delay_policy_is_set = !get_options()->DisableDelays && create_cell->delay_policy_is_set;
+  if (circ->delay_policy_is_set) {
     log_info(LD_GENERAL, "[RENDEZMIX][POLICY] Received delay policy (mode=%d, param1=%f, param2=%f, max=%f)",
             create_cell->delay_policy.mode, create_cell->delay_policy.param1,
             create_cell->delay_policy.param2, create_cell->delay_policy.max);
     memcpy(&circ->delay_policy, &create_cell->delay_policy, sizeof(delay_policy_t));
   }
-  circ->delay_policy_is_set = create_cell->delay_policy_is_set;
 
   /* Mark whether this circuit used TAP in case we need to use this
    * information for onion service statistics later on. */
