@@ -1104,6 +1104,8 @@ struct or_options_t {
   /* Double: Hard upper limit for delays */
   double DelayMax;
 
+  /* Boolean: If the OR rejects Delay Policies */
+  int DisableDelays;
   /* Integer: Delay mode for the OR to use when requested to use the AUTO mode. [0, 5] */
   int AutoDelayMode;
   /* Double: Parameter to use when requested to use the AUTO mode. */
