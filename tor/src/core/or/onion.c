@@ -249,6 +249,8 @@ created_cell_parse(created_cell_t *cell_out, const cell_t *cell_in)
       dprm_offset = 2 + cell_out->handshake_len;
       break;
     }
+  default:
+    return -1;
   }
   /* RENDEZMIX created_cell_parse() */
   if (dprm_offset + 16 > CELL_PAYLOAD_SIZE) {
@@ -532,7 +534,7 @@ extended_cell_parse(extended_cell_t *cell_out,
     return -1;
   }
   /* RENDEZMIX extended_cell_parse() */
-  if (payload_len < dprm_offset + 16 + sizeof(delay_policy_t))
+  if (dprm_offset + 16 > RELAY_PAYLOAD_SIZE)
     return -1;
   cell_out->created_cell.delay_policy_is_set = tor_memeq(payload + dprm_offset, DELAY_POLICY_RESPONSE_MAGIC, 16);
 
@@ -640,8 +642,8 @@ created_cell_format(cell_t *cell_out, const created_cell_t *cell_in)
     return -1;
   }
   /* RENDEZMIX Set DELAY_POLICY_RESPONSE_MAGIC */
-  tor_assert(dprm_offset + 16 <= (int)sizeof(cell_out->payload));
   if (cell_in->delay_policy_is_set) {
+    tor_assert(dprm_offset + 16 <= (int)sizeof(cell_out->payload));
     memcpy(cell_out->payload + dprm_offset, DELAY_POLICY_RESPONSE_MAGIC, 16);
   }
   return 0;
