@@ -400,6 +400,9 @@ cpuworker_onion_handshake_replyfn(void *work_)
     }
   }
 
+  /* RENDEZMIX Set DELAY_POLICY_RESPONSE_MAGIC if delay policy is set */
+  rpl.created_cell.delay_policy_is_set = circ->delay_policy_is_set;
+
   if (onionskin_answer(circ,
                        &rpl.created_cell,
                        (const char*)rpl.keys, sizeof(rpl.keys),
