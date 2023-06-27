@@ -15,6 +15,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from data_utils import DeepCoffeaDataset, TripletSampler, preprocess_dcf, partition_windows
 
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
 
 class FeatureEmbeddingNetwork(nn.Module):
 

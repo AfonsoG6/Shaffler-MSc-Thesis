@@ -257,6 +257,10 @@ created_cell_parse(created_cell_t *cell_out, const cell_t *cell_in)
     return -1;
   }
   cell_out->delay_policy_is_set = tor_memeq(cell_in->payload + dprm_offset, DELAY_POLICY_RESPONSE_MAGIC, 16);
+  if (cell_out->delay_policy_is_set)
+    log_info(LD_GENERAL, "[RENDEZMIX][POLICY] DELAY_POLICY_RESPONSE_MAGIC found @ %d (CREATED)", dprm_offset);
+  else
+    log_info(LD_GENERAL, "[RENDEZMIX][POLICY] DELAY_POLICY_RESPONSE_MAGIC not found @ %d (CREATED)", dprm_offset);
 
   return check_created_cell(cell_out);
 }
@@ -537,6 +541,10 @@ extended_cell_parse(extended_cell_t *cell_out,
   if (dprm_offset + 16 > RELAY_PAYLOAD_SIZE)
     return -1;
   cell_out->created_cell.delay_policy_is_set = tor_memeq(payload + dprm_offset, DELAY_POLICY_RESPONSE_MAGIC, 16);
+  if (cell_out->created_cell.delay_policy_is_set)
+    log_info(LD_GENERAL, "[RENDEZMIX][POLICY] DELAY_POLICY_RESPONSE_MAGIC found @ %d (CREATED)", dprm_offset);
+  else
+    log_info(LD_GENERAL, "[RENDEZMIX][POLICY] DELAY_POLICY_RESPONSE_MAGIC not found @ %d (CREATED)", dprm_offset);
 
   return check_extended_cell(cell_out);
 }
@@ -645,6 +653,7 @@ created_cell_format(cell_t *cell_out, const created_cell_t *cell_in)
   if (cell_in->delay_policy_is_set) {
     tor_assert(dprm_offset + 16 <= (int)sizeof(cell_out->payload));
     memcpy(cell_out->payload + dprm_offset, DELAY_POLICY_RESPONSE_MAGIC, 16);
+    log_info(LD_GENERAL, "[RENDEZMIX][POLICY] DELAY_POLICY_RESPONSE_MAGIC set @ %d (CREATED)", dprm_offset);
   }
   return 0;
 }
@@ -827,6 +836,7 @@ extended_cell_format(uint8_t *command_out, uint16_t *len_out,
     if (*len_out + 16 > RELAY_PAYLOAD_SIZE)
       return -1;
     memcpy(payload_out+*len_out, DELAY_POLICY_RESPONSE_MAGIC, 16);
+    log_info(LD_GENERAL, "[RENDEZMIX][POLICY] DELAY_POLICY_RESPONSE_MAGIC set @ %d (EXTENDED)", *len_out);
     *len_out += 16;
   }
 
