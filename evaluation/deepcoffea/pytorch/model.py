@@ -222,7 +222,7 @@ def main(mode: str,
                 print("Best training loss (avg) so far.\n")
 
                 # save the metrics
-                np.savez_compressed(save_dir / f"ep-{ep+1:03d}_loss{best_loss_mean:.5f}_metrics", corr_matrix=corr_matrix, loss_mean=best_loss_mean)
+                # np.savez_compressed(save_dir / f"ep-{ep+1:03d}_loss{best_loss_mean:.5f}_metrics", corr_matrix=corr_matrix, loss_mean=best_loss_mean)
 
                 # save the model snapshot
                 torch.save({
@@ -269,6 +269,8 @@ def main(mode: str,
         corr_matrix = cosine_similarity(tor_embs, exit_embs)
 
         np.savez_compressed(ckpt.parent / f"best_loss_corrmatrix", corr_matrix=corr_matrix)
+        # Save the correlation matrix as a csv file
+        np.savetxt(ckpt.parent / f"best_loss_corrmatrix.csv", corr_matrix, delimiter=",")
 
 
 if __name__ == "__main__":
