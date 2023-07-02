@@ -251,15 +251,6 @@ struct circuit_t {
 
   /** Congestion control fields */
   struct congestion_control_t *ccontrol;
-
-  /** RENDEZMIX */
-  uint8_t delay_command;
-  short delay_state_in;
-  short delay_state_out;
-  struct timeval previous_cell_tv_in;
-  struct timeval previous_cell_tv_out;
-  cell_queue_t n_delay_queue;
-  tor_timer_t *n_delay_timer;
 };
 
 #endif /* !defined(CIRCUIT_ST_H) */

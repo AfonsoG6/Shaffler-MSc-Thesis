@@ -2,6 +2,7 @@ import time
 import pathlib
 import datetime
 import argparse
+import csv
 
 import numpy as np
 
@@ -15,6 +16,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from data_utils import DeepCoffeaDataset, TripletSampler, preprocess_dcf, partition_windows
 
+import os
+from eval_utils import Cosine_Similarity_eval, ini_cosine_output, threshold_finder
 
 class FeatureEmbeddingNetwork(nn.Module):
 
@@ -131,7 +134,7 @@ def main(mode: str,
          batch_size: int,
          data_root: str,
          ckpt: str):
-    assert mode in set(["train", "test"]), f"mode: {mode} is not supported"
+    assert mode in set(["train", "test", "eval"]), f"mode: {mode} is not supported"
 
     # To ensure device-agnostic reproducibility
     torch.manual_seed(114)
@@ -220,7 +223,7 @@ def main(mode: str,
                 print("Best training loss (avg) so far.\n")
 
                 # save the metrics
-                np.savez_compressed(save_dir / f"ep-{ep+1:03d}_loss{best_loss_mean:.5f}_metrics", corr_matrix=corr_matrix, loss_mean=best_loss_mean)
+                # np.savez_compressed(save_dir / f"ep-{ep+1:03d}_loss{best_loss_mean:.5f}_metrics", corr_matrix=corr_matrix, loss_mean=best_loss_mean)
 
                 # save the model snapshot
                 torch.save({
@@ -234,6 +237,73 @@ def main(mode: str,
             if np.mean(losses) < 0.003:
                 break
 
+    elif mode == "eval":
+        if ckpt is None:
+            raise ValueError("ckpt is not set!")
+        
+        ckpt = pathlib.Path(ckpt).resolve()
+        results_path = os.path.splitext(ckpt.as_posix())[0] + "_results.csv"
+        fields = ckpt.parent.name.split("_")
+
+        delta = int(fields[-12].split("d")[-1])
+        win_size = int(fields[-11].split("ws")[-1])
+        n_wins = int(fields[-10].split("nw")[-1])
+        threshold = int(fields[-9].split("thr")[-1])
+        tor_len = int(fields[-8].split("tl")[-1])
+        exit_len = int(fields[-7].split("el")[-1])
+        n_test = int(fields[-6].split("nt")[-1])
+        emb_size = int(fields[-4].split("es")[-1])
+        batch_size = int(fields[-1].split("bs")[-1])
+        #ep = int(ckpt.name.split("_")[0].split("-")[1])
+        
+        rank_thr_list = [60, 50, 47, 43, 40, 37, 33, 28, 24, 20, 16.667, 14, 12.5, 11, 10, 9, 8.333, 7, 6.25, 5, 4.545, 3.846, 2.941, 1.667, 1.6, 1.5, 1.4, 1.3, 1.2, 1.1, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2]
+        minimum_windows_positive = 1 + n_wins // 2
+        if n_wins == 7:
+            minimum_windows_positive = 6
+        elif n_wins == 9:
+            minimum_windows_positive = 7
+        elif n_wins == 11:
+            minimum_windows_positive = 9
+            
+        rank_multi_output = []
+        for i in range(0, len(rank_thr_list)):
+            rank_multi_output.append([(rank_thr_list[i])])
+            
+        activated_windows = []
+        for i in range(n_wins):
+            activated_windows.append(i)
+        last_activated_window = activated_windows[-1]
+        
+        pth_content = torch.load(ckpt)
+
+        anchor = FeatureEmbeddingNetwork(emb_size=emb_size, input_size=tor_len*2).to(dev)
+        anchor.load_state_dict(pth_content["anchor_state_dict"])
+        pandn = FeatureEmbeddingNetwork(emb_size=emb_size, input_size=exit_len*2).to(dev)
+        pandn.load_state_dict(pth_content["pandn_state_dict"])
+        print(f"Snapshot: '{ckpt}' loaded")
+        
+        for epoch_idx in range(len(rank_thr_list)):
+            thr = rank_thr_list[epoch_idx]
+            print(f"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ We are in thr {thr} ({epoch_idx}/{len(rank_thr_list)}) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            multi_output_list = rank_multi_output[epoch_idx]
+            single_output = []
+            for win in range(n_wins):
+                print(f"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ We are in window {win} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                test_set = DeepCoffeaDataset(data_root, delta, win_size, n_wins, threshold, tor_len, exit_len, n_test, False, win)
+                test_loader = DataLoader(test_set, batch_size=batch_size)
+                tor_embs, exit_embs = inference(anchor, pandn, test_loader, dev)
+
+                if win == 0:
+                    ini_cosine_output(single_output, tor_embs.shape[0])
+                corr_matrix = cosine_similarity(tor_embs, exit_embs)
+                threshold_result = threshold_finder(corr_matrix, thr)
+
+                if win in activated_windows:
+                    Cosine_Similarity_eval(tor_embs, exit_embs, threshold_result, single_output, win, last_activated_window, minimum_windows_positive, corr_matrix, multi_output_list, n_test)
+        with open(results_path, "w", newline="") as rank_f:
+            writer = csv.writer(rank_f)
+            writer.writerow(["Threshold", "TPR", "FPR", "BDR"])
+            writer.writerows(rank_multi_output)
     else:
         if ckpt is None:
             raise ValueError("ckpt is not set!")
@@ -267,7 +337,6 @@ def main(mode: str,
         corr_matrix = cosine_similarity(tor_embs, exit_embs)
 
         np.savez_compressed(ckpt.parent / f"best_loss_corrmatrix", corr_matrix=corr_matrix)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Deep Coffea.")

@@ -88,7 +88,7 @@
 static int circuit_send_first_onion_skin(origin_circuit_t *circ);
 static int circuit_build_no_more_hops(origin_circuit_t *circ);
 static int circuit_send_intermediate_onion_skin(origin_circuit_t *circ,
-                                                crypt_path_t *hop);
+                                                crypt_path_t *hop, int second_hop);
 static const node_t *choose_good_middle_server(uint8_t purpose,
                           cpath_build_state_t *state,
                           crypt_path_t *head,
@@ -951,7 +951,7 @@ circuit_send_next_onion_skin(origin_circuit_t *circ)
 
   if (hop) {
     /* Case two: we're on a hop after the first. */
-    return circuit_send_intermediate_onion_skin(circ, hop);
+    return circuit_send_intermediate_onion_skin(circ, hop, (circ->cpath->next->state == CPATH_STATE_CLOSED));
   }
 
   /* Case three: the circuit is finished. Do housekeeping tasks on it. */
@@ -1107,7 +1107,7 @@ circuit_build_no_more_hops(origin_circuit_t *circ)
  */
 static int
 circuit_send_intermediate_onion_skin(origin_circuit_t *circ,
-                                     crypt_path_t *hop)
+                                     crypt_path_t *hop, int second_hop)
 {
   int len;
   extend_cell_t ec;
@@ -1166,7 +1166,14 @@ circuit_send_intermediate_onion_skin(origin_circuit_t *circ,
     uint8_t command = 0;
     uint16_t payload_len=0;
     uint8_t payload[RELAY_PAYLOAD_SIZE];
-    if (extend_cell_format(&command, &payload_len, payload, &ec)<0) {
+    /* RENDEZMIX Set the delay mode and parameters */
+    delay_policy_t delay_policy;
+    memset(&delay_policy, 0, sizeof(delay_policy_t));
+    if (second_hop) {
+      get_delay_policy(&delay_policy);
+    }
+
+    if (extend_cell_format(&command, &payload_len, payload, &ec, delay_policy)<0) {
       log_warn(LD_CIRC,"Couldn't format extend cell");
       return -END_CIRC_REASON_INTERNAL;
     }
@@ -1271,6 +1278,13 @@ circuit_finish_handshake(origin_circuit_t *circ,
   onion_handshake_state_release(&hop->handshake_state);
 
   if (cpath_init_circuit_crypto(hop, keys, sizeof(keys), 0, 0)<0) {
+    return -END_CIRC_REASON_TORPROTOCOL;
+  }
+
+  /* RENDEZMIX Check if circuit should be closed due to the delay policy failing to be set */
+  if (hop != circ->cpath && hop == circ->cpath->next &&
+      get_options()->EnforceDelayPolicy && !reply->delay_policy_is_set) {
+    log_warn(LD_CIRC, "Expected delay policy to be set by the middle node, but wasn't. Closing.");
     return -END_CIRC_REASON_TORPROTOCOL;
   }
 
