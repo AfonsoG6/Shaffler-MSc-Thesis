@@ -2,6 +2,7 @@ import time
 import pathlib
 import datetime
 import argparse
+import csv
 
 import numpy as np
 
@@ -14,6 +15,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics.pairwise import cosine_similarity
 
 from data_utils import DeepCoffeaDataset, TripletSampler, preprocess_dcf, partition_windows
+from pdb import set_trace as bp
 
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
@@ -241,6 +243,7 @@ def main(mode: str,
             raise ValueError("ckpt is not set!")
         
         ckpt = pathlib.Path(ckpt).resolve()
+        results_path = os.path.splitext(ckpt.as_posix())[0] + "_results.csv"
         fields = ckpt.parent.name.split("_")
 
         delta = int(fields[-12].split("d")[-1])
@@ -253,7 +256,25 @@ def main(mode: str,
         emb_size = int(fields[-4].split("es")[-1])
         batch_size = int(fields[-1].split("bs")[-1])
         #ep = int(ckpt.name.split("_")[0].split("-")[1])
-
+        
+        rank_thr_list = [60, 50, 47, 43, 40, 37, 33, 28, 24, 20, 16.667, 14, 12.5, 11, 10, 9, 8.333, 7, 6.25, 5, 4.545, 3.846, 2.941, 1.667, 1.6, 1.5, 1.4, 1.3, 1.2, 1.1, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2]
+        minimum_windows_positive = 1 + n_wins // 2
+        if n_wins == 7:
+            minimum_windows_positive = 6
+        elif n_wins == 9:
+            minimum_windows_positive = 7
+        elif n_wins == 11:
+            minimum_windows_positive = 9
+            
+        rank_multi_output = []
+        for i in range(0, len(rank_thr_list)):
+            rank_multi_output.append([(rank_thr_list[i])])
+            
+        activated_windows = []
+        for i in range(n_wins):
+            activated_windows.append(i)
+        last_activated_window = activated_windows[-1]
+        
         pth_content = torch.load(ckpt)
 
         anchor = FeatureEmbeddingNetwork(emb_size=emb_size, input_size=tor_len*2).to(dev)
@@ -261,17 +282,117 @@ def main(mode: str,
         pandn = FeatureEmbeddingNetwork(emb_size=emb_size, input_size=exit_len*2).to(dev)
         pandn.load_state_dict(pth_content["pandn_state_dict"])
         print(f"Snapshot: '{ckpt}' loaded")
-
         test_set = DeepCoffeaDataset(data_root, delta, win_size, n_wins, threshold, tor_len, exit_len, n_test, False)
         test_loader = DataLoader(test_set, batch_size=batch_size)
-
         tor_embs, exit_embs = inference(anchor, pandn, test_loader, dev)
-        corr_matrix = cosine_similarity(tor_embs, exit_embs)
+        
+        for epoch_idx in range(len(rank_thr_list)):
+            thr = rank_thr_list[epoch_idx]
+            print(f"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ We are in thr {thr} ({epoch_idx}/{len(rank_thr_list)}) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            multi_output_list = rank_multi_output[epoch_idx]
+            single_output = []
+            for win in range(n_wins):
+                print(f"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ We are in window {win} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
-        np.savez_compressed(ckpt.parent / f"best_loss_corrmatrix", corr_matrix=corr_matrix)
-        # Save the correlation matrix as a csv file
-        np.savetxt(ckpt.parent / f"best_loss_corrmatrix.csv", corr_matrix, delimiter=",")
+                if win == 0:
+                    ini_cosine_output(single_output, tor_embs.shape[0])
+                corr_matrix = cosine_similarity(tor_embs, exit_embs)
+                threshold_result = threshold_finder(corr_matrix, thr)
 
+                if win in activated_windows:
+                    Cosine_Similarity_eval(tor_embs, exit_embs, threshold_result, single_output, win, last_activated_window, minimum_windows_positive, corr_matrix, multi_output_list, n_test)
+        with open(results_path, "w", newline="") as rank_f:
+            writer = csv.writer(rank_f)
+            writer.writerow(["Threshold", "TPR", "FPR", "BDR"])
+            writer.writerows(rank_multi_output)
+
+# Every tor flow will have a unique threshold
+def threshold_finder(input_similarity_list, thres_seed):
+    output_threshold_list = []
+    for simi_list_index in range(0, len(input_similarity_list)):
+        temp = list(input_similarity_list[simi_list_index])
+        temp.sort(reverse=True)
+
+        cut_point = int((len(input_similarity_list[simi_list_index]) - 1) * ((thres_seed) / 100))
+        output_threshold_list.append(temp[cut_point])
+    return output_threshold_list
+
+def ini_cosine_output(single_output_l, input_number):
+    for pairs in range(0, (input_number * input_number)):
+        single_output_l.append(0)
+
+def Cosine_Similarity_eval(tor_embs, exit_embs, similarity_threshold, single_output_l, evaluating_window, last_window, correlated_shreshold, cosine_similarity_all_list, muti_output_list, flow):
+    global total_vot
+    # print('single_output_l ',np.array(single_output_l).shape)
+    number_of_lines = tor_embs.shape[0]
+    start_emd = time.time()
+    for tor_emb_index in range(0, number_of_lines):
+        t = similarity_threshold[tor_emb_index]
+        constant_num = int(tor_emb_index * number_of_lines)
+        for exit_emb_index in range(0, number_of_lines):
+            if cosine_similarity_all_list[tor_emb_index][exit_emb_index] >= t:
+                # print('single_output_l[constant_num + exit_emb_index] ',single_output_l[constant_num + exit_emb_index])
+                single_output_l[constant_num + exit_emb_index] = single_output_l[constant_num + exit_emb_index] + 1
+
+    if evaluating_window == last_window:
+        TP = 0
+        TN = 0
+        FP = 0
+        FN = 0
+
+        # now begin to evaluate
+        # print("evaluating .......")
+        for tor_eval_index in range(0, tor_embs.shape[0]):
+            for exit_eval_index in range(0, tor_embs.shape[0]):
+                cos_condithon_a = tor_eval_index == exit_eval_index
+                number_of_ones = single_output_l[(tor_eval_index * (tor_embs.shape[0])) + exit_eval_index]
+                cos_condition_b = number_of_ones >= correlated_shreshold
+                cos_condition_c = number_of_ones < correlated_shreshold
+
+                if cos_condithon_a and cos_condition_b:
+                    TP = TP + 1
+                if cos_condithon_a and cos_condition_c:
+                    FN = FN + 1
+                if (not (cos_condithon_a)) and cos_condition_b:
+                    FP = FP + 1
+                if (not (cos_condithon_a)) and cos_condition_c:
+                    TN = TN + 1
+
+        print("TP: ", TP, "FN: ", FN, "FP: ", FP, "TN: ", TN)
+        if (TP + FN) != 0:
+            TPR = (float)(TP) / (TP + FN)
+        else:
+            TPR = -1
+
+        if (FP + TN) != 0:
+            FPR = (float)(FP) / (FP + TN)
+        else:
+            FPR = -1
+
+        muti_output_list.append(TPR)
+        muti_output_list.append(FPR)
+        muti_output_list.append(calculate_bdr(TPR, FPR, flow))
+        print(TPR, FPR, calculate_bdr(TPR, FPR, flow))
+
+    # print(".....done!")
+    end_time = time.time()
+    total_vot = total_vot + (end_time - start_emd)
+
+
+def calculate_bdr(tpr, fpr, flow):
+    TPR = tpr
+    FPR = fpr
+    c = 1 / int(flow)
+    u = (int(flow) - 1) / int(flow)
+    if ((TPR * c) + (FPR * u)) != 0:
+        BDR = (TPR * c) / ((TPR * c) + (FPR * u))
+    else:
+        BDR = -1
+    return BDR
+
+total_emb = 0
+total_vot = 0
+total_cos = 0
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Deep Coffea.")
