@@ -114,6 +114,16 @@ create_cell_init(create_cell_t *cell_out, uint8_t cell_type,
   cell_out->handshake_type = handshake_type;
   cell_out->handshake_len = handshake_len;
   memcpy(cell_out->onionskin, onionskin, handshake_len);
+
+  /* RENDEZMIX Parse the delay policy into the CREATE_CELL */
+  if (tor_memeq(onionskin + handshake_len, DELAY_POLICY_MAGIC, 16)) {
+    cell_out->delay_policy_is_set = 1;
+    memcpy(&cell_out->delay_policy, onionskin + handshake_len + 16, sizeof(delay_policy_t));
+  }
+  else {
+    cell_out->delay_policy_is_set = 0;
+    memset(&cell_out->delay_policy, 0, sizeof(delay_policy_t));
+  }
 }
 
 /** Helper: parse the CREATE2 payload at <b>p</b>, which could be up to
@@ -212,6 +222,7 @@ check_created_cell(const created_cell_t *cell)
 int
 created_cell_parse(created_cell_t *cell_out, const cell_t *cell_in)
 {
+  int dprm_offset;
   memset(cell_out, 0, sizeof(*cell_out));
 
   switch (cell_in->command) {
@@ -219,11 +230,13 @@ created_cell_parse(created_cell_t *cell_out, const cell_t *cell_in)
     cell_out->cell_type = CELL_CREATED;
     cell_out->handshake_len = TAP_ONIONSKIN_REPLY_LEN;
     memcpy(cell_out->reply, cell_in->payload, TAP_ONIONSKIN_REPLY_LEN);
+    dprm_offset = TAP_ONIONSKIN_REPLY_LEN;
     break;
   case CELL_CREATED_FAST:
     cell_out->cell_type = CELL_CREATED_FAST;
     cell_out->handshake_len = CREATED_FAST_LEN;
     memcpy(cell_out->reply, cell_in->payload, CREATED_FAST_LEN);
+    dprm_offset = CREATED_FAST_LEN;
     break;
   case CELL_CREATED2:
     {
@@ -233,9 +246,21 @@ created_cell_parse(created_cell_t *cell_out, const cell_t *cell_in)
       if (cell_out->handshake_len > CELL_PAYLOAD_SIZE - 2)
         return -1;
       memcpy(cell_out->reply, p+2, cell_out->handshake_len);
+      dprm_offset = 2 + cell_out->handshake_len;
       break;
     }
+  default:
+    return -1;
   }
+  /* RENDEZMIX created_cell_parse() */
+  if (dprm_offset + 16 > CELL_PAYLOAD_SIZE) {
+    return -1;
+  }
+  cell_out->delay_policy_is_set = tor_memeq(cell_in->payload + dprm_offset, DELAY_POLICY_RESPONSE_MAGIC, 16);
+  if (cell_out->delay_policy_is_set)
+    log_info(LD_GENERAL, "[RENDEZMIX][POLICY] DELAY_POLICY_RESPONSE_MAGIC found @ %d (CREATED)", dprm_offset);
+  else
+    log_info(LD_GENERAL, "[RENDEZMIX][POLICY] DELAY_POLICY_RESPONSE_MAGIC not found @ %d (CREATED)", dprm_offset);
 
   return check_created_cell(cell_out);
 }
@@ -441,6 +466,14 @@ extend_cell_parse,(extend_cell_t *cell_out,
     return -1;
   }
 
+  /* RENDEZMIX Parse delay policy from EXTEND_CELL */
+  int dpm_offset = payload_length - (16 + sizeof(delay_policy_t));
+  if (tor_memeq(payload + dpm_offset, DELAY_POLICY_MAGIC, 16)) {
+    cell_out->create_cell.delay_policy_is_set = 1;
+    memcpy(&cell_out->create_cell.delay_policy, payload + dpm_offset + 16, sizeof(delay_policy_t));
+  }
+  else cell_out->create_cell.delay_policy_is_set = 0;
+
   return check_extend_cell(cell_out);
 }
 
@@ -470,6 +503,7 @@ extended_cell_parse(extended_cell_t *cell_out,
                     const uint8_t command, const uint8_t *payload,
                     size_t payload_len)
 {
+  int dprm_offset;
   tor_assert(cell_out);
   tor_assert(payload);
 
@@ -485,6 +519,7 @@ extended_cell_parse(extended_cell_t *cell_out,
     cell_out->created_cell.cell_type = CELL_CREATED;
     cell_out->created_cell.handshake_len = TAP_ONIONSKIN_REPLY_LEN;
     memcpy(cell_out->created_cell.reply, payload, TAP_ONIONSKIN_REPLY_LEN);
+    dprm_offset = TAP_ONIONSKIN_REPLY_LEN;
     break;
   case RELAY_COMMAND_EXTENDED2:
     {
@@ -496,11 +531,20 @@ extended_cell_parse(extended_cell_t *cell_out,
         return -1;
       memcpy(cell_out->created_cell.reply, payload+2,
              cell_out->created_cell.handshake_len);
+      dprm_offset = 2 + cell_out->created_cell.handshake_len;
     }
     break;
   default:
     return -1;
   }
+  /* RENDEZMIX extended_cell_parse() */
+  if (dprm_offset + 16 > RELAY_PAYLOAD_SIZE)
+    return -1;
+  cell_out->created_cell.delay_policy_is_set = tor_memeq(payload + dprm_offset, DELAY_POLICY_RESPONSE_MAGIC, 16);
+  if (cell_out->created_cell.delay_policy_is_set)
+    log_info(LD_GENERAL, "[RENDEZMIX][POLICY] DELAY_POLICY_RESPONSE_MAGIC found @ %d (CREATED)", dprm_offset);
+  else
+    log_info(LD_GENERAL, "[RENDEZMIX][POLICY] DELAY_POLICY_RESPONSE_MAGIC not found @ %d (CREATED)", dprm_offset);
 
   return check_extended_cell(cell_out);
 }
@@ -539,15 +583,26 @@ create_cell_format_impl(cell_t *cell_out, const create_cell_t *cell_in,
   case CELL_CREATE_FAST:
     tor_assert(cell_in->handshake_len <= space);
     memcpy(p, cell_in->onionskin, cell_in->handshake_len);
+    p += cell_in->handshake_len;
+    space -= cell_in->handshake_len;
     break;
   case CELL_CREATE2:
     tor_assert(cell_in->handshake_len <= sizeof(cell_out->payload)-4);
     set_uint16(cell_out->payload, htons(cell_in->handshake_type));
     set_uint16(cell_out->payload+2, htons(cell_in->handshake_len));
     memcpy(cell_out->payload + 4, cell_in->onionskin, cell_in->handshake_len);
+    p = cell_out->payload + 4 + cell_in->handshake_len;
+    space -= 4 + cell_in->handshake_len;
     break;
   default:
     return -1;
+  }
+  // RENDEZMIX Copy delay policy to cell payload
+  if (cell_in->delay_policy_is_set) {
+    tor_assert(16 + sizeof(delay_policy_t) <= space);
+    memcpy(p, DELAY_POLICY_MAGIC, 16);
+    p += 16;
+    memcpy(p, &cell_in->delay_policy, sizeof(delay_policy_t));
   }
 
   return 0;
@@ -571,6 +626,7 @@ create_cell_format_relayed(cell_t *cell_out, const create_cell_t *cell_in)
 int
 created_cell_format(cell_t *cell_out, const created_cell_t *cell_in)
 {
+  int dprm_offset;
   if (check_created_cell(cell_in) < 0)
     return -1;
 
@@ -582,14 +638,22 @@ created_cell_format(cell_t *cell_out, const created_cell_t *cell_in)
   case CELL_CREATED_FAST:
     tor_assert(cell_in->handshake_len <= sizeof(cell_out->payload));
     memcpy(cell_out->payload, cell_in->reply, cell_in->handshake_len);
+    dprm_offset = cell_in->handshake_len;
     break;
   case CELL_CREATED2:
     tor_assert(cell_in->handshake_len <= sizeof(cell_out->payload)-2);
     set_uint16(cell_out->payload, htons(cell_in->handshake_len));
     memcpy(cell_out->payload + 2, cell_in->reply, cell_in->handshake_len);
+    dprm_offset = 2 + cell_in->handshake_len;
     break;
   default:
     return -1;
+  }
+  /* RENDEZMIX Set DELAY_POLICY_RESPONSE_MAGIC */
+  if (cell_in->delay_policy_is_set) {
+    tor_assert(dprm_offset + 16 <= (int)sizeof(cell_out->payload));
+    memcpy(cell_out->payload + dprm_offset, DELAY_POLICY_RESPONSE_MAGIC, 16);
+    log_info(LD_GENERAL, "[RENDEZMIX][POLICY] DELAY_POLICY_RESPONSE_MAGIC set @ %d (CREATED)", dprm_offset);
   }
   return 0;
 }
@@ -615,7 +679,7 @@ should_include_ed25519_id_extend_cells(const networkstatus_t *ns,
  * RELAY_PAYLOAD_SIZE bytes available.  Return 0 on success, -1 on failure. */
 int
 extend_cell_format(uint8_t *command_out, uint16_t *len_out,
-                   uint8_t *payload_out, const extend_cell_t *cell_in)
+                   uint8_t *payload_out, const extend_cell_t *cell_in, delay_policy_t delay_policy)
 {
   uint8_t *p;
   if (check_extend_cell(cell_in) < 0)
@@ -716,6 +780,15 @@ extend_cell_format(uint8_t *command_out, uint16_t *len_out,
   default:
     return -1;
   }
+  /* RENDEZMIX Insert delay policy into extend cell payload */
+  if (get_options()->EnforceDelayPolicy || delay_policy.mode) {
+    if (*len_out + 16 + sizeof(delay_policy_t) > RELAY_PAYLOAD_SIZE) {
+      return -1;
+    }
+    memcpy(payload_out+*len_out, DELAY_POLICY_MAGIC, 16);
+    memcpy(payload_out+*len_out+16, &delay_policy, sizeof(delay_policy_t));
+    *len_out += 16 + sizeof(delay_policy_t);
+  }
 
   return 0;
 }
@@ -758,6 +831,26 @@ extended_cell_format(uint8_t *command_out, uint16_t *len_out,
   default:
     return -1;
   }
+  /* RENDEZMIX extended_cell_format() */
+  if (cell_in->created_cell.delay_policy_is_set) {
+    if (*len_out + 16 > RELAY_PAYLOAD_SIZE)
+      return -1;
+    memcpy(payload_out+*len_out, DELAY_POLICY_RESPONSE_MAGIC, 16);
+    log_info(LD_GENERAL, "[RENDEZMIX][POLICY] DELAY_POLICY_RESPONSE_MAGIC set @ %d (EXTENDED)", *len_out);
+    *len_out += 16;
+  }
 
   return 0;
+}
+
+/* ------------------------------------------------- RENDEZMIX ------------------------------------------------------ */
+
+void get_delay_policy(delay_policy_t *policy_out) {
+  const or_options_t *options = get_options();
+  policy_out->mode = options->DelayMode;
+  policy_out->param1 = options->DelayParam1;
+  policy_out->param2 = options->DelayParam2;
+  policy_out->max = options->DelayMax;
+  log_info(LD_GENERAL, "[RENDEZMIX][POLICY] Loaded delay policy (mode=%d, param1=%f, param2=%f, max=%f)",
+           policy_out->mode, policy_out->param1, policy_out->param2, policy_out->max);
 }

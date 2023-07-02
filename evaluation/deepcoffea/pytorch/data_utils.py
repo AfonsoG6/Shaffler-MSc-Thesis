@@ -397,7 +397,7 @@ def torch_pairwise_cosine_similarity(a, b, eps=1e-8):
 
 class DeepCoffeaDataset(Dataset):
 
-    def __init__(self, data_root, delta, win_size, n_wins, threshold, tor_len, exit_len, n_test, train=True):
+    def __init__(self, data_root, delta, win_size, n_wins, threshold, tor_len, exit_len, n_test, train=True, win=None):
         self.train = train
         data_root = pathlib.Path(data_root)
 
@@ -414,6 +414,10 @@ class DeepCoffeaDataset(Dataset):
 
         loaded = np.load(npz_path)
         v_tor, v_exit, v_label = loaded[f"{mode}_tor"], loaded[f"{mode}_exit"], loaded[f"{mode}_label"]
+        if win is not None:
+            v_tor = v_tor[win]
+            v_exit = v_exit[win]
+            v_label = v_label[win]
 
         print(f"Number of examples to {mode}: {v_tor.shape[1]}, number of windows: {v_tor.shape[0]}")
 
