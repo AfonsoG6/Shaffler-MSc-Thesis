@@ -4241,7 +4241,11 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
 
 
   if (circ->marked_for_close) {
-    log_info(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] circuit is closed, dropping cell", get_direction_str(direction));
+    log_warn(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] circuit is closed, dropping cell", get_direction_str(direction));
+    return;
+  }
+  if (circ->magic != OR_CIRCUIT_MAGIC) {
+    log_warn(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] circuit is not an OR circuit, dropping cell", get_direction_str(direction));
     return;
   }
   or_circ = TO_OR_CIRCUIT(circ);
