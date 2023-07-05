@@ -4239,7 +4239,6 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
   tor_free(info);
   (void)time;
 
-
   if (circ->marked_for_close) {
     log_warn(LD_GENERAL, "[RENDEZMIX][UPDATED][%s] circuit is closed, dropping cell", get_direction_str(direction));
     return;
@@ -4250,6 +4249,7 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
   }
   or_circ = TO_OR_CIRCUIT(circ);
   if (direction == CELL_DIRECTION_OUT) {
+    timer_free(or_circ->n_delay_timer);
     or_circ->n_delay_timer = NULL;
     queue = &circ->n_chan_cells;
     delay_queue = &or_circ->n_delay_queue;
@@ -4259,6 +4259,7 @@ cell_ready_callback(tor_timer_t *timer, void *args, const struct monotime_t *tim
     }
   }
   else {
+    timer_free(or_circ->p_delay_timer);
     or_circ->p_delay_timer = NULL;
     queue = &or_circ->p_chan_cells;
     delay_queue = &or_circ->p_delay_queue;
