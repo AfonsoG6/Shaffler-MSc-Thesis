@@ -1225,8 +1225,14 @@ circuit_free_(circuit_t *circ)
     // RENDEZMIX Free data from circ
     cell_queue_clear(&ocirc->p_delay_queue);
     cell_queue_clear(&ocirc->n_delay_queue);
-    timer_free(ocirc->p_delay_timer);
-    timer_free(ocirc->n_delay_timer);
+    if (ocirc->p_delay_timer) {
+      timer_free(ocirc->p_delay_timer);
+      ocirc->p_delay_timer = NULL;
+    }
+    if (ocirc->n_delay_timer) {
+      timer_free(ocirc->n_delay_timer);
+      ocirc->n_delay_timer = NULL;
+    }
   }
 
   extend_info_free(circ->n_hop);
@@ -2387,8 +2393,14 @@ marked_circuit_free_cells(circuit_t *circ)
     // RENDEZMIX Free data from circ
     cell_queue_clear(&orcirc->p_delay_queue);
     cell_queue_clear(&orcirc->n_delay_queue);
-    timer_free(orcirc->p_delay_timer);
-    timer_free(orcirc->n_delay_timer);
+    if (orcirc->p_delay_timer) {
+      timer_free(orcirc->p_delay_timer);
+      orcirc->p_delay_timer = NULL;
+    }
+    if (orcirc->n_delay_timer) {
+      timer_free(orcirc->n_delay_timer);
+      orcirc->n_delay_timer = NULL;
+    }
   }
 }
 
