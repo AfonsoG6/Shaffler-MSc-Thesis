@@ -8,13 +8,13 @@ make
 make install
 
 cd /part/simulation
-rm -rf sim_300_4_n/shadow.data sim_300_4_n/shadow.log
-tornettools simulate sim_300_4_n
-zip -r Normal_sim.zip sim_300_4_n
+rm -rf sim_300_2_n/shadow.data sim_300_2_n/shadow.log
+tornettools simulate sim_300_2_n
+zip -r Normal_sim.zip sim_300_2_n
 
 cd /part/simulation/datasets/
-python3 stage.py -s ../sim_300_4_n
-python3 parse.py -s ../sim_300_4_n -o Normal
+python3 stage.py -s ../sim_300_2_n
+python3 parse.py -s ../sim_300_2_n -o Normal
 python3 cleanup.py -d Normal
 zip -r Normal_dataset.zip Normal
 rm -rf Normal
