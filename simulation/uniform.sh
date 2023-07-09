@@ -16,7 +16,7 @@ cd /part/simulation/datasets/
 python3 stage.py -s ../sim_300_2_u
 python3 parse.py -s ../sim_300_2_u -o Uniform
 python3 cleanup.py -d Uniform
-rm -rf sim_300_2_u/shadow.data sim_300_2_u/shadow.log
+rm -rf /part/simulation/sim_300_2_u/shadow.data /part/simulation/sim_300_2_u/shadow.log
 zip -r Uniform_dataset.zip Uniform
 rm -rf Uniform
 echo "Done!"
