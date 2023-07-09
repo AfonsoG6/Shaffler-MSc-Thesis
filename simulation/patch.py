@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from math import ceil
 from copy import deepcopy
 import random
+import shutil
 import yaml
 import re
 import os
@@ -133,6 +134,22 @@ def pick_nodes():
         pick[cat] = choice
     return pick
 
+def rm_minimal(hosts_cfg: dict, hosts_path: str):
+    for host in hosts_cfg.keys():
+        if host.startswith("markov") or host.startswith("perf"):
+            hosts_cfg.pop(host)
+        else:
+            for process in hosts_cfg[host]["processes"]:
+                if host.startswith("custom"):
+                    if process["path"].endswith("oniontrace") and process["args"].startswith("Mode=record"):
+                        hosts_cfg[host]["processes"].remove(process)
+                else:
+                    if process["path"].endswith("oniontrace"):
+                        hosts_cfg[host]["processes"].remove(process)
+    for host_dir in os.listdir(hosts_path):
+        if host_dir.startswith("markov") or host_dir.startswith("perf"):
+            shutil.rmtree(os.path.join(hosts_path, host_dir), ignore_errors=True)
+
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-s", "--simulation", type=str, required=True)
@@ -140,12 +157,15 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--duration", type=float, required=False, default=1)
     #Flag to specify if we want the same netnodeid for all clients
     parser.add_argument("-g", "--global_netnodeid", action="store_true", required=False, default=False)
+    #Flag to specify if minimal or not
+    parser.add_argument("-m", "--minimal", action="store_true", required=False, default=False)
 
     args = parser.parse_args()
     simulation: str = args.simulation
     num_clients: int = args.num_clients
     duration: int = ceil(args.duration * 3600)
     global_netnodeid: bool = args.global_netnodeid
+    minimal: bool = args.minimal
     
     
     config_path = os.path.join(simulation, "shadow.config.yaml")
@@ -172,15 +192,8 @@ if __name__ == "__main__":
         ports.add(10000 + idx)
     patch_servers(config["hosts"], ports)
 
-    
-    """ for host in config["hosts"].keys():
-        for process in config["hosts"][host]["processes"]:
-            if host.startswith("customclient"):
-                if process["path"].endswith("oniontrace") and process["args"].startswith("Mode=record"):
-                    config["hosts"][host]["processes"].remove(process)
-            else:
-                if process["path"].endswith("oniontrace"):
-                    config["hosts"][host]["processes"].remove(process) """
+    if minimal:
+        rm_minimal(config["hosts"], hosts_path)
 
     yaml.dump(config, open(config_path, "w"), default_flow_style=False, sort_keys=False)
 
