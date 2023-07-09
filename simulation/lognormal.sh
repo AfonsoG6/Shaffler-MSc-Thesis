@@ -16,7 +16,7 @@ cd /part/simulation/datasets/
 python3 stage.py -s ../sim_300_2_l
 python3 parse.py -s ../sim_300_2_l -o Lognormal
 python3 cleanup.py -d Lognormal
-rm -rf sim_300_2_l/shadow.data sim_300_2_l/shadow.log
+rm -rf /part/simulation/sim_300_2_l/shadow.data /part/simulation/sim_300_2_l/shadow.log
 zip -r Lognormal_dataset.zip Lognormal
 rm -rf Lognormal
 echo "Done!"

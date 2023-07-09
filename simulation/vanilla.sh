@@ -13,7 +13,7 @@ cd /part/simulation/datasets/
 python3 stage.py -s ../sim_300_2
 python3 parse.py -s ../sim_300_2 -o Vanilla
 python3 cleanup.py -d Vanilla
-rm -rf sim_300_2/shadow.data sim_300_2/shadow.log
+rm -rf /part/simulation/sim_300_2/shadow.data /part/simulation/sim_300_2/shadow.log
 zip -r Vanilla_dataset.zip Vanilla
 rm -rf Vanilla
 echo "Done!"
