@@ -135,9 +135,10 @@ def pick_nodes():
     return pick
 
 def rm_minimal(hosts_cfg: dict, hosts_path: str):
+    hosts_to_rm: list = []
     for host in hosts_cfg.keys():
         if host.startswith("markov") or host.startswith("perf"):
-            hosts_cfg.pop(host)
+            hosts_to_rm.append(host)
         else:
             for process in hosts_cfg[host]["processes"]:
                 if host.startswith("custom"):
@@ -146,9 +147,9 @@ def rm_minimal(hosts_cfg: dict, hosts_path: str):
                 else:
                     if process["path"].endswith("oniontrace"):
                         hosts_cfg[host]["processes"].remove(process)
-    for host_dir in os.listdir(hosts_path):
-        if host_dir.startswith("markov") or host_dir.startswith("perf"):
-            shutil.rmtree(os.path.join(hosts_path, host_dir), ignore_errors=True)
+    for host in hosts_to_rm:
+        hosts_cfg.pop(host)
+        shutil.rmtree(os.path.join(hosts_path, host), ignore_errors=True)
 
 if __name__ == "__main__":
     parser = ArgumentParser()
