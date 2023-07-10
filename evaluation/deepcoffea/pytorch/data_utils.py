@@ -14,7 +14,7 @@ import numpy as np
 import torch
 from torch.utils.data import Sampler, Dataset
 from tqdm import tqdm
-
+import random
 
 def filter_windows(delta, win_size, n_wins, threshold, data_root):
     """Make sure there are enough (> threshold) packets in each window.
@@ -176,14 +176,14 @@ def partition_windows(delta, win_size, n_wins, threshold, data_root):
     if not out_dir.exists():
         out_dir.mkdir()
 
+    data: dict = {}
+    min_flows: int = -1
     for wi in range(n_wins):
         print(f"Partitioning window [{wi+1:02d}/{n_wins:02d}]...")
         offset = win_size - delta
         interval = [wi*offset, wi*offset + win_size]
 
-        here = []
-        there = []
-        labels = []
+        data[wi] = []
         for fn in tqdm(valid_files, ascii=True, ncols=120):
             here_seq = parse_file(here_path / fn, interval)
 
@@ -191,16 +191,30 @@ def partition_windows(delta, win_size, n_wins, threshold, data_root):
                 there_seq = parse_file(there_path / fn, interval)
 
                 if len(there_seq) != 0:
-                    here.append(here_seq)
-                    there.append(there_seq)
-                    labels.append(fn)
+                    data[wi].append((here_seq, there_seq, fn))
 
-        here, there, labels = np.array(here, dtype=object), np.array(there, dtype=object), np.array(labels, dtype=object)
-
+        if len(data[wi]) < min_flows or min_flows < 0:
+            min_flows = len(data[wi])
+    
+    print(f"Number of flows to normalize windows: {min_flows}")
+    for wi in range(n_wins):
         out_path = out_dir / f"d{delta}_ws{win_size}_nw{n_wins}_thr{threshold}_wi{wi:02d}.pkl"
         with open(out_path, "wb") as fp:
-            pickle.dump({'tor': here, 'exit': there, 'label': labels}, fp)
+            pickle.dump(reduce_data(data[wi], min_flows), fp)
 
+def reduce_data(win_data: list, length: int) -> dict:
+    #random.shuffle(win_data)
+    flows = win_data[:length]
+    print(f"{len(win_data)} -> {len(flows)}")
+    here = []
+    there = []
+    labels = []
+    for flow in flows:
+        here.append(flow[0])
+        there.append(flow[1])
+        labels.append(flow[2])
+    here, there, labels = np.array(here, dtype=object), np.array(there, dtype=object), np.array(labels, dtype=object)
+    return {'tor': here, 'exit': there, 'label': labels}
 
 def preprocess_dcf(delta, win_size, n_wins, threshold, tor_len, exit_len, n_test, data_root, seed=114):
     """Preprocessing .pkl files for the deep model:
@@ -273,7 +287,7 @@ def preprocess_dcf(delta, win_size, n_wins, threshold, tor_len, exit_len, n_test
 
             train_circuits_set = set(circuits[:i+1])
 
-        print(f"Window: {wi:02d}. Loading the whole sequences")
+        print(f"Window: {wi:02d}. Loading the whole sequences (n_flows={n_flows})")
         window_tor_size = []
         window_tor_ipd = []
         window_exit_size = []
