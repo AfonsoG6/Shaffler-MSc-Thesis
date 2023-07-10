@@ -166,9 +166,9 @@ def main(mode: str,
             #raise ValueError(f"data: {data_root.name} is not supported.")
 
         save_dir = pathlib.Path("./experiments") / f"deepcoffea_{data_name}_d{delta}_ws{win_size}_nw{n_wins}_thr{threshold}_tl{tor_len}_el{exit_len}_nt{n_test}_ap{alpha:.0e}_es{emb_size}_lr{lr:.0e}_mep{max_ep}_bs{batch_size}"
+        global_ckpt = (save_dir / "best_loss.pth").as_posix()
         if not save_dir.exists():
             save_dir.mkdir(parents=True)
-
         trainable_params = list(anchor.parameters()) + list(pandn.parameters())
         #optimizer = optim.SGD(trainable_params, lr=lr, weight_decay=1e-6, momentum=0.9, nesterov=True)
         optimizer = optim.Adam(trainable_params, lr=lr)
@@ -304,6 +304,10 @@ def main(mode: str,
             writer = csv.writer(rank_f)
             writer.writerow(["Threshold", "TPR", "FPR", "BDR"])
             writer.writerows(rank_multi_output)
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Results ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        with open(results_path, "r") as f:
+            print(f.read())
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     else:
         if ckpt is None:
             raise ValueError("ckpt is not set!")
@@ -338,9 +342,11 @@ def main(mode: str,
 
         np.savez_compressed(ckpt.parent / f"best_loss_corrmatrix", corr_matrix=corr_matrix)
 
+global_ckpt: str = ""
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Deep Coffea.")
-    parser.add_argument("--mode", default="train", type=str, help="To train or test.")
+    parser.add_argument("--mode", default="all", type=str, help="To train or test.")
     parser.add_argument("--delta", default=3, type=float, help="For window partition (see data_utils.py).")
     parser.add_argument("--win_size", default=5, type=float, help="For window partition (see data_utils.py).")
     parser.add_argument("--n_wins", default=11, type=int, help="For window partition (see data_utils.py).")
@@ -359,7 +365,12 @@ if __name__ == "__main__":
     parser.add_argument("--ckpt", default=None, type=str, help="Load path for the checkpoint model.")
     args = parser.parse_args()
     
-    if "process" in args.mode:
+    if args.mode == "all":
+        partition_windows(args.delta, args.win_size, args.n_wins, args.threshold, args.data_root)
+        preprocess_dcf(args.delta, args.win_size, args.n_wins, args.threshold, args.tor_len, args.exit_len, args.n_test, args.data_root)
+        main("train", args.delta, args.win_size, args.n_wins, args.threshold, args.tor_len, args.exit_len, args.n_test, args.alpha, args.emb_size, args.lr, args.ep, args.batch_size, args.data_root, global_ckpt)
+        main("eval", args.delta, args.win_size, args.n_wins, args.threshold, args.tor_len, args.exit_len, args.n_test, args.alpha, args.emb_size, args.lr, args.ep, args.batch_size, args.data_root, global_ckpt)
+    elif "process" in args.mode:
         partition_windows(args.delta, args.win_size, args.n_wins, args.threshold, args.data_root)
         preprocess_dcf(args.delta, args.win_size, args.n_wins, args.threshold, args.tor_len, args.exit_len, args.n_test, args.data_root)
     else:
