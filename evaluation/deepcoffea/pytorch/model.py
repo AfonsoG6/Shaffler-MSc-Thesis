@@ -366,10 +366,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     if args.mode == "all":
-        partition_windows(args.delta, args.win_size, args.n_wins, args.threshold, args.data_root)
-        preprocess_dcf(args.delta, args.win_size, args.n_wins, args.threshold, args.tor_len, args.exit_len, args.n_test, args.data_root)
-        main("train", args.delta, args.win_size, args.n_wins, args.threshold, args.tor_len, args.exit_len, args.n_test, args.alpha, args.emb_size, args.lr, args.ep, args.batch_size, args.data_root, global_ckpt)
-        main("eval", args.delta, args.win_size, args.n_wins, args.threshold, args.tor_len, args.exit_len, args.n_test, args.alpha, args.emb_size, args.lr, args.ep, args.batch_size, args.data_root, global_ckpt)
+        data_roots = args.data_root.split(',')
+        for data_root in data_roots:
+            if not data_root.startswith("datasets"):
+                data_root = os.path.join("datasets", data_root)
+            partition_windows(args.delta, args.win_size, args.n_wins, args.threshold, data_root)
+            preprocess_dcf(args.delta, args.win_size, args.n_wins, args.threshold, args.tor_len, args.exit_len, args.n_test, data_root)
+            main("train", args.delta, args.win_size, args.n_wins, args.threshold, args.tor_len, args.exit_len, args.n_test, args.alpha, args.emb_size, args.lr, args.ep, args.batch_size, data_root, global_ckpt)
+            main("eval", args.delta, args.win_size, args.n_wins, args.threshold, args.tor_len, args.exit_len, args.n_test, args.alpha, args.emb_size, args.lr, args.ep, args.batch_size, data_root, global_ckpt)
     elif "process" in args.mode:
         partition_windows(args.delta, args.win_size, args.n_wins, args.threshold, args.data_root)
         preprocess_dcf(args.delta, args.win_size, args.n_wins, args.threshold, args.tor_len, args.exit_len, args.n_test, args.data_root)

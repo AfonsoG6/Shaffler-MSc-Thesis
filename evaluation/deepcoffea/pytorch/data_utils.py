@@ -14,7 +14,6 @@ import numpy as np
 import torch
 from torch.utils.data import Sampler, Dataset
 from tqdm import tqdm
-import random
 
 def filter_windows(delta, win_size, n_wins, threshold, data_root):
     """Make sure there are enough (> threshold) packets in each window.
@@ -204,7 +203,7 @@ def partition_windows(delta, win_size, n_wins, threshold, data_root):
 
 def reduce_data(win_data: list, length: int) -> dict:
     #random.shuffle(win_data)
-    flows = win_data[:length]
+    flows = win_data #[:length]
     print(f"{len(win_data)} -> {len(flows)}")
     here = []
     there = []
@@ -329,6 +328,7 @@ def preprocess_dcf(delta, win_size, n_wins, threshold, tor_len, exit_len, n_test
         test_window_tor = []
         test_window_exit = []
         test_window_label = []
+        print(f"len(train_circuits_set) = {len(train_circuits_set)}")
         for win_tor, win_exit, label in zip(window_tor_fixedlen, window_exit_fixedlen, labels):
             circuit = label.split("_")[0]
             if circuit in train_circuits_set:
@@ -339,7 +339,7 @@ def preprocess_dcf(delta, win_size, n_wins, threshold, tor_len, exit_len, n_test
                 test_window_tor.append(win_tor)
                 test_window_exit.append(win_exit)
                 test_window_label.append(label + f"_wi{wi:02d}")
-
+        print(f"len(train_window_tor) = {len(train_window_tor)}")
         train_tor.append(train_window_tor)
         train_exit.append(train_window_exit)
         train_label.append(train_window_label)
@@ -348,7 +348,15 @@ def preprocess_dcf(delta, win_size, n_wins, threshold, tor_len, exit_len, n_test
         test_label.append(test_window_label)
         
         print(f"Window: {wi:02d}. Done.")
-
+    
+    normalize_shape(train_tor)
+    normalize_shape(train_exit)
+    normalize_shape(train_label)
+    
+    normalize_shape(test_tor)
+    normalize_shape(test_exit)    
+    normalize_shape(test_label)
+    
     train_tor = np.array(train_tor).astype(np.float32)
     train_exit = np.array(train_exit).astype(np.float32)
     test_tor = np.array(test_tor).astype(np.float32)
@@ -358,6 +366,10 @@ def preprocess_dcf(delta, win_size, n_wins, threshold, tor_len, exit_len, n_test
 
     print("Preprocessing done.")
 
+def normalize_shape(lst: list):
+    m = min([len(lst[j]) for j in range(len(lst))])
+    for i in range(len(lst)):
+        lst[i] = lst[i][:m]
 
 def get_train_test_filepaths(train_npz_path):
     train_out_path = train_npz_path[:-4] + "_files.txt"
