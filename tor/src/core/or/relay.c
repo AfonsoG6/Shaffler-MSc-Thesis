@@ -3555,6 +3555,26 @@ gen_uniform_value(double low, double high) {
   return low + ((high - low) * uniform);
 }
 
+double
+gen_poisson_value(double lambda) {
+  double real_lambda = lambda * 1e-3;
+  double L = exp(-real_lambda);
+  int k = 0;
+  double p = 1.0;
+
+  do {
+    k++;
+    p *= gen_random_uniform_01();
+  } while (p > L);
+  return (k - 1)*1e3;
+}
+
+double
+gen_exponential_value(double lambda) {
+  double uniform = gen_random_uniform_01();
+  return -log(1 - uniform) / lambda;
+}
+
 uint8_t update_circ_delay_state(uint8_t state) {
 	double r = gen_random_uniform_01();
 	if (state == 0) {
@@ -4070,6 +4090,30 @@ get_delay_microseconds_lognormal(double location, double scale)
   return value;
 }
 
+double
+get_delay_microseconds_poisson(double lambda)
+{
+  double value;
+  // DEFAULT: Approximately [0, 1s]
+  if (lambda == 0.0) lambda = 0.7e5;
+  do {
+    value = gen_poisson_value(lambda);
+  } while (value < 0);
+  return value;
+}
+
+double
+get_delay_microseconds_exponential(double lambda)
+{
+  double value;
+  // DEFAULT: Approximately [0, 1s]
+  if (lambda == 0.0) lambda = 0.3e-4;
+  do {
+    value = gen_exponential_value(lambda);
+  } while (value < 0);
+  return value;
+}
+
 struct timeval
 get_delay_timeval(or_circuit_t *circ, int direction)
 {
@@ -4096,6 +4140,12 @@ get_delay_timeval(or_circuit_t *circ, int direction)
         break;
       case DELAY_MODE_LOGNORMAL:
         microsec = get_delay_microseconds_lognormal(param1, param2);
+        break;
+      case DELAY_MODE_EXPONENTIAL:
+        microsec = get_delay_microseconds_exponential(param1);
+        break;
+      case DELAY_MODE_POISSON:
+        microsec = get_delay_microseconds_poisson(param1);
         break;
       case DELAY_MODE_MARKOV:
         microsec = get_delay_microseconds_markov(circ, direction);

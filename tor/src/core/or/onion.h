@@ -32,7 +32,9 @@ struct curve25519_public_key_t;
 #define DELAY_MODE_UNIFORM 2
 #define DELAY_MODE_NORMAL 3
 #define DELAY_MODE_LOGNORMAL 4
-#define DELAY_MODE_MARKOV 5
+#define DELAY_MODE_EXPONENTIAL 5
+#define DELAY_MODE_POISSON 6
+#define DELAY_MODE_MARKOV 7
 
 typedef struct delay_policy_t {
   uint8_t mode;     // 1 byte
