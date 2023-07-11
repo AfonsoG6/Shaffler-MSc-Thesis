@@ -25,13 +25,29 @@ cp -r sim_300_2 ./sim_300_2_u
 echo "EnforceDelayPolicy 1" >> sim_300_2_u/conf/tor.client.torrc
 echo "DelayMode 2" >> sim_300_2_u/conf/tor.client.torrc
 echo "DelayParam1 0.0" >> sim_300_2_u/conf/tor.client.torrc
-echo "DelayParam2 0.5e5" >> sim_300_2_u/conf/tor.client.torrc
-echo "DelayMax 0.5e5" >> sim_300_2_u/conf/tor.client.torrc
+echo "DelayParam2 1e5" >> sim_300_2_u/conf/tor.client.torrc
+echo "DelayMax 1e5" >> sim_300_2_u/conf/tor.client.torrc
 
-# Create a copy of the simulation for the lognormal simulation
-cp -r sim_300_2 ./sim_300_2_l
-echo "EnforceDelayPolicy 1" >> sim_300_2_l/conf/tor.client.torrc
-echo "DelayMode 4" >> sim_300_2_l/conf/tor.client.torrc
-echo "DelayParam1 -1.5e5" >> sim_300_2_l/conf/tor.client.torrc
-echo "DelayParam2 0.5e5" >> sim_300_2_l/conf/tor.client.torrc
-echo "DelayMax 1e5" >> sim_300_2_l/conf/tor.client.torrc
+# # Create a copy of the simulation for the lognormal simulation
+# cp -r sim_300_2 ./sim_300_2_l
+# echo "EnforceDelayPolicy 1" >> sim_300_2_l/conf/tor.client.torrc
+# echo "DelayMode 4" >> sim_300_2_l/conf/tor.client.torrc
+# echo "DelayParam1 -1.5e5" >> sim_300_2_l/conf/tor.client.torrc
+# echo "DelayParam2 0.5e5" >> sim_300_2_l/conf/tor.client.torrc
+# echo "DelayMax 1e5" >> sim_300_2_l/conf/tor.client.torrc
+
+# Create a copy of the simulation for the exponential simulation
+cp -r sim_300_2 ./sim_300_2_e
+echo "EnforceDelayPolicy 1" >> sim_300_2_e/conf/tor.client.torrc
+echo "DelayMode 5" >> sim_300_2_e/conf/tor.client.torrc
+echo "DelayParam1 0.3e-4" >> sim_300_2_e/conf/tor.client.torrc
+echo "DelayParam2 0.0" >> sim_300_2_e/conf/tor.client.torrc
+echo "DelayMax 1e5" >> sim_300_2_e/conf/tor.client.torrc
+
+# Create a copy of the simulation for the poisson simulation
+cp -r sim_300_2 ./sim_300_2_p
+echo "EnforceDelayPolicy 1" >> sim_300_2_p/conf/tor.client.torrc
+echo "DelayMode 6" >> sim_300_2_p/conf/tor.client.torrc
+echo "DelayParam1 0.7e5" >> sim_300_2_p/conf/tor.client.torrc
+echo "DelayParam2 0.0" >> sim_300_2_p/conf/tor.client.torrc
+echo "DelayMax 1e5" >> sim_300_2_p/conf/tor.client.torrc
