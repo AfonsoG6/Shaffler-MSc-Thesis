@@ -134,6 +134,7 @@ def main(mode: str,
          batch_size: int,
          data_root: str,
          ckpt: str):
+    global global_ckpt
     assert mode in set(["train", "test", "eval"]), f"mode: {mode} is not supported"
 
     # To ensure device-agnostic reproducibility
