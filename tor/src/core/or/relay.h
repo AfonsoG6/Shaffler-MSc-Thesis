@@ -171,6 +171,10 @@ double gen_lognormal_value(double location, double scale);
 
 double gen_uniform_value(double low, double high);
 
+double gen_poisson_value(double lambda);
+
+double gen_exponential_value(double lambda);
+
 uint8_t update_circ_delay_state(uint8_t state);
 
 double generate_delay(uint8_t delay_state);
@@ -182,6 +186,10 @@ double get_delay_microseconds_uniform(double low, double high);
 double get_delay_microseconds_normal(double location, double scale);
 
 double get_delay_microseconds_lognormal(double location, double scale);
+
+double get_delay_microseconds_poisson(double lambda);
+
+double get_delay_microseconds_exponential(double lambda);
 
 const char * get_direction_str(int direction);
 
