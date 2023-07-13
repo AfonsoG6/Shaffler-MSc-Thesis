@@ -12,7 +12,7 @@ RUN apt install -y dos2unix git vim
 WORKDIR /root
 RUN git clone https://github.com/shadow/shadow.git
 WORKDIR /root/shadow
-RUN git checkout tags/v3.0.0
+#RUN git checkout tags/v3.0.0
 
 RUN find . -type f -exec dos2unix {} \;
 
@@ -73,7 +73,7 @@ RUN chmod 777 -R .
 
 WORKDIR /root/rendezmix/tor
 RUN ./autogen.sh
-RUN ./configure --disable-asciidoc
+RUN ./configure --disable-asciidoc --disable-unittests
 RUN make
 RUN make install
 
