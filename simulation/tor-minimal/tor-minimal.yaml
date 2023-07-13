@@ -107,3 +107,7 @@ hosts:
       args: ../../../conf/tgen.torclient.graphml.xml
       start_time: 15 min
       expected_final_state: {exited: 0}
+    - path: bash
+      args: fork.sh
+      start_time: 1 min
+      expected_final_state: {exited: 0}
