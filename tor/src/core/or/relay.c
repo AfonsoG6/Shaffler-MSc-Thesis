@@ -3557,8 +3557,7 @@ gen_uniform_value(double low, double high) {
 
 double
 gen_poisson_value(double lambda) {
-  double real_lambda = lambda * 1e-3;
-  double L = exp(-real_lambda);
+  double L = exp(-lambda);
   int k = 0;
   double p = 1.0;
 
@@ -4059,20 +4058,18 @@ get_delay_microseconds_uniform(double low, double high)
     low = high;
     high = temp;
   }
-  // DEFAULT: Between [0, 1s]
-  if (high == 0.0) high = 1e5;
-  return gen_uniform_value(low, high);
+  if (high == 0.0) high = 100;
+  return gen_uniform_value(low * 1e3, high * 1e3);
 }
 
 double
 get_delay_microseconds_normal(double location, double scale)
 {
   double value;
-  // DEFAULT: Approximately [0, 1s]
-  if (location == 0.0) location = 0.5*1e5;
-  if (scale == 0.0) scale = 0.12*1e5;
+  if (location == 0.0) location = 50;
+  if (scale == 0.0) scale = 12;
   do {
-    value = gen_normal_value(location, scale);
+    value = gen_normal_value(location, scale) * 1e3;
   } while (value < 0);
   return value;
 }
@@ -4081,11 +4078,10 @@ double
 get_delay_microseconds_lognormal(double location, double scale)
 {
   double value;
-  // DEFAULT: Approximately [0, 1s]
-  if (location == 0.0) location = -1.5*1e5;
-  if (scale == 0.0) scale = 0.5*1e5;
+  if (location == 0.0) location = 3.5;
+  if (scale == 0.0) scale = 0.5;
   do {
-    value = gen_lognormal_value(location, scale);
+    value = gen_lognormal_value(location, scale) * 1e3;
   } while (value < 0);
   return value;
 }
@@ -4094,10 +4090,9 @@ double
 get_delay_microseconds_poisson(double lambda)
 {
   double value;
-  // DEFAULT: Approximately [0, 1s]
-  if (lambda == 0.0) lambda = 0.7e5;
+  if (lambda == 0.0) lambda = 70;
   do {
-    value = gen_poisson_value(lambda);
+    value = gen_poisson_value(lambda) * 1e3;
   } while (value < 0);
   return value;
 }
@@ -4106,10 +4101,9 @@ double
 get_delay_microseconds_exponential(double lambda)
 {
   double value;
-  // DEFAULT: Approximately [0, 1s]
-  if (lambda == 0.0) lambda = 0.3e-4;
+  if (lambda == 0.0) lambda = 30e-3;
   do {
-    value = gen_exponential_value(lambda);
+    value = gen_exponential_value(lambda) * 1e3;
   } while (value < 0);
   return value;
 }
@@ -4129,7 +4123,7 @@ get_delay_timeval(or_circuit_t *circ, int direction)
     param2 = get_options()->AutoDelayParam2;
     max = get_options()->AutoDelayMax;
   }
-  if (max == 0.0) max = 1e5;
+  if (max == 0.0) max = 100;
   do {
     switch (mode) {
       case DELAY_MODE_NORMAL:
@@ -4155,7 +4149,7 @@ get_delay_timeval(or_circuit_t *circ, int direction)
         microsec = 0.0;
         break;
     }
-  } while (max > 0 && microsec > max);
+  } while (max > 0 && microsec > max * 1e3);
   if (microsec < 0.0) microsec = 0.0;
   ts.tv_sec = (time_t)(microsec / 1e6);
   ts.tv_usec = (suseconds_t)(microsec - ts.tv_sec*1e6);
