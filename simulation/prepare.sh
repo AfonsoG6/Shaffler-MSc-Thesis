@@ -28,6 +28,30 @@ echo "DelayParam1 50" >> sim_300_2_n/conf/tor.client.torrc
 echo "DelayParam2 12" >> sim_300_2_n/conf/tor.client.torrc
 echo "DelayMax 100" >> sim_300_2_n/conf/tor.client.torrc
 
+# Create a copy of the simulation for the normal simulation
+cp -r sim_300_2 ./sim_300_2_n50-6
+echo "EnforceDelayPolicy 1" >> sim_300_2_n50-6/conf/tor.client.torrc
+echo "DelayMode 3" >> sim_300_2_n50-6/conf/tor.client.torrc
+echo "DelayParam1 50" >> sim_300_2_n50-6/conf/tor.client.torrc
+echo "DelayParam2 6" >> sim_300_2_n50-6/conf/tor.client.torrc
+echo "DelayMax 100" >> sim_300_2_n50-6/conf/tor.client.torrc
+
+# Create a copy of the simulation for the normal simulation
+cp -r sim_300_2 ./sim_300_2_n25-6
+echo "EnforceDelayPolicy 1" >> sim_300_2_n25-6/conf/tor.client.torrc
+echo "DelayMode 3" >> sim_300_2_n25-6/conf/tor.client.torrc
+echo "DelayParam1 25" >> sim_300_2_n25-6/conf/tor.client.torrc
+echo "DelayParam2 6" >> sim_300_2_n25-6/conf/tor.client.torrc
+echo "DelayMax 100" >> sim_300_2_n25-6/conf/tor.client.torrc
+
+# Create a copy of the simulation for the normal simulation
+cp -r sim_300_2 ./sim_300_2_n75-6
+echo "EnforceDelayPolicy 1" >> sim_300_2_n75-6/conf/tor.client.torrc
+echo "DelayMode 3" >> sim_300_2_n75-6/conf/tor.client.torrc
+echo "DelayParam1 75" >> sim_300_2_n75-6/conf/tor.client.torrc
+echo "DelayParam2 6" >> sim_300_2_n75-6/conf/tor.client.torrc
+echo "DelayMax 100" >> sim_300_2_n75-6/conf/tor.client.torrc
+
 # Create a copy of the simulation for the lognormal simulation
 cp -r sim_300_2 ./sim_300_2_l
 echo "EnforceDelayPolicy 1" >> sim_300_2_l/conf/tor.client.torrc
