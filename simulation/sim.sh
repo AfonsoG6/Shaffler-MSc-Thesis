@@ -1,16 +1,11 @@
-while getopts d:n: flag
-do
-    case "${flag}" in
-        d) dir=${OPTARG};;
-        n) name=${OPTARG};;
-    esac
-done
-
-if [ -z "$dir" ] || [ -z "$name" ];
+dir=$1
+if [ -z "$dir" ];
 then
-    echo "Usage: ./sim.sh -d <dir> -n <name>"
+    echo "Usage: ./sim.sh <dir>"
     exit 1
 fi
+
+name=$(echo $dir | cut -d'_' -f 4)
 
 echo "Starting ${name} Simulation"
 cd /root/rendezmix/tor
