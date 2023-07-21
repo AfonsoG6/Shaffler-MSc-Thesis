@@ -1,0 +1,51 @@
+{
+    "tor": {
+        "tor_exec_path": "/usr/local/bin/tor",
+        "torrc": {
+            "socks_port": "9050",
+            "control_port": "9051",
+            "hidden_service_port": "8080",
+            "socks5_proxy_address": "127.0.0.1",
+            "socks5_proxy_port": "1080"
+        }
+    },
+    "nginx": {
+        "config_dir": "/etc/nginx/conf.d",
+        "exec_path": "nginx",
+        "check_period": 5000
+    },
+    "app": {
+        "gunicorn_exec_path": "gunicorn",
+        "bind_address": "127.0.0.1:8000",
+        "mode": "SPage",
+        "size": 10000,
+        "page_name": "page1.html",
+        "adjustable": true
+    },
+    "tbb": {
+        "tbb_exec_path": "/root/.local/share/torbrowser/tbb/x86_64/tor-browser/Browser/firefox",
+        "tbb_profiles_dir": "/root/.local/share/torbrowser/tbb/x86_64/tor-browser/Browser/TorBrowser/Data/Browser"
+    },
+    "cclient": {
+        "python_path" : "python",
+        "gecko_path" : "/root/geckodriver",
+        "rate" : 15000,
+        "timeout" : 10000,
+        "endpoint" : "/",
+        "fail_limit" : 1
+    },
+    "manager": {
+        "logs": {
+            "truncate_file": true,
+            "log_level": "Debug"
+        },
+        "listeners": [
+            {
+                "network": "tcp",
+                "address": "127.0.0.1",
+                "port": "1080",
+                "handler_timeout": 2000
+            }
+        ]
+    }
+}
