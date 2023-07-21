@@ -32,4 +32,8 @@ python3 cleanup.py -d ${name}
 rm -rf ../${dir}/shadow.data ../${dir}/shadow.log
 zip -r ${name}_dataset.zip ${name}
 rm -rf ${name}
+
+cd /part/simulation
+zip -r ${name}.zip ${name}_sim.zip ${name}_perf.zip datasets/${name}_dataset.zip
+rm -rf ${name}_sim.zip ${name}_perf.zip datasets/${name}_dataset.zip
 echo "Done!"
