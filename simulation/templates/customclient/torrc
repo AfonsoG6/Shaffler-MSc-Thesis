@@ -4,3 +4,4 @@ UseEntryGuards 1
 EntryNodes {entry}
 MiddleNodes {middle}
 ExitNodes {exit}
+%include ./os.torrc
