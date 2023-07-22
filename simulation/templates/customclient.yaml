@@ -5,9 +5,8 @@ processes:
 - path: hostname
   args: -I
   start_time: 60
-
 - path: /root/.local/bin/tor
-  args: --defaults-torrc torrc-defaults -f os.torrc
+  args: --defaults-torrc torrc-defaults -f ../../../conf/tor.os.torrc
   environment:
     OPENBLAS_NUM_THREADS: '1'
   start_time: 200
@@ -15,7 +14,7 @@ processes:
   shutdown_signal: SIGKILL
   expected_final_state: {signaled: SIGKILL}
 - path: python3
-  args: setup.py
+  args: setup.py -c ../../../conf/cover-config.json
   start_time: 210
   expected_final_state: {exited: 0}
 - path: /root/.local/bin/tor
@@ -36,7 +35,6 @@ processes:
   args: ./traffic_gen/cover_client/client.py
   start_time: 300
   expected_final_state: running
-
 - path: /root/.local/bin/oniontrace
   args: Mode=log TorControlPort=9051 LogLevel=info Events=CIRC,STREAM
   start_time: 241

@@ -202,5 +202,12 @@ if __name__ == "__main__":
         rm_minimal(config["hosts"], hosts_path)
 
     yaml.dump(config, open(config_path, "w"), default_flow_style=False, sort_keys=False)
+    
+    tconf_path = os.path.join("templates", "conf")
+    for elem in os.listdir(tconf_path):
+        if os.path.isfile(os.path.join(tconf_path, elem)):
+            shutil.copy(os.path.join(tconf_path, elem), os.path.join(conf_path, elem))
+        else:
+            shutil.copytree(os.path.join(tconf_path, elem), os.path.join(conf_path, elem))
 
     print("Done!")
