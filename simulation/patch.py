@@ -53,17 +53,22 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
     dir_path = os.path.join(templates_path, "customclient")
     client_path = os.path.join(hosts_path, newhostname)
     os.makedirs(client_path, exist_ok=True)
-    for file in os.listdir(dir_path):
-        with open(os.path.join(dir_path, file), "r") as f:
-            data = f.read()
-            if file == "torrc":
-                pick: dict = pick_nodes()
-                print(f"Picked {pick} for {newhostname}")
-                data = data.replace("{entry}", pick["entry"])
-                data = data.replace("{middle}", pick["middle"])
-                data = data.replace("{exit}", pick["exit"])
-            with open(os.path.join(client_path, file), "w") as g:
+    for elem in os.listdir(dir_path):
+        if elem == "torrc":
+            with open(os.path.join(dir_path, elem), "r") as f:
+                data = f.read()
+            pick: dict = pick_nodes()
+            print(f"Picked {pick} for {newhostname}")
+            data = data.replace("{entry}", pick["entry"])
+            data = data.replace("{middle}", pick["middle"])
+            data = data.replace("{exit}", pick["exit"])
+            with open(os.path.join(client_path, elem), "w") as g:
                 g.write(data)
+        else:
+            if os.path.isfile(os.path.join(dir_path, elem)):
+                shutil.copy(os.path.join(dir_path, elem), os.path.join(client_path, elem))
+            else:
+                shutil.copytree(os.path.join(dir_path, elem), os.path.join(client_path, elem))
     print(f"Created {newhostname} directory")
     config_path = os.path.join(templates_path, "customclient.yaml")
     new_host = yaml.load(open(config_path, "r"), Loader=yaml.FullLoader)
@@ -72,8 +77,8 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
         while not netnodeid_ok(hosts, netnodeid):
             netnodeid = random.randint(0, 2520)
     new_host["network_node_id"] = netnodeid
-    tgen_proc_template = new_host["processes"][3]
-    new_host["processes"] = new_host["processes"][:3]
+    tgen_proc_template = list(filter(lambda x: x["path"].endswith("tgen"), new_host["processes"]))[0]
+    new_host["processes"] = list(filter(lambda x: not x["path"].endswith("tgen"), new_host["processes"]))
     for flow_start in range(300 + random.randint(0, 90), duration, 90):
         if flow_start + 60 >= duration:
             break
@@ -197,5 +202,12 @@ if __name__ == "__main__":
         rm_minimal(config["hosts"], hosts_path)
 
     yaml.dump(config, open(config_path, "w"), default_flow_style=False, sort_keys=False)
+    
+    tconf_path = os.path.join("templates", "conf")
+    for elem in os.listdir(tconf_path):
+        if os.path.isfile(os.path.join(tconf_path, elem)):
+            shutil.copy(os.path.join(tconf_path, elem), os.path.join(conf_path, elem))
+        else:
+            shutil.copytree(os.path.join(tconf_path, elem), os.path.join(conf_path, elem))
 
     print("Done!")
