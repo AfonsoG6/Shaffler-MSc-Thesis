@@ -1,7 +1,7 @@
 name=$1
 if [ -z "$name" ];
 then
-    echo "Usage: ./sim.sh <name>"
+    echo "Usage: ./config.sh <name>"
     exit 1
 fi
 
