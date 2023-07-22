@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import time
+import shutil
 from argparse import ArgumentParser
 
 
@@ -95,7 +96,7 @@ def getHostname(hs_dir):
 def copyNginxConf(path):
     print_prefix("Copying Nginx conf file")
     clientname = os.path.basename(os.getcwd())
-    os.system(f'cp os.conf "{path}/{clientname}.os.conf"')
+    shutil.copyfile("os.conf", f"{path}/{clientname}.os.conf")
     print_prefix("\tNginx conf file copied\n")
     return
 
@@ -153,7 +154,7 @@ def getDefaultProfileDir(profies_path):
 
 def copyTbbPrefs(path):
     print_prefix("Copying TBB user prefs to profile dir")
-    os.system(f'cp user.js "{path}"')
+    shutil.copyfile("user.js", f"{path}/user.js")
     print_prefix("\tTBB user prefs copied\n")
     return
 
