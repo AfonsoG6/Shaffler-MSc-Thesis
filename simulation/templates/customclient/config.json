@@ -1,6 +1,6 @@
 {
     "tor": {
-        "tor_exec_path": "/usr/local/bin/tor",
+        "tor_exec_path": "/root/.local/bin/tor",
         "torrc": {
             "socks_port": "9050",
             "control_port": "9051",

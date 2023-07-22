@@ -228,12 +228,11 @@ def main():
     configs = readConfFile()
     os.makedirs(current_dir + "/logs", exist_ok=True)
     genTorrc(configs["tor"]["torrc"])
-    exit()
     genNginxConf(configs["nginx"], configs["tor"]["torrc"], configs["app"])
-    genTbbPrefs(configs["tor"]["torrc"], configs["tbb"]["tbb_profiles_dir"])
+    #genTbbPrefs(configs["tor"]["torrc"], configs["tbb"]["tbb_profiles_dir"])
     configOSApp(configs["app"])
     extractCoverClientConfig(configs)
-    extractManagerConfig(configs)
+    #extractManagerConfig(configs)
     print_prefix("===== SETUP FINISHED =====\n")
     return
 
