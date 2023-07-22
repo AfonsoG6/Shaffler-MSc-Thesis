@@ -55,31 +55,15 @@ def genNginxConf(nginx_confs, torrc_confs, app_confs):
     hostname = getHostname(torrc_confs["hidden_service_dir"]).strip()
     nginx_confs["hostname"] = hostname
     print_prefix("Generating Nginx conf file")
+    with open("os.conf.template", "r") as template:
+        data = template.read()
+        data = data.replace("{hidden_service_port}", torrc_confs["hidden_service_port"])
+        data = data.replace("{hostname}", hostname)
+        data = data.replace("{bind_address}", app_confs["bind_address"])
     with open("os.conf", "w") as out:
-        out.writelines(
-            [
-                f"server_names_hash_bucket_size 128;\n",
-                f'log_format  main  \'$remote_addr - $remote_user [$time_local] "$request" \'\n\'$status $body_bytes_sent "$http_referer" \'\n\'"$http_user_agent" "$http_x_forwarded_for"\';\n',
-                f'server {"{"}\n',
-                f"\taccess_log  {current_dir}/logs/nginx_access.log  main;\n"
-                f'\tlisten {torrc_confs["hidden_service_port"]};\n',
-                f"\tserver_name {hostname} 127.0.0.1;\n",
-                f'\tlocation /nginx_status {"{"}\n',
-                f"\t\tstub_status;\n",
-                f'\t{"}"}\n',
-                f'\tlocation / {"{"}\n',
-                f'\t\tproxy_pass http://{app_confs["bind_address"]};\n',
-                f"\t\tproxy_set_header X-Frowarded-For $proxy_add_x_forwarded_for;\n",
-                f"\t\tproxy_set_header X-Forwarded-Proto $scheme;\n",
-                f"\t\tproxy_set_header X-Forwarded-Host $host;\n",
-                f"\t\tproxy_set_header X-Forwarded-Prefix /;\n",
-                f'\t{"}"}\n',
-                f'{"}"}\n',
-            ]
-        )
-        out.close()
+        out.write(data)
     print_prefix("\tNginx conf file generated\n")
-    # copyNginxConf(nginx_confs["config_dir"])
+    copyNginxConf(nginx_confs["alt_config_dir"])
     return
 
 
@@ -110,7 +94,8 @@ def getHostname(hs_dir):
 
 def copyNginxConf(path):
     print_prefix("Copying Nginx conf file")
-    os.system(f'cp os.conf "{path}"')
+    clientname = os.path.basename(os.getcwd())
+    os.system(f'cp os.conf "{path}/{clientname}.os.conf"')
     print_prefix("\tNginx conf file copied\n")
     return
 
