@@ -77,8 +77,8 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
         while not netnodeid_ok(hosts, netnodeid):
             netnodeid = random.randint(0, 2520)
     new_host["network_node_id"] = netnodeid
-    tgen_proc_template = new_host["processes"][3]
-    new_host["processes"] = new_host["processes"][:3]
+    tgen_proc_template = list(filter(lambda x: x["path"].endswith("tgen"), new_host["processes"]))[0]
+    new_host["processes"] = list(filter(lambda x: not x["path"].endswith("tgen"), new_host["processes"]))
     for flow_start in range(300 + random.randint(0, 90), duration, 90):
         if flow_start + 60 >= duration:
             break
