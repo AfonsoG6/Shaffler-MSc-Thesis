@@ -53,6 +53,10 @@ then
     param1=0
     param2=0
     max=$arg1
+elif [ "$mode" = "Vanilla" ] || [ -z "$mode" ];
+then
+    cp -r sim_300_2 ./sim_300_2_Vanilla
+    exit 0
 else
     echo "Mode is not valid"
     exit 1

@@ -53,17 +53,19 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
     dir_path = os.path.join(templates_path, "customclient")
     client_path = os.path.join(hosts_path, newhostname)
     os.makedirs(client_path, exist_ok=True)
-    for file in os.listdir(dir_path):
-        with open(os.path.join(dir_path, file), "r") as f:
-            data = f.read()
-            if file == "torrc":
-                pick: dict = pick_nodes()
-                print(f"Picked {pick} for {newhostname}")
-                data = data.replace("{entry}", pick["entry"])
-                data = data.replace("{middle}", pick["middle"])
-                data = data.replace("{exit}", pick["exit"])
-            with open(os.path.join(client_path, file), "w") as g:
+    for elem in os.listdir(dir_path):
+        if elem == "torrc":
+            with open(os.path.join(dir_path, elem), "r") as f:
+                data = f.read()
+            pick: dict = pick_nodes()
+            print(f"Picked {pick} for {newhostname}")
+            data = data.replace("{entry}", pick["entry"])
+            data = data.replace("{middle}", pick["middle"])
+            data = data.replace("{exit}", pick["exit"])
+            with open(os.path.join(client_path, elem), "w") as g:
                 g.write(data)
+        else:
+            shutil.copytree(os.path.join(dir_path, elem), os.path.join(client_path, elem))
     print(f"Created {newhostname} directory")
     config_path = os.path.join(templates_path, "customclient.yaml")
     new_host = yaml.load(open(config_path, "r"), Loader=yaml.FullLoader)
