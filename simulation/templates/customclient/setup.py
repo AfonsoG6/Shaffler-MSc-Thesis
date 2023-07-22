@@ -10,9 +10,9 @@ from argparse import ArgumentParser
 def print_prefix(msg):
     print(f"[COVER_SETUP] {msg}")
 
-def readConfFile():
+def readConfFile(config_path):
     print_prefix("Reading config file")
-    with open("config.json", "r") as config_file:
+    with open(config_path, "r") as config_file:
         configs = json.load(config_file)
         config_file.close()
     print_prefix("\tRead config file\n")
@@ -23,8 +23,9 @@ def readConfFile():
 def genTorrc(confs):
     logs_dir = current_dir + "/logs/"
     hidden_service_dir = current_dir + "/traffic_gen/os/tor/"
+    """
     print_prefix("Generating Torrc")
-    with open("os.torrc", "w") as torrc:
+    with open("tor.os.torrc", "w") as torrc:
         torrc.writelines(
             [
                 f'SocksPort {confs["socks_port"]}\n',
@@ -42,6 +43,7 @@ def genTorrc(confs):
             ]
         )
         torrc.close()
+    """
     confs["torrc_path"] = current_dir + "/torrc"
     confs["hidden_service_dir"] = hidden_service_dir
     print_prefix("\tTorrc generated\n")
@@ -94,7 +96,7 @@ def getHostname(hs_dir):
         print_prefix("Couldn't find hostname and running Tor here is not possible with shadow, so we're exiting...")
         exit(1)
         print_prefix("Couldn't find hostname, running Tor to generate one:")
-        proc = subprocess.Popen("tor -f os.torrc", shell=True)
+        proc = subprocess.Popen("tor -f tor.os.torrc", shell=True)
         while not os.path.exists(path):
             time.sleep(0.5)
         proc.terminate()
@@ -225,7 +227,7 @@ def extractManagerConfig(confs):
 
 def main():
     print_prefix("\n===== STARTING SETUP =====\n")
-    configs = readConfFile()
+    configs = readConfFile(config_path)
     os.makedirs(current_dir + "/logs", exist_ok=True)
     genTorrc(configs["tor"]["torrc"])
     genNginxConf(configs["nginx"], configs["tor"]["torrc"], configs["app"])
@@ -246,7 +248,15 @@ if __name__ == "__main__":
         default=".",
         help="Directory where the setup is being run",
     )
+    parser.add_argument(
+        "-c",
+        "--config",
+        type=str,
+        default="config.json",
+        help="Path to the config file",
+    )
     args = parser.parse_args()
     current_dir: str = args.dir
     current_dir = current_dir.rstrip("/")
+    config_path: str = args.config
     main()
