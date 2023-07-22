@@ -12,7 +12,7 @@ RUN apt install -y dos2unix git vim
 WORKDIR /root
 RUN git clone https://github.com/shadow/shadow.git
 WORKDIR /root/shadow
-#RUN git checkout tags/v3.0.0
+RUN git checkout tags/v3.0.0
 
 RUN find . -type f -exec dos2unix {} \;
 
@@ -31,7 +31,6 @@ ENV PATH "/root/.local/bin:${PATH}"
 WORKDIR /root
 RUN git clone https://github.com/shadow/tgen.git
 WORKDIR /root/tgen
-RUN git checkout 30c95bbe723ebe5e4d068adfd975b094e00dbe10
 
 RUN apt install -y cmake libglib2.0-dev libigraph-dev
 
@@ -41,11 +40,15 @@ RUN cmake .. -DCMAKE_INSTALL_PREFIX=/root/.local
 RUN make
 RUN make install
 
+WORKDIR /root/tgen/tools
+RUN apt install -y python3 python3-dev python3-pip libxml2 libxml2-dev libxslt1.1 libxslt1-dev libpng16-16 libpng-dev libfreetype6 libfreetype6-dev libblas-dev liblapack-dev
+RUN pip install -r requirements.txt
+RUN pip install -I .
+
 # Install OnionTrace
 WORKDIR /root
 RUN git clone https://github.com/shadow/oniontrace.git
 WORKDIR /root/oniontrace/
-RUN git checkout 3696db43288c8a116e8a1cff42a9c698d1d4ab33
 
 RUN apt install -y cmake libglib2.0-0 libglib2.0-dev
 
@@ -54,6 +57,11 @@ WORKDIR /root/oniontrace/build
 RUN cmake .. -DCMAKE_INSTALL_PREFIX=/root/.local
 RUN make
 RUN make install
+
+WORKDIR /root/oniontrace/tools
+RUN apt install -y python3 python3-dev python3-pip libxml2 libxml2-dev libxslt1.1 libxslt1-dev libpng16-16 libpng16-16 libfreetype6 libfreetype6-dev libblas-dev liblapack-dev
+RUN pip install -r requirements.txt
+RUN pip install -I .
 
 # Install Rendezmix (Tor)
 RUN apt install -y openssl libssl-dev libevent-dev build-essential automake zlib1g zlib1g-dev
@@ -78,10 +86,6 @@ RUN make
 RUN make install
 
 WORKDIR /root/rendezmix/simulation/datasets
-RUN pip install -r requirements.txt
-
-WORKDIR /root/rendezmix/loop
-RUN apt install -y python3
 RUN pip install -r requirements.txt
 
 # Install Vanilla Tor

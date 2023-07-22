@@ -5,17 +5,17 @@ processes:
 - path: hostname
   args: -I
   start_time: 60
-- path: ~/.local/bin/tor
+- path: /root/.local/bin/tor
   args: --defaults-torrc torrc-defaults -f torrc
   environment:
     OPENBLAS_NUM_THREADS: '1'
   start_time: 240
   expected_final_state: running
-- path: ~/.local/bin/oniontrace
+- path: /root/.local/bin/oniontrace
   args: Mode=log TorControlPort=9051 LogLevel=info Events=CIRC,STREAM
   start_time: 241
   expected_final_state: running
-- path: ~/.local/bin/tgen
+- path: /root/.local/bin/tgen
   args: tgenrc.graphml
   start_time: 300
   shutdown_time: 125

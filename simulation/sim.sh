@@ -8,12 +8,22 @@ fi
 name=$(echo $dir | cut -d'_' -f 4 | cut -d'/' -f 1)
 
 echo "Starting ${name} Simulation"
-cd /root/rendezmix/tor
-git pull
-./autogen.sh
-./configure --disable-asciidoc --disable-unittests
-make
-make install
+
+if [ "$name" = "Vanilla" ];
+then
+    cd /root/tor
+    ./autogen.sh
+    ./configure --disable-asciidoc --disable-unittests
+    make
+    make install
+else
+    cd /root/rendezmix/tor
+    git pull
+    ./autogen.sh
+    ./configure --disable-asciidoc --disable-unittests
+    make
+    make install
+fi
 
 cd /part/simulation
 rm -rf ${dir}/shadow.data ${dir}/shadow.log
@@ -32,4 +42,8 @@ python3 cleanup.py -d ${name}
 rm -rf ../${dir}/shadow.data ../${dir}/shadow.log
 zip -r ${name}_dataset.zip ${name}
 rm -rf ${name}
+
+cd /part/simulation
+zip -r ${name}.zip ${name}_sim.zip ${name}_perf.zip datasets/${name}_dataset.zip
+rm -rf ${name}_sim.zip ${name}_perf.zip datasets/${name}_dataset.zip
 echo "Done!"
