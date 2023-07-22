@@ -3602,8 +3602,8 @@ options_validate_cb(const void *old_options_, void *options_, char **msg)
       options->NumEntryGuards > options->NumPrimaryGuards) {
     REJECT("NumEntryGuards must not be greater than NumPrimaryGuards.");
   }
-
-  if (options->EntryNodes &&
+  
+  if (0 && options->EntryNodes &&
       routerset_is_list(options->EntryNodes) &&
       (routerset_len(options->EntryNodes) == 1) &&
       (options->RendConfigLines != NULL)) {
