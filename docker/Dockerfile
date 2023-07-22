@@ -90,6 +90,7 @@ RUN apt install -y nginx torbrowser-launcher
 RUN torbrowser-launcher
 RUN wget https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz
 RUN tar -xvf geckodriver-v0.33.0-linux64.tar.gz
+RUN rm geckodriver-v0.33.0-linux64.tar.gz
 
 WORKDIR /root/rendezmix/simulation
 RUN pip install -r requirements.txt
