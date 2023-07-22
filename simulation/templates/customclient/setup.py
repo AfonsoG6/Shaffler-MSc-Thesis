@@ -58,6 +58,7 @@ def genNginxConf(nginx_confs, torrc_confs, app_confs):
     print_prefix("Generating Nginx conf file")
     with open("os.conf.template", "r") as template:
         data = template.read()
+        data = data.replace("{log_path}", os.path.join(os.getcwd(), "logs", "nginx_access.log"))
         data = data.replace("{hidden_service_port}", torrc_confs["hidden_service_port"])
         data = data.replace("{hostname}", hostname)
         data = data.replace("{bind_address}", app_confs["bind_address"])

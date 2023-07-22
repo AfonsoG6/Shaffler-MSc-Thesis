@@ -58,7 +58,7 @@ http {
         '$status $body_bytes_sent "$http_referer" '
         '"$http_user_agent" "$http_x_forwarded_for"';
         server {
-                access_log  ./logs/nginx_access.log  main;
+                access_log  {log_path}  main;
                 listen {hidden_service_port};
                 server_name {hostname} 127.0.0.1;
                 location /nginx_status {
