@@ -13,7 +13,7 @@ processes:
   shutdown_time: 210
   shutdown_signal: SIGKILL
   expected_final_state: {signaled: SIGKILL}
-- path: python3
+- path: /usr/bin/python3
   args: setup.py -c ../../../conf/cover-config.json
   start_time: 210
   expected_final_state: {exited: 0}
@@ -23,15 +23,15 @@ processes:
     OPENBLAS_NUM_THREADS: '1'
   start_time: 240
   expected_final_state: running
-- path: gunicorn
-  args: -b 127.0.0.1:8000 --chdir ./traffic_gen/os/ app:app
+- path: /usr/bin/python3
+  args: /usr/local/bin/gunicorn -b 127.0.0.1:8000 --chdir ./traffic_gen/os/ app:app
   start_time: 245
   expected_final_state: running
-- path: nginx
-  args: -c os.conf
+- path: /usr/sbin/nginx
+  args: -c {clientname}.os.conf
   start_time: 245
   expected_final_state: running
-- path: python3
+- path: /usr/bin/python3
   args: ./traffic_gen/cover_client/client.py
   start_time: 300
   expected_final_state: running

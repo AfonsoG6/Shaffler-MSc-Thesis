@@ -11,6 +11,7 @@
     },
     "nginx": {
         "config_dir": "/etc/nginx/conf.d",
+        "alt_config_dir": "/usr/share/nginx",
         "exec_path": "nginx",
         "check_period": 5000
     },
