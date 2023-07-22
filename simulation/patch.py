@@ -65,7 +65,10 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
             with open(os.path.join(client_path, elem), "w") as g:
                 g.write(data)
         else:
-            shutil.copytree(os.path.join(dir_path, elem), client_path)
+            if os.path.isfile(os.path.join(dir_path, elem)):
+                shutil.copy(os.path.join(dir_path, elem), os.path.join(client_path, elem))
+            else:
+                shutil.copytree(os.path.join(dir_path, elem), os.path.join(client_path, elem))
     print(f"Created {newhostname} directory")
     config_path = os.path.join(templates_path, "customclient.yaml")
     new_host = yaml.load(open(config_path, "r"), Loader=yaml.FullLoader)
