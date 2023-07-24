@@ -2,8 +2,7 @@ import json
 import os
 from flask import Flask, url_for, render_template
 from os.path import isfile
-from os import listdir
-from random import randbytes
+from os import listdir, urandom
 from werkzeug.middleware.proxy_fix import ProxyFix
 from argparse import ArgumentParser
 
@@ -88,7 +87,7 @@ def sendPageByIndex(index):
 
 def sendXBytes(x):
     if x > 33:
-        return randbytes(x-33)
+        return urandom(x-33)
     else:
         return ('',200)
 
