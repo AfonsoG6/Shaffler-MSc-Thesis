@@ -5,6 +5,7 @@ from os.path import isfile
 from os import listdir
 from random import randbytes
 from werkzeug.middleware.proxy_fix import ProxyFix
+from argparse import ArgumentParser
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
@@ -129,3 +130,9 @@ def setPageName(name):
 #     print(url_for('set_default', size=1024))
 #     print(url_for('specific',size=2048))
 #     print(url_for('same'))
+
+if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument('-p', '--port', default=8000, type=int, help='port to listen on')
+    args = parser.parse_args()
+    app.run(host='127.0.0.1', port=args.port)
