@@ -1,4 +1,5 @@
 configparser
 Flask
-gunicorn
-selenium
+fake-useragent
+requests
+requests-html
