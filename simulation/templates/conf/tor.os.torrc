@@ -6,4 +6,4 @@ TruncateLogFile 1
 Log notice stderr
 NumEntryGuards 1
 HiddenServiceDir traffic_gen/os/tor
-HiddenServicePort 80 127.0.0.1:8080
+HiddenServicePort 80 127.0.0.1:8000

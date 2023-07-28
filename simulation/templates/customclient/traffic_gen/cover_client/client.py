@@ -41,6 +41,7 @@ def mainCycle(configs):
                     timeout=load_timeout,
                     proxies={"http": socks5, "https": socks5},
                 )
+                print(f"[COVER] Received response: {res.status_code}")
                 if not isinstance(res, HTMLResponse):
                     print("[COVER] Received non-HTML response")
                     continue

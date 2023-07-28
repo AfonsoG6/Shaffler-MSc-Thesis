@@ -1,7 +1,3 @@
 # Enter any host-specific tor config options here.
 # Note that any option specified here may override a default from torrc-defaults.
 %include ../../../conf/tor.os.torrc
-UseEntryGuards 1
-EntryNodes {entry}
-MiddleNodes {middle}
-ExitNodes {exit}
