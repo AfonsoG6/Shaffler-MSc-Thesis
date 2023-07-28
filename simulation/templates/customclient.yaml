@@ -6,29 +6,17 @@ processes:
   args: -I
   start_time: 60
 - path: /root/.local/bin/tor
-  args: --defaults-torrc torrc-defaults -f ../../../conf/tor.os.torrc
+  args: --defaults-torrc torrc-defaults -f torrc
   environment:
     OPENBLAS_NUM_THREADS: '1'
   start_time: 200
-  shutdown_time: 210
-  shutdown_signal: SIGKILL
-  expected_final_state: {signaled: SIGKILL}
+  expected_final_state: running
 - path: /usr/bin/python3
   args: setup.py -c ../../../conf/cover-config.json
   start_time: 210
   expected_final_state: {exited: 0}
-- path: /root/.local/bin/tor
-  args: --defaults-torrc torrc-defaults -f torrc
-  environment:
-    OPENBLAS_NUM_THREADS: '1'
-  start_time: 240
-  expected_final_state: running
 - path: /usr/bin/python3
   args: ./traffic_gen/os/app.py -p 8000
-  start_time: 245
-  expected_final_state: running
-- path: /usr/sbin/nginx
-  args: -c {clientname}.os.conf
   start_time: 245
   expected_final_state: running
 - path: /usr/bin/python3

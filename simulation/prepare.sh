@@ -1,6 +1,6 @@
 cd /root/rendezmix
 git reset --hard HEAD
-git checkout master
+git checkout cover
 git pull
 cp -r /root/rendezmix/simulation /part
 
