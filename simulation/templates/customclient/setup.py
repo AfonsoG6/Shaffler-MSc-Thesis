@@ -17,6 +17,22 @@ def readConfFile(config_path):
     return configs
 
 
+def getHostname(hs_dir):
+    print_prefix("Getting hostname")
+    path = hs_dir + "hostname"
+    # check if hostname already exists
+    if os.path.exists(path):
+        with open(path, "r") as name_file:
+            hostname = name_file.readline().strip()
+            name_file.close()
+    # run Tor with the new torrc until hostname is created
+    else:
+        print_prefix("Couldn't find hostname and running Tor here is not possible with shadow, so we're exiting...")
+        exit(1)
+    print_prefix(f"\tHostname: {hostname}\n")
+    return hostname
+
+
 # Config the OS app
 def configOSApp(confs):
     app_config = copy.deepcopy(confs)
@@ -35,7 +51,7 @@ def extractCoverClientConfig(configs):
     cover_client_configs = {
         "log_path": current_dir + "/logs/cclient.log",
         "timeout": configs["cclient"]["timeout"],
-        "address": configs["nginx"]["hostname"],
+        "address": getHostname(current_dir + "/traffic_gen/os/tor/").strip(),
         "endpoint": configs["cclient"]["endpoint"],
         "rate": configs["cclient"]["rate"],
         "fail_limit": configs["cclient"]["fail_limit"],
