@@ -45,7 +45,7 @@ def mainCycle(configs):
                 if not isinstance(res, HTMLResponse):
                     print("[COVER] Received non-HTML response")
                     continue
-                res.html.render(timeout=load_timeout)
+                #res.html.render(timeout=load_timeout)
                 fails = 0
                 base = time.time()
             except:
