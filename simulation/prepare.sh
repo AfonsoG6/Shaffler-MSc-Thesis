@@ -2,7 +2,7 @@ cd /root/rendezmix
 git reset --hard HEAD
 git checkout cover
 git pull
-cp -r /root/rendezmix/simulation /part
+cp -r /root/rendezmix/simulation /part/cover
 
 # Generate the simulation configuration files
 cd /part/simulation/data

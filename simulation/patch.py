@@ -79,8 +79,6 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
     new_host["network_node_id"] = netnodeid
     tgen_proc_template = list(filter(lambda x: x["path"].endswith("tgen"), new_host["processes"]))[0]
     new_host["processes"] = list(filter(lambda x: not x["path"].endswith("tgen"), new_host["processes"]))
-    nginx_proc = list(filter(lambda x: x["path"].endswith("nginx"), new_host["processes"]))[0]
-    nginx_proc["args"] = nginx_proc["args"].replace("{clientname}", newhostname)
     for flow_start in range(300 + random.randint(0, 90), duration, 90):
         if flow_start + 60 >= duration:
             break
