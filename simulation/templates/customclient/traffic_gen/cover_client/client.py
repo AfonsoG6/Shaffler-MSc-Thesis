@@ -1,7 +1,8 @@
 import json
 import os
 import time
-from requests_html import HTMLSession, HTMLResponse
+#from requests_html import HTMLSession, HTMLResponse
+import requests
 from requests import Response
 from fake_useragent import UserAgent
 
@@ -34,17 +35,18 @@ def mainCycle(configs):
     while True:
         if time.time() - base >= rate:
             try:
-                session: HTMLSession = HTMLSession()
-                res: Response = session.get(
+                print(f"[COVER] Sending request to {address}")
+                #session: HTMLSession = HTMLSession()
+                res: Response = requests.get(
                     address,
                     headers=headers,
                     timeout=load_timeout,
                     proxies={"http": socks5, "https": socks5},
                 )
                 print(f"[COVER] Received response: {res.status_code}")
-                if not isinstance(res, HTMLResponse):
+                """ if not isinstance(res, HTMLResponse):
                     print("[COVER] Received non-HTML response")
-                    continue
+                    continue """
                 #res.html.render(timeout=load_timeout)
                 fails = 0
                 base = time.time()
