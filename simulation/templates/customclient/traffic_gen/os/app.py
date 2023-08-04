@@ -43,7 +43,7 @@ def send():
         return sendXBytes(size)
     elif mode in ('SPage'):
         pageName = configs[1]
-        if isfile('templates/'+pageName):
+        if isfile(current_dir + '/templates/' + pageName):
             return render_template(pageName)
         else:
             return ('Page not found',404)
@@ -70,7 +70,7 @@ def sendInt(i):
 def sendPageByName(name):
     mode = configs[0]
     if mode in ('MPage','Dynamic'):
-        if isfile('templates/'+name):
+        if isfile(current_dir + '/templates/'+name):
             return render_template(name)
         else:
             return ('Page not found',404)
@@ -78,9 +78,9 @@ def sendPageByName(name):
         return ('Current mode does not support that operation',400)
 
 def sendPageByIndex(index):
-    dir = sorted(listdir('templates'))
+    dir = sorted(listdir(current_dir + 'templates'))
     print(dir)
-    if index < len(dir) and isfile('templates/'+dir[index]):
+    if index < len(dir) and isfile(current_dir + '/templates/'+dir[index]):
         return render_template(dir[index])
     else:
         return ('Page not found',404)
@@ -112,7 +112,7 @@ def setSize(size):
 def setPageName(name): 
     if configs[0] == 'SPage':
         if configs[2]:
-            if isfile('templates/'+name):
+            if isfile(current_dir + '/templates/'+name):
                 configs[1] = name
                 return send()
             else:
