@@ -45,14 +45,14 @@ def mainCycle(configs):
             if not isinstance(res, HTMLResponse):
                 print("[COVER] Received non-HTML response", flush=True)
                 continue
-            #res.html.render(timeout=load_timeout)
+            hres: HTMLResponse = res
+            hres.html.render(timeout=load_timeout)
             fails = 0
-        except:
+        except Exception as e:
+            print(f"[COVER] Exception: {e}", flush=True)
             fails += 1
-            if fails > tolerated_fails:
+            if tolerated_fails >= 0 and fails > tolerated_fails:
                 break
-            else:
-                continue
 
     print("[COVER] Exceeded fail limit... Exiting", flush=True)
     return

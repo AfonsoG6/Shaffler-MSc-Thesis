@@ -8,9 +8,9 @@
     },
     "cclient": {
         "python_path" : "python",
-        "rate" : 15000,
-        "timeout" : 10000,
+        "rate" : 10000,
+        "timeout" : 5000,
         "endpoint" : "/",
-        "fail_limit" : 1
+        "fail_limit" : -1
     }
 }
