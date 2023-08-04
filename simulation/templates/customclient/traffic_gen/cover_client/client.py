@@ -27,7 +27,7 @@ def mainCycle(configs):
     }
 
     # socks5 = f"socks5://localhost:9050" # DNS to be resolved client side
-    socks5 = f"socks5h://localhost:9050"  # DNS to be resolved on the proxy side
+    socks5 = f"socks5h://127.0.0.1:9050"  # DNS to be resolved on the proxy side
 
     fails = 0
     base = time.time() - rate  # ensure first access happens straight away
