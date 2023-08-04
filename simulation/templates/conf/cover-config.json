@@ -1,7 +1,7 @@
 {
     "app": {
         "bind_address": "127.0.0.1:8000",
-        "mode": "SPage",
+        "mode": "Const",
         "size": 10000,
         "page_name": "page1.html",
         "adjustable": true
@@ -10,7 +10,7 @@
         "python_path" : "python",
         "rate" : 15000,
         "timeout" : 10000,
-        "endpoint" : "/ignore",
+        "endpoint" : "/",
         "fail_limit" : 1
     }
 }

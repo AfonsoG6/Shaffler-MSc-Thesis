@@ -1,8 +1,7 @@
 import json
 import os
 import time
-#from requests_html import HTMLSession, HTMLResponse
-import requests
+from requests_html import HTMLSession, HTMLResponse
 from requests import Response
 from fake_useragent import UserAgent
 
@@ -27,25 +26,27 @@ def mainCycle(configs):
         "Pragma": "no-cache",
     }
 
-    # socks5 = f"socks5://localhost:9050" # DNS to be resolved client side
+    # socks5 = f"socks5://127.0.0.1:9050" # DNS to be resolved client side
     socks5 = f"socks5h://127.0.0.1:9050"  # DNS to be resolved on the proxy side
 
     fails = 0
     while True:
         time.sleep(rate)
         try:
-            print(f"[COVER] Sending request to {address}")
-            #session: HTMLSession = HTMLSession()
-            res: Response = requests.get(
+            print(f"[COVER] Sending request to {address}", flush=True)
+            with open("./cover.log", "a") as log:
+                log.write(f"[COVER] Sending request to {address}\n")
+            session: HTMLSession = HTMLSession()
+            res: Response = session.get(
                 address,
                 headers=headers,
                 timeout=load_timeout,
                 proxies={"http": socks5, "https": socks5},
             )
-            print(f"[COVER] Received response: {res.status_code}")
-            """ if not isinstance(res, HTMLResponse):
-                print("[COVER] Received non-HTML response")
-                continue """
+            print(f"[COVER] Received response: {res.status_code}", flush=True)
+            if not isinstance(res, HTMLResponse):
+                print("[COVER] Received non-HTML response", flush=True)
+                continue
             #res.html.render(timeout=load_timeout)
             fails = 0
         except:
@@ -55,7 +56,7 @@ def mainCycle(configs):
             else:
                 continue
 
-    print("[COVER] Exceeded fail limit... Exiting")
+    print("[COVER] Exceeded fail limit... Exiting", flush=True)
     return
 
 
