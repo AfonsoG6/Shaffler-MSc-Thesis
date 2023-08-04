@@ -34,8 +34,6 @@ def mainCycle(configs):
         time.sleep(rate)
         try:
             print(f"[COVER] Sending request to {address}", flush=True)
-            with open("./cover.log", "a") as log:
-                log.write(f"[COVER] Sending request to {address}\n")
             session: HTMLSession = HTMLSession()
             res: Response = session.get(
                 address,
