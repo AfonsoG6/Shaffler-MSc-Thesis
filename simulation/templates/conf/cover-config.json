@@ -10,7 +10,7 @@
         "python_path" : "python",
         "rate" : 15000,
         "timeout" : 10000,
-        "endpoint" : "/",
+        "endpoint" : "/ignore",
         "fail_limit" : 1
     }
 }
