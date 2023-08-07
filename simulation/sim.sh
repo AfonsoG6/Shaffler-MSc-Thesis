@@ -5,7 +5,7 @@ then
     exit 1
 fi
 
-name=$(echo $dir | cut -d'_' -f 4 | cut -d'/' -f 1)
+name=$(basename $dir | cut -d'_' -f 4)
 
 echo "Starting ${name} Simulation"
 
