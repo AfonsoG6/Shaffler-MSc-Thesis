@@ -26,22 +26,29 @@ def enable_cover(hosts_path: str, config: dict, templates_path: str):
             
     for host in os.listdir(hosts_path):
         if host.startswith("customclient"):
-            orig_torrc_path = os.path.join(templates_path, "customclient", "torrc")
             dest_torrc_path = os.path.join(hosts_path, host, "torrc")
-            with open(orig_torrc_path, 'r') as i:
-                data = i.read()
             with open(dest_torrc_path, 'w') as o:
-                o.write(data)
+                o.write(f"%include ../../../conf/tor.os.torrc")
+
+def enable_one_circuit(hosts_path: str):
+    for host in os.listdir(hosts_path):
+        if host.startswith("customclient"):
+            dest_torrc_path = os.path.join(hosts_path, host, "torrc")
+            with open(dest_torrc_path, 'w') as o:
+                o.write(f"%include ./torrc-circ")
 
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-s", "--simulation", type=str, required=True)
     parser.add_argument("--cover-on", action="store_true", required=False, default=False)
     parser.add_argument("--cover-off", action="store_true", required=False, default=False)
-    parser.add_argument("-c", "--config", type=str, required=False, default="")
+    parser.add_argument("--config", type=str, required=False, default="")
+    parser.add_argument("--one-circuit", action="store_true", required=False, default=False)
 
     args = parser.parse_args()
     simulation: str = args.simulation
+    if args.cover_on and args.one_circuit:
+        print("One circuit mode is not compatible with cover traffic mode")
 
     hosts_path = os.path.join(simulation, "shadow.data.template", "hosts")
     config_path = os.path.join(simulation, "shadow.config.yaml")
@@ -58,6 +65,8 @@ if __name__ == "__main__":
             data = i.read()
         with open(dest_config_path, 'w') as o:
             o.write(data)
+    if args.one_circuit:
+        enable_one_circuit(hosts_path)
 
     yaml.dump(config, open(config_path, "w"), default_flow_style=False, sort_keys=False)
 

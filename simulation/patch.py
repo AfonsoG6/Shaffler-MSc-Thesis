@@ -54,7 +54,7 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
     client_path = os.path.join(hosts_path, newhostname)
     os.makedirs(client_path, exist_ok=True)
     for elem in os.listdir(dir_path):
-        if elem == "torrc":
+        if elem == "torrc-circ":
             with open(os.path.join(dir_path, elem), "r") as f:
                 data = f.read()
             pick: dict = pick_nodes()
