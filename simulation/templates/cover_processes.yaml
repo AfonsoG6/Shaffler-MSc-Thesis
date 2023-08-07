@@ -1,0 +1,12 @@
+- path: /usr/bin/python3
+  args: setup.py -c ../../../conf/cover-config.json
+  start_time: 210
+  expected_final_state: {exited: 0}
+- path: /usr/bin/python3
+  args: ./traffic_gen/os/app.py -p 8000
+  start_time: 245
+  expected_final_state: running
+- path: /usr/bin/python3
+  args: ./traffic_gen/cover_client/client.py
+  start_time: 300
+  expected_final_state: running
