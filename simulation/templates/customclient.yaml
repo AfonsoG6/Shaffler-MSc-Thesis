@@ -9,7 +9,7 @@ processes:
   args: --defaults-torrc torrc-defaults -f torrc
   environment:
     OPENBLAS_NUM_THREADS: '1'
-  start_time: 240
+  start_time: 200
   expected_final_state: running
 - path: /root/.local/bin/oniontrace
   args: Mode=log TorControlPort=9051 LogLevel=info Events=CIRC,STREAM
