@@ -1,16 +1,20 @@
-name=$1
-if [ -z "$name" ];
+sim=$1
+name=$2
+if [ -z "$sim" ] || [ -z "$name" ];
 then
-    echo "Usage: ./config.sh <name>"
+    echo "Usage: ./config.sh <sim> <name>"
     exit 1
 fi
+
+sim_name=$(basename $sim)
+name=$(basename $name)
 
 mode=$(echo $name | cut -d'#' -f 1)
 arg1=$(echo $name | cut -d'#' -f 2)
 arg2=$(echo $name | cut -d'#' -f 3)
 arg3=$(echo $name | cut -d'#' -f 4)
 
-# Conver mode name to its number
+# Convert mode name to its number
 if [ "$mode" = "Uniform" ];
 then
     mode=2
@@ -55,7 +59,7 @@ then
     max=$arg1
 elif [ "$mode" = "Vanilla" ] || [ -z "$mode" ];
 then
-    cp -r sim_200_2 ./sim_200_2_Vanilla
+    cp -r ${sim} ./${sim_name}_Vanilla
     exit 0
 else
     echo "Mode is not valid"
@@ -85,9 +89,9 @@ then
 fi
 
 # Create a copy of the simulation
-cp -r sim_200_2 ./sim_200_2_${name}
-echo "EnforceDelayPolicy 1" >> sim_200_2_${name}/conf/tor.client.torrc
-echo "DelayMode ${mode}" >> sim_200_2_${name}/conf/tor.client.torrc
-echo "DelayParam1 ${param1}" >> sim_200_2_${name}/conf/tor.client.torrc
-echo "DelayParam2 ${param2}" >> sim_200_2_${name}/conf/tor.client.torrc
-echo "DelayMax ${max}" >> sim_200_2_${name}/conf/tor.client.torrc
+cp -r ${sim} ./${sim_name}_${name}
+echo "EnforceDelayPolicy 1" >> ${sim_name}_${name}/conf/tor.client.torrc
+echo "DelayMode ${mode}" >> ${sim_name}_${name}/conf/tor.client.torrc
+echo "DelayParam1 ${param1}" >> ${sim_name}_${name}/conf/tor.client.torrc
+echo "DelayParam2 ${param2}" >> ${sim_name}_${name}/conf/tor.client.torrc
+echo "DelayMax ${max}" >> ${sim_name}_${name}/conf/tor.client.torrc

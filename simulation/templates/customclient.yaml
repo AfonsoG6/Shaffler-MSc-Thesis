@@ -6,22 +6,10 @@ processes:
   args: -I
   start_time: 60
 - path: /root/.local/bin/tor
-  args: --defaults-torrc torrc-defaults -f torrc
+  args: --defaults-torrc torrc-defaults
   environment:
     OPENBLAS_NUM_THREADS: '1'
   start_time: 200
-  expected_final_state: running
-- path: /usr/bin/python3
-  args: setup.py -c ../../../conf/cover-config.json
-  start_time: 210
-  expected_final_state: {exited: 0}
-- path: /usr/bin/python3
-  args: ./traffic_gen/os/app.py -p 8000
-  start_time: 245
-  expected_final_state: running
-- path: /usr/bin/python3
-  args: ./traffic_gen/cover_client/client.py
-  start_time: 300
   expected_final_state: running
 - path: /root/.local/bin/oniontrace
   args: Mode=log TorControlPort=9051 LogLevel=info Events=CIRC,STREAM
