@@ -6,7 +6,7 @@ processes:
   args: -I
   start_time: 60
 - path: /root/.local/bin/tor
-  args: --defaults-torrc torrc-defaults
+  args: --defaults-torrc torrc-defaults -f torrc
   environment:
     OPENBLAS_NUM_THREADS: '1'
   start_time: 200

@@ -348,8 +348,8 @@ global_ckpt: str = ""
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Deep Coffea.")
     parser.add_argument("--mode", default="all", type=str, help="To train or test.")
-    parser.add_argument("--delta", default=3, type=float, help="For window partition (see data_utils.py).")
-    parser.add_argument("--win_size", default=5, type=float, help="For window partition (see data_utils.py).")
+    parser.add_argument("--delta", default=3, type=int, help="For window partition (see data_utils.py).")
+    parser.add_argument("--win_size", default=5, type=int, help="For window partition (see data_utils.py).")
     parser.add_argument("--n_wins", default=11, type=int, help="For window partition (see data_utils.py).")
     parser.add_argument("--threshold", default=20, type=int, help="For window partition (see data_utils.py).")
     parser.add_argument("--tor_len", default=500, type=int, help="Flow size for the tor pairs.")
