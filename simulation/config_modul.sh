@@ -2,7 +2,7 @@ sim=$1
 name=$2
 if [ -z "$sim" ] || [ -z "$name" ];
 then
-    echo "Usage: ./config.sh <sim> <name>"
+    echo "Usage: ./config_modul.sh <sim> <name>"
     exit 1
 fi
 
