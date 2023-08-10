@@ -30,8 +30,12 @@ def mainCycle(configs):
     socks5 = f"socks5h://127.0.0.1:9050"  # DNS to be resolved on the proxy side
 
     fails = 0
+    base = time.time() - rate
     while True:
-        time.sleep(rate)
+        remaining = rate - (time.time() - base)
+        if remaining > 0:
+            time.sleep(remaining)
+        base = time.time()
         try:
             print(f"[COVER] Sending request to {address}", flush=True)
             session: HTMLSession = HTMLSession()
