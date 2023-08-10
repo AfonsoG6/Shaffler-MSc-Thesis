@@ -175,7 +175,7 @@ if __name__ == "__main__":
     duration: int = ceil(args.duration * 3600)
     global_netnodeid: bool = args.global_netnodeid
     minimal: bool = args.minimal
-    coveroff: bool = not args.coveroff
+    coveroff: bool = args.coveroff
     
     config_path = os.path.join(simulation, "shadow.config.yaml")
     conf_path = os.path.join(simulation, "conf")
