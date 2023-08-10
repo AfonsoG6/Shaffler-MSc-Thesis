@@ -43,7 +43,7 @@ def get_servers_string(hosts: dict, port: int):
             servers.append(f"{host}:{port}")
     return ",".join(servers)
 
-def create_client(hosts: dict, idx: int, netnodeid: int = -1):
+def create_client(hosts: dict, idx: int, netnodeid: int = -1, coveroff: bool = False):
     global hosts_path, tgen_server_path, tgen_server_dir_path, duration
     
     newhostname: str = f"customclient{idx}"
@@ -64,6 +64,8 @@ def create_client(hosts: dict, idx: int, netnodeid: int = -1):
             data = data.replace("{exit}", pick["exit"])
             with open(os.path.join(client_path, elem), "w") as g:
                 g.write(data)
+        elif elem == "traffic_gen" and coveroff:
+            continue
         else:
             if os.path.isfile(os.path.join(dir_path, elem)):
                 shutil.copy(os.path.join(dir_path, elem), os.path.join(client_path, elem))
@@ -165,6 +167,7 @@ if __name__ == "__main__":
     parser.add_argument("-g", "--global_netnodeid", action="store_true", required=False, default=False)
     #Flag to specify if minimal or not
     parser.add_argument("-m", "--minimal", action="store_true", required=False, default=False)
+    parser.add_argument("--coveroff", action="store_true", required=False, default=False)
 
     args = parser.parse_args()
     simulation: str = args.simulation
@@ -172,7 +175,7 @@ if __name__ == "__main__":
     duration: int = ceil(args.duration * 3600)
     global_netnodeid: bool = args.global_netnodeid
     minimal: bool = args.minimal
-    
+    coveroff: bool = not args.coveroff
     
     config_path = os.path.join(simulation, "shadow.config.yaml")
     conf_path = os.path.join(simulation, "conf")
@@ -194,7 +197,7 @@ if __name__ == "__main__":
 
     ports: set = set()
     for idx in range(num_clients):
-        create_client(config["hosts"], idx, netnodeid)
+        create_client(config["hosts"], idx, netnodeid, coveroff)
         ports.add(10000 + idx)
     patch_servers(config["hosts"], ports)
 
