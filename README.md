@@ -122,3 +122,9 @@ docker cp $(docker container list | grep "rendezmix.*Up" | awk '{print $1}'):/pa
 docker cp $(docker container list | grep "rendezmix.*Up" | awk '{print $1}'):/part/simulation/Const#1MB#10s.zip .
 docker cp $(docker container list | grep "rendezmix.*Up" | awk '{print $1}'):/part/simulation/Const#100KB#1s.zip .
 ```
+
+To re-attach the terminal to the docker container
+
+```sh
+docker attach $(docker container list | grep "rendezmix.*Up" | awk '{print $1}')
+```
