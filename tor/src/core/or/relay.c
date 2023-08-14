@@ -3565,7 +3565,7 @@ gen_poisson_value(double lambda) {
     k++;
     p *= gen_random_uniform_01();
   } while (p > L);
-  return (k - 1)*1e3;
+  return k - 1;
 }
 
 double
