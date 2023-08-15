@@ -3,3 +3,4 @@ Flask
 fake-useragent
 requests
 requests-html
+pysocks
