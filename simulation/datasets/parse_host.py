@@ -55,7 +55,9 @@ def timestamp_str(timestamp: float) -> str:
 def parse_pcap_outflow(info_servers: dict, hostname: str, hosts_path: str, output_path: str) -> None:
     outflow_path: str = os.path.join(output_path, "outflow")
     os.makedirs(outflow_path, exist_ok=True)
-
+    
+    open(os.path.join(output_path, f"{hostname}.err"), "w").close()
+    
     pcap_path: str = os.path.join(hosts_path, hostname, "eth0.pcap")
     print(f"[{hostname} process] Parsing {pcap_path}...")
     
@@ -75,6 +77,8 @@ def parse_pcap_outflow(info_servers: dict, hostname: str, hosts_path: str, outpu
                     continue
                 info: list = info_servers[port]
             except:
+                with open(os.path.join(output_path, f"{hostname}.err"), "a") as file:
+                    file.write(f"[ERROR] Ignoring packet while parsing {hostname}: {timestamp_str(timestamp)}\t[{ip}]\n")
                 continue
             for idx in range(completed_idx[port], len(info)):
                 if timestamp < info[idx]["timestamp"]:
@@ -93,6 +97,8 @@ def parse_pcap_outflow(info_servers: dict, hostname: str, hosts_path: str, outpu
 def parse_pcap_inflow(info: list, hostname: str, hosts_path: str, output_path: str) -> None:
     inflow_path: str = os.path.join(output_path, "inflow")
     os.makedirs(inflow_path, exist_ok=True)
+    
+    open(os.path.join(output_path, f"{hostname}.err"), "w").close()
 
     pcap_path: str = os.path.join(hosts_path, hostname, "eth0.pcap")
     own_address: str = get_address(os.path.join(hosts_path, hostname))
@@ -110,6 +116,8 @@ def parse_pcap_inflow(info: list, hostname: str, hosts_path: str, output_path: s
                 try:
                     orientation = get_orientation_client(ip, own_address)
                 except:
+                    with open(os.path.join(output_path, f"{hostname}.err"), "a") as file:
+                        file.write(f"[ERROR] Ignoring packet while parsing {hostname}: {timestamp_str(timestamp)}\t[{ip}]\n")
                     continue
                 file_path: str = os.path.join(inflow_path, f"{info[idx]['circuit_idx']}_{info[idx]['site_idx']}")
                 with open(file_path, "a") as file:
