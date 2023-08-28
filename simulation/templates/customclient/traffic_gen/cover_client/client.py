@@ -9,7 +9,7 @@ from random import random
 from datetime import datetime
 
 def log(context: str, message: str) -> None:
-    print(f"{datetime.now().strftime('%b %d %H:%M:%S.%f')} [LOG,{context}] {message}")
+    print(f"{datetime.now().strftime('%b %d %H:%M:%S.%f')} [LOG,{context}] {message}", flush=True)
 
 def do_request(
     session: HTMLSession, address: str, headers: dict, timeout: float, socks5: str, thread_id: int, request_id: int
