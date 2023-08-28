@@ -27,7 +27,9 @@ def getHostname(hs_dir):
             name_file.close()
     # run Tor with the new torrc until hostname is created
     else:
-        print_prefix("Couldn't find hostname and running Tor here is not possible with shadow, so we're exiting...")
+        print_prefix(
+            "Couldn't find hostname and running Tor here is not possible with shadow, so we're exiting..."
+        )
         exit(1)
     print_prefix(f"\tHostname: {hostname}\n")
     return hostname
@@ -53,7 +55,9 @@ def extractCoverClientConfig(configs):
         "timeout": configs["cclient"]["timeout"],
         "address": getHostname(current_dir + "/traffic_gen/os/tor/").strip(),
         "endpoint": configs["cclient"]["endpoint"],
-        "rate": configs["cclient"]["rate"],
+        "delta": configs["cclient"]["delta"],
+        "deviation": configs["cclient"]["deviation"],
+        "threads": configs["cclient"]["threads"],
         "fail_limit": configs["cclient"]["fail_limit"],
     }
 
