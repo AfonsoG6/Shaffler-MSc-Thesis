@@ -8,8 +8,10 @@
     },
     "cclient": {
         "python_path" : "python",
-        "rate" : 10000,
-        "timeout" : 5000,
+        "threads" : 2,
+        "delta" : 10,
+        "deviation" : 3,
+        "timeout" : 10,
         "endpoint" : "/",
         "fail_limit" : -1
     }
