@@ -303,7 +303,7 @@ def main(mode: str,
                     Cosine_Similarity_eval(tor_embs, exit_embs, threshold_result, single_output, win, last_activated_window, minimum_windows_positive, corr_matrix, multi_output_list, n_test)
         with open(results_path, "w", newline="") as rank_f:
             writer = csv.writer(rank_f)
-            writer.writerow(["Threshold", "TPR", "FPR", "BDR"])
+            writer.writerow(["Threshold", "TP", "FP", "TN", "FN", "TPR", "FPR", "BDR"])
             writer.writerows(rank_multi_output)
         print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Results ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         with open(results_path, "r") as f:

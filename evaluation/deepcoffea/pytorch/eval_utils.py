@@ -14,7 +14,7 @@ def ini_cosine_output(single_output_l, input_number):
     for pairs in range(0, (input_number * input_number)):
         single_output_l.append(0)
 
-def Cosine_Similarity_eval(tor_embs, exit_embs, similarity_threshold, single_output_l, evaluating_window, last_window, correlated_shreshold, cosine_similarity_all_list, muti_output_list, flow):
+def Cosine_Similarity_eval(tor_embs, exit_embs, similarity_threshold, single_output_l, evaluating_window, last_window, correlated_shreshold, cosine_similarity_all_list, multi_output_list, flow):
     number_of_lines = tor_embs.shape[0]
     for tor_emb_index in range(0, number_of_lines):
         t = similarity_threshold[tor_emb_index]
@@ -56,10 +56,14 @@ def Cosine_Similarity_eval(tor_embs, exit_embs, similarity_threshold, single_out
         else:
             FPR = -1
 
-        muti_output_list.append(TPR)
-        muti_output_list.append(FPR)
-        muti_output_list.append(calculate_bdr(TPR, FPR, flow))
-        print(TPR, FPR, calculate_bdr(TPR, FPR, flow))
+        multi_output_list.append(TP)
+        multi_output_list.append(FP)
+        multi_output_list.append(TN)
+        multi_output_list.append(FN)
+        multi_output_list.append(TPR)
+        multi_output_list.append(FPR)
+        multi_output_list.append(calculate_bdr(TPR, FPR, flow))
+        print(TP, FP, TN, FN, TPR, FPR, calculate_bdr(TPR, FPR, flow))
 
 def calculate_bdr(tpr, fpr, flow):
     TPR = tpr
