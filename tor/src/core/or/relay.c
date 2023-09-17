@@ -3533,24 +3533,21 @@ gen_normal_variate(void)
 }
 
 double
-gen_normal_value(double location, double scale)
+gen_normal_value(double mu, double sigma)
 {
-  /* location is mu, scale is sigma */
   double x = gen_normal_variate();
-  return location + (scale * x);
+  return mu + (sigma * x);
 }
 
 double
-gen_lognormal_value(double location, double scale)
+gen_lognormal_value(double mu, double sigma)
 {
-  /* location is mu, scale is sigma */
-  double x = gen_normal_value(location, scale);
+  double x = gen_normal_value(mu, sigma);
   return exp(x);
 }
 
 double
 gen_uniform_value(double low, double high) {
-  /* inverse transform sampling, scale is x_m, shape is alpha */
   double uniform = gen_random_uniform_01();
   return low + ((high - low) * uniform);
 }
@@ -4063,25 +4060,25 @@ get_delay_microseconds_uniform(double low, double high)
 }
 
 double
-get_delay_microseconds_normal(double location, double scale)
+get_delay_microseconds_normal(double mu, double sigma)
 {
   double value;
-  if (location == 0.0) location = 50;
-  if (scale == 0.0) scale = 12;
+  if (mu == 0.0) mu = 50;
+  if (sigma == 0.0) sigma = 12;
   do {
-    value = gen_normal_value(location, scale) * 1e3;
+    value = gen_normal_value(mu, sigma) * 1e3;
   } while (value < 0);
   return value;
 }
 
 double
-get_delay_microseconds_lognormal(double location, double scale)
+get_delay_microseconds_lognormal(double mu, double sigma)
 {
   double value;
-  if (location == 0.0) location = 3.5;
-  if (scale == 0.0) scale = 0.5;
+  if (mu == 0.0) mu = 3.5;
+  if (sigma == 0.0) sigma = 0.5;
   do {
-    value = gen_lognormal_value(location, scale) * 1e3;
+    value = gen_lognormal_value(mu, sigma) * 1e3;
   } while (value < 0);
   return value;
 }

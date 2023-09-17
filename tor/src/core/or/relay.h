@@ -165,9 +165,9 @@ double gen_random_uniform_01(void);
 
 double gen_normal_variate(void);
 
-double gen_normal_value(double location, double scale);
+double gen_normal_value(double mu, double sigma);
 
-double gen_lognormal_value(double location, double scale);
+double gen_lognormal_value(double mu, double sigma);
 
 double gen_uniform_value(double low, double high);
 
@@ -183,9 +183,9 @@ double get_delay_microseconds_markov(or_circuit_t *circ, int direction);
 
 double get_delay_microseconds_uniform(double low, double high);
 
-double get_delay_microseconds_normal(double location, double scale);
+double get_delay_microseconds_normal(double mu, double sigma);
 
-double get_delay_microseconds_lognormal(double location, double scale);
+double get_delay_microseconds_lognormal(double mu, double sigma);
 
 double get_delay_microseconds_poisson(double lambda);
 
