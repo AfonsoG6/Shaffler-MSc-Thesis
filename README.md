@@ -1,4 +1,4 @@
-# Rendezmix
+# Shaffler (MSc Thesis)
 
 ## Start Docker container
 
